@@ -1,0 +1,45 @@
+PODS:
+  - Expecta (1.0.6)
+  - PromiseKit/Hang (1.7.7):
+    - PromiseKit/Promise
+  - PromiseKit/Promise (1.7.7)
+  - PromiseKit/When (1.7.7):
+    - PromiseKit/Promise
+  - Specta (1.0.7)
+  - Tanker (9999):
+    - PromiseKit/Promise (~> 1.7)
+    - PromiseKit/When (~> 1.7)
+    - Tanker/libtanker (= 9999)
+  - Tanker/libtanker (9999):
+    - PromiseKit/Promise (~> 1.7)
+    - PromiseKit/When (~> 1.7)
+  - Tanker/Tests (9999):
+    - Expecta
+    - PromiseKit/Hang (~> 1.7)
+    - PromiseKit/Promise (~> 1.7)
+    - PromiseKit/When (~> 1.7)
+    - Specta
+
+DEPENDENCIES:
+  - Tanker (from `../TankerDev.podspec`)
+  - Tanker/Tests (from `../TankerDev.podspec`)
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - Expecta
+    - PromiseKit
+    - Specta
+
+EXTERNAL SOURCES:
+  Tanker:
+    :path: "../TankerDev.podspec"
+
+SPEC CHECKSUMS:
+  Expecta: 3b6bd90a64b9a1dcb0b70aa0e10a7f8f631667d5
+  PromiseKit: 9007df2f9e2ef725467084ab3880cf932ab935a4
+  Specta: 3e1bd89c3517421982dc4d1c992503e48bd5fe66
+  Tanker: 9de5bb060e576c329a90c2c6441f501d96775c42
+
+PODFILE CHECKSUM: 99f166e2c7141fc10fc359994c225905cbd231b0
+
+COCOAPODS: 1.5.3

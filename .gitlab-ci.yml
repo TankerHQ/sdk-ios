@@ -1,0 +1,37 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - check
+  - deploy
+
+before_script:
+    - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
+    - dmenv install
+    - dmenv run -- python run-ci.py update-conan-config --platform darwin
+
+check/native-stable:
+  stage: check
+  when: manual
+  script:
+    - dmenv run -- python run-ci.py check
+  tags:
+    - macos
+
+check/native-from-sources:
+  stage: check
+  when: manual
+  script:
+    - dmenv run -- python run-ci.py check --native-from-sources
+  tags:
+    - macos
+
+deploy:
+  stage: deploy
+  when: manual
+  only:
+    - tags
+  script:
+    - dmenv run -- python run-ci.py deploy
+  tags:
+    - macos

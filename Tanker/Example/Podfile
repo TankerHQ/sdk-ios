@@ -1,0 +1,12 @@
+use_frameworks!
+platform :ios, '9.0'
+
+target 'Tanker_Example' do
+  pod 'Tanker', :path => '../TankerDev.podspec', :testspecs => ['Tests']
+
+  target 'Tanker_Tests' do
+    inherit! :search_paths
+
+
+  end
+end
