@@ -5,6 +5,7 @@ import sys
 import ci
 import ci.cpp
 import ci.ios
+import ci.git
 
 
 def main():
@@ -21,6 +22,7 @@ def main():
     )
 
     subparsers.add_parser("deploy")
+    subparsers.add_parser("mirror")
 
     args = parser.parse_args()
 
@@ -30,6 +32,8 @@ def main():
         ci.ios.check(native_from_sources=args.native_from_sources)
     elif args.command == "deploy":
         ci.ios.deploy()
+    elif args.command == "mirror":
+        ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
     else:
         parser.print_help()
         sys.exit()
