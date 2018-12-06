@@ -21,7 +21,8 @@ def main():
         "--native-from-sources", action="store_true", dest="native_from_sources"
     )
 
-    subparsers.add_parser("deploy")
+    deploy_parser = subparsers.add_parser("deploy")
+    deploy_parser.add_argument("--git-tag", required=True)
     subparsers.add_parser("mirror")
 
     args = parser.parse_args()
@@ -31,7 +32,8 @@ def main():
     elif args.command == "check":
         ci.ios.check(native_from_sources=args.native_from_sources)
     elif args.command == "deploy":
-        ci.ios.deploy()
+        git_tag = args.git_tag
+        ci.ios.deploy(git_tag=git_tag)
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
     else:
