@@ -59,7 +59,8 @@ def main() -> None:
     deps_handler = ci.ios.DepsHandler(
         debug=debug,
         archs=archs,
-        native_from_sources=native_from_sources
+        native_from_sources=native_from_sources,
+        allow_missing_deps=True,
     )
 
     deps_handler.handle_cpp_deps()
