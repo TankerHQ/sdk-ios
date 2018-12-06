@@ -65,6 +65,17 @@
 - (nonnull NSNumber*)connectUnlockRequiredHandler:(nonnull TKRUnlockRequiredHandler)handler;
 
 /*!
+ @brief Register a handler called when the current device is revoked.
+ 
+ @discussion The handler will be called as soon as the device is revoked.
+ 
+ @param handler This block will be called without any argument, and will be run on a background queue.
+ 
+ @return an event handler id.
+ */
+- (nonnull NSNumber*)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler;
+
+/*!
  @brief Check if the current user has already registered an unlock key.
 
  @discussion If this method returns @NO, you can call registerUnlock or generateAndRegisterUnlockKey.
@@ -373,6 +384,17 @@
  */
 - (nonnull PMKPromise*)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
                                 options:(nonnull TKRShareOptions*)options;
+
+/*!
+ @brief Revoke a device from its deviceId
+ 
+ @param deviceId device ID to revoke.
+ 
+ @pre @a deviceId must be the ID of one of the current user's devices.
+ 
+ @return a void promise. The promise being resolved does not mean that the device has been revoked yet. You have to use the TKRDeviceRevokedHandler.
+ */
+- (nonnull PMKPromise*)revokeDevice:(nonnull NSString*)deviceId;
 
 - (void)dealloc;
 

@@ -921,6 +921,92 @@ SpecBegin(TankerSpecs)
           expect(decryptedText).to.equal(clearText);
         });
       });
+      
+      describe(@"revocation", ^{
+        __block TKRTanker* tanker;
+        __block TKRTanker* secondDevice;
+        __block NSString* userID;
+        __block NSString* userToken;
+        
+        beforeEach(^{
+          tanker = [TKRTanker tankerWithOptions:tankerOptions];
+          userID = createUUID();
+          userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
+          
+          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(trustchainURL, trustchainID)];
+          expect(secondDevice).toNot.beNil();
+          
+          [PMKPromise hang:[tanker openWithUserID:userID userToken:userToken]];
+          expect(tanker.status).to.equal(TKRStatusOpen);
+          
+          TKRUnlockKey* unlockKey = [PMKPromise hang:[tanker generateAndRegisterUnlockKey]];
+          expect(unlockKey).toNot.beNil();
+          
+          [secondDevice connectUnlockRequiredHandler:^{
+            [secondDevice unlockCurrentDeviceWithUnlockKey:unlockKey];
+          }];
+          
+          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          expect(secondDevice.status).to.equal(TKRStatusOpen);
+        });
+        
+        afterEach(^{
+          [PMKPromise hang:[tanker close]];
+          [PMKPromise hang:[secondDevice close]];
+        });
+        
+        it(@"can self revoke", ^{
+          __block bool revoked = false;
+          NSString* deviceID = [PMKPromise hang:[tanker deviceID]];
+          [tanker connectDeviceRevokedHandler:^(void) {
+            revoked = true;
+          }];
+          [PMKPromise hang:[tanker revokeDevice:deviceID]];
+          sleep(1);
+          expect(tanker.status).to.equal(TKRStatusClosed);
+          expect(revoked).to.equal(true);
+        });
+        
+        it(@"can revoke another device", ^{
+          __block bool revoked = false;
+          
+          NSString* deviceID = [PMKPromise hang:[tanker deviceID]];
+          [tanker connectDeviceRevokedHandler:^(void) {
+            revoked = true;
+          }];
+          [PMKPromise hang:[secondDevice revokeDevice:deviceID]];
+          sleep(1);
+          expect(tanker.status).to.equal(TKRStatusClosed);
+          expect(revoked).to.equal(true);
+        });
+        
+        it(@"rejects a revocation of another user's device", ^{
+          TKRTanker* bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(bobTanker).toNot.beNil();
+          
+          NSString* bobID = createUUID();
+          NSString* bobToken = createUserToken(bobID, trustchainID, trustchainPrivateKey);
+          
+          [PMKPromise hang:[bobTanker openWithUserID:bobID userToken:bobToken]];
+          expect(bobTanker.status).to.equal(TKRStatusOpen);
+          
+          __block bool revoked = false;
+          NSString* deviceID = [PMKPromise hang:[tanker deviceID]];
+          [tanker connectDeviceRevokedHandler:^(void) {
+            revoked = true;
+          }];
+          NSError* err = [PMKPromise hang:[bobTanker revokeDevice:deviceID]];
+          sleep(1);
+          
+          expect(err.domain).to.equal(TKRErrorDomain);
+          expect(err.code).to.equal(TKRErrorDeviceNotFound);
+          
+          expect(tanker.status).to.equal(TKRStatusOpen);
+          expect(revoked).to.equal(false);
+          
+          [PMKPromise hang:[bobTanker close]];
+        });
+      });
     });
 
 SpecEnd

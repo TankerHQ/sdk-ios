@@ -15,8 +15,11 @@ typedef void (^TKRValidationHandler)(NSString* validationCode);
 /*!
  @typedef TKRUnlockRequiredHandler
  @brief Block which will be called when the current device must be unlocked.
-
- @discussion This block @b MUST @b NOT hang the current thread, otherwise Tanker
- will deadlock!
  */
 typedef void (^TKRUnlockRequiredHandler)(void);
+
+/*!
+ @typedef TKRDeviceRevokedHandler
+ @brief Block which will be called when the current device is revoked.
+ */
+typedef void (^TKRDeviceRevokedHandler)(void);

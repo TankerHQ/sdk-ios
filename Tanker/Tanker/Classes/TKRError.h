@@ -24,4 +24,5 @@ typedef NS_ENUM(NSUInteger, TKRError) {
   TKRErrorInvalidGroupSize = 19,
   TKRErrorRecipientNotFound = 20,
   TKRErrorGroupNotFound = 21,
+  TKRErrorDeviceNotFound = 22,
 };
