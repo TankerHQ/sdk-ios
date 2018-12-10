@@ -3,6 +3,7 @@
 #import "TKRError.h"
 #import "TKRTanker.h"
 #import "TKRUnlockKey.h"
+#import "TKRTankerOptions+Private.h"
 
 #import "TKRTestConfig.h"
 
@@ -81,7 +82,7 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* trustchainID)
   opts.trustchainURL = url;
   opts.trustchainID = trustchainID;
   opts.writablePath = createStorageFullpath();
-  opts.isTest = true;
+  opts.sdkType = @"test";
   return opts;
 }
 

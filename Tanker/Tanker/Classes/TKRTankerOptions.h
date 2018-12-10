@@ -17,11 +17,6 @@
 @property NSString* trustchainURL;
 
 /*!
- @brief Only for testing purposes. Do not use.
- */
-@property bool isTest;
-
-/*!
  @brief Path to which Tanker will write its internal files.
 
  @discussion The path must point to an existing folder.
