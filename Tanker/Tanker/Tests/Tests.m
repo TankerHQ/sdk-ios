@@ -2,7 +2,7 @@
 
 #import "TKRError.h"
 #import "TKRTanker.h"
-#import "TKRUnlockKey+Private.h"
+#import "TKRUnlockKey.h"
 
 #import "TKRTestConfig.h"
 
