@@ -1,7 +1,10 @@
 [version]
-current = "1.9.0"
+current = "dev"
 
 regex = '''
+  (dev)
+  |
+  (
   (?P<major>\d+)
   \.
   (?P<minor>\d+)
@@ -12,6 +15,7 @@ regex = '''
     (?P<channel>alpha|beta|r)
     (?P<release>\d+)
   )?
+  )
 '''
 
 [git]
