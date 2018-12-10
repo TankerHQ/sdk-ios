@@ -81,6 +81,7 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* trustchainID)
   opts.trustchainURL = url;
   opts.trustchainID = trustchainID;
   opts.writablePath = createStorageFullpath();
+  opts.isTest = true;
   return opts;
 }
 
