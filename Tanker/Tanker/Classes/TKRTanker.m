@@ -43,6 +43,17 @@ static void onUnlockRequired(void* unused, void* extra_arg)
   handler();
 }
 
+static void onDeviceRevoked(void* unused, void* extra_arg)
+{
+  NSLog(@"onDeviceRevoked called");
+  assert(!unused);
+  assert(extra_arg);
+  
+  TKRUnlockRequiredHandler handler = (__bridge_transfer typeof(TKRUnlockRequiredHandler))extra_arg;
+  
+  handler();
+}
+
 static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cOptions)
 {
   cOptions->trustchain_id = [options.trustchainID cStringUsingEncoding:NSUTF8StringEncoding];
@@ -324,7 +335,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSNumber* evt = [NSNumber numberWithInt:TANKER_EVENT_UNLOCK_REQUIRED];
   NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onUnlockRequired];
 
-  // TODO throw TKRException?
   NSError* err = nil;
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
@@ -334,6 +344,27 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                            });
                            }
                            error:&err];
+  // Err cannot fail as the event is a valid tanker event
+  assert(!err);
+  return ret;
+}
+
+- (nonnull NSNumber*)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
+{
+  NSNumber* evt = [NSNumber numberWithInt:TANKER_EVENT_DEVICE_REVOKED];
+  NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onDeviceRevoked];
+  
+  NSError* err = nil;
+  NSNumber* ret = [self setEvent:evt
+                     callbackPtr:callbackPtr
+                         handler:^(id unused) {
+                           dispatch_promise(^{
+                             handler();
+                           });
+                         }
+                           error:&err];
+  // Err cannot fail as the event is a valid tanker event
+  assert(!err);
   return ret;
 }
 
@@ -484,6 +515,18 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     tanker_future_t* resolve_future =
     tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
     tanker_future_destroy(unlock_future);
+    tanker_future_destroy(resolve_future);
+  }];
+}
+
+- (nonnull PMKPromise*)revokeDevice:(nonnull NSString*)deviceId
+{
+  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+    char const* device_id = [deviceId cStringUsingEncoding:NSUTF8StringEncoding];
+    tanker_future_t* revoke_future = tanker_revoke_device((tanker_t*)self.cTanker, device_id);
+    tanker_future_t* resolve_future =
+    tanker_future_then(revoke_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+    tanker_future_destroy(revoke_future);
     tanker_future_destroy(resolve_future);
   }];
 }
