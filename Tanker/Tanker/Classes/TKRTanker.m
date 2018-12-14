@@ -49,7 +49,7 @@ static void onDeviceRevoked(void* unused, void* extra_arg)
   assert(!unused);
   assert(extra_arg);
   
-  TKRUnlockRequiredHandler handler = (__bridge_transfer typeof(TKRUnlockRequiredHandler))extra_arg;
+  TKRDeviceRevokedHandler handler = (__bridge_transfer typeof(TKRDeviceRevokedHandler))extra_arg;
   
   handler();
 }
