@@ -332,7 +332,7 @@ SpecBegin(TankerSpecs)
           NSData* encryptedData =
               [PMKPromise hang:[aliceTanker encryptDataFromString:clearText options:encryptionOptions]];
 
-          [aliceTanker updateMembersOfGroup:groupId add:@[ bobID ]];
+          [PMKPromise hang:[aliceTanker updateMembersOfGroup:groupId add:@[ bobID ]]];
 
           NSString* decryptedString = [PMKPromise hang:[bobTanker decryptStringFromData:encryptedData]];
           expect(decryptedString).to.equal(clearText);
