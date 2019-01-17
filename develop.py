@@ -18,7 +18,7 @@ def main() -> None:
 
     deps_cpp = subparsers.add_parser("deps-cpp")
     deps_cpp.add_argument("--release", action="store_true")
-    deps_cpp.add_argument("--stable-native", action="store_true")
+    deps_cpp.add_argument("--deployed-native", action="store_true")
     deps_cpp.add_argument("--all-archs", action="store_true")
 
     subparsers.add_parser("generate-test-config")
@@ -44,7 +44,7 @@ def main() -> None:
         archs = ci.ios.ARCHS
     else:
         archs = ['x86_64']
-    native_from_sources = not args.stable_native
+    native_from_sources = not args.deployed_native
 
     ui.info_1(
         "Installing C++ deps",

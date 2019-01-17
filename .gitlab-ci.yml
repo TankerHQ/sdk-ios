@@ -10,7 +10,7 @@ before_script:
     - dmenv install
     - dmenv run -- python run-ci.py update-conan-config --platform darwin
 
-check/native-stable:
+check/deployed-native:
   stage: check
   when: manual
   except:
