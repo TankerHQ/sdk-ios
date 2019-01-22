@@ -40,61 +40,61 @@
   return objc_getAssociatedObject(self, @selector(events));
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromDataImpl:(nonnull NSData*)clearData
-                                                options:(nonnull TKREncryptionOptions*)options
+- (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
+                        options:(nonnull TKREncryptionOptions*)options
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
 {
   uint64_t encrypted_size = tanker_encrypted_size(clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
-  return
-      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-        if (!encrypted_buffer)
-        {
-          [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)encrypted_size];
-        }
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    // Force clearData to be retained until the tanker_future is done
+    // to avoid reading a dangling pointer
+    AntiARCRetain(clearData);
 
-        tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
+    if (err)
+    {
+      free(encrypted_buffer);
+      handler(nil, err);
+    }
+    else
+    {
+      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+      hack.ptrValue = (uintptr_t)encrypted_buffer;
+      hack.ptrSize = (NSUInteger)encrypted_size;
+      handler(hack, nil);
+    }
+  };
 
-        char** user_ids = convertStringstoCStrings(options.shareWithUsers);
-        char** group_ids = convertStringstoCStrings(options.shareWithGroups);
+  if (!encrypted_buffer)
+  {
+    [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)encrypted_size];
+  }
 
-        encryption_options.recipient_uids = (char const* const*)user_ids;
-        encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
-        encryption_options.recipient_gids = (char const* const*)group_ids;
-        encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
-        tanker_future_t* encrypt_future = tanker_encrypt((tanker_t*)self.cTanker,
-                                                         encrypted_buffer,
-                                                         (uint8_t const*)clearData.bytes,
-                                                         clearData.length,
-                                                         &encryption_options);
-        tanker_future_t* resolve_future =
-            tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-        tanker_future_destroy(encrypt_future);
-        tanker_future_destroy(resolve_future);
-        for (int i = 0; i < options.shareWithUsers.count; ++i)
-          free(user_ids[i]);
-        free(user_ids);
-        for (int i = 0; i < options.shareWithGroups.count; ++i)
-          free(group_ids[i]);
-        free(group_ids);
-      }]
-          .catch(^(NSError* err) {
-            free(encrypted_buffer);
-            // let users write a .catch continuation by returning the NSError.
-            return err;
-          })
-          .then(^{
-            // Force clearData to be retained until the tanker_future is done
-            // to avoid reading a dangling pointer
-            AntiARCRetain(clearData);
-            // no need to retain userIDs since tanker will copy them.
+  tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
 
-            // See decryptDataFromDataImpl for more info on this.
-            PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-            hack.ptrValue = (uintptr_t)encrypted_buffer;
-            hack.ptrSize = (NSUInteger)encrypted_size;
-            return hack;
-          });
+  char** user_ids = convertStringstoCStrings(options.shareWithUsers);
+  char** group_ids = convertStringstoCStrings(options.shareWithGroups);
+
+  encryption_options.recipient_uids = (char const* const*)user_ids;
+  encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
+  encryption_options.recipient_gids = (char const* const*)group_ids;
+  encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
+  tanker_future_t* encrypt_future = tanker_encrypt((tanker_t*)self.cTanker,
+                                                   encrypted_buffer,
+                                                   (uint8_t const*)clearData.bytes,
+                                                   clearData.length,
+                                                   &encryption_options);
+  tanker_future_t* resolve_future =
+      tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(encrypt_future);
+  tanker_future_destroy(resolve_future);
+  for (int i = 0; i < options.shareWithUsers.count; ++i)
+    free(user_ids[i]);
+  free(user_ids);
+  for (int i = 0; i < options.shareWithGroups.count; ++i)
+    free(group_ids[i]);
+  free(group_ids);
 }
 
 - (nonnull PMKPromise<NSData*>*)decryptDataFromDataImpl:(nonnull NSData*)cipherData

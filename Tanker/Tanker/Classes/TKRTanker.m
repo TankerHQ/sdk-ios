@@ -201,11 +201,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
            resolve(convertStringToData(clearText));
          }]
       .then(^(NSData* clearData) {
-        return [self encryptDataFromDataImpl:clearData options:options];
-      })
-      .then(^(PtrAndSizePair* hack) {
-        uint8_t* encrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
-        return [NSData dataWithBytesNoCopy:encrypted_buffer length:hack.ptrSize freeWhenDone:YES];
+        return [self encryptDataFromData:clearData options:options];
       });
 }
 
@@ -235,11 +231,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 - (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData
                                             options:(nonnull TKREncryptionOptions*)options
 {
-  return [self encryptDataFromDataImpl:clearData options:options].then(^(PtrAndSizePair* hack) {
-    uint8_t* encrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+           [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
+         }]
+      .then(^(PtrAndSizePair* hack) {
+        uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
 
-    return [NSData dataWithBytesNoCopy:encrypted_buffer length:hack.ptrSize freeWhenDone:YES];
-  });
+        return [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
+      });
 }
 
 - (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherData

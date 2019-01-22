@@ -1,7 +1,9 @@
 
 #import <Foundation/Foundation.h>
 
+#import "PromiseKit.h"
 #import "TKRTanker.h"
+#import "TKRUtils+Private.h"
 
 typedef void (^TKRAbstractEventHandler)(id);
 
@@ -10,8 +12,10 @@ typedef void (^TKRAbstractEventHandler)(id);
 @property void* cTanker;
 @property NSMutableArray* events;
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromDataImpl:(nonnull NSData*)clearData
-                                                options:(nonnull TKREncryptionOptions*)options;
+- (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
+                        options:(nonnull TKREncryptionOptions*)options
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError* err))handler;
+
 - (nonnull PMKPromise<NSData*>*)decryptDataFromDataImpl:(nonnull NSData*)cipherData
                                                 options:(nonnull TKRDecryptionOptions*)options;
 
