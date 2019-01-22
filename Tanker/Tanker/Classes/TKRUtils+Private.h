@@ -11,6 +11,9 @@
 
 @end
 
+// Internal block used to wrap C futures
+typedef void (^TKRAdapter)(NSNumber* ptrValue, NSError* err);
+
 NSNumber* ptrToNumber(void* ptr);
 void* numberToPtr(NSNumber* nb);
 NSError* getOptionalFutureError(void* future);

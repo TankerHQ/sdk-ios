@@ -4,9 +4,9 @@
 
 #import "TKRChunkEncryptor+Private.h"
 #import "TKRTanker+Private.h"
+#import "TKRTankerOptions+Private.h"
 #import "TKRUnlockKey+Private.h"
 #import "TKRUtils+Private.h"
-#import "TKRTankerOptions+Private.h"
 
 #include <assert.h>
 #include <string.h>
@@ -48,9 +48,9 @@ static void onDeviceRevoked(void* unused, void* extra_arg)
   NSLog(@"onDeviceRevoked called");
   assert(!unused);
   assert(extra_arg);
-  
+
   TKRDeviceRevokedHandler handler = (__bridge_transfer typeof(TKRDeviceRevokedHandler))extra_arg;
-  
+
   handler();
 }
 
@@ -143,7 +143,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)openWithUserID:(nonnull NSString*)userID userToken:(nonnull NSString*)userToken
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     char const* user_id = [userID cStringUsingEncoding:NSUTF8StringEncoding];
     char const* user_token = [userToken cStringUsingEncoding:NSUTF8StringEncoding];
 
@@ -157,7 +157,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<NSString*>*)deviceID
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
            tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
            tanker_future_t* resolve_future = tanker_future_then(
                device_id_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
@@ -271,35 +271,37 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<NSString*>*)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
-    char** user_ids = convertStringstoCStrings(userIds);
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
+           char** user_ids = convertStringstoCStrings(userIds);
 
-    tanker_future_t* future = tanker_create_group((tanker_t*)self.cTanker, (char const* const*)user_ids, userIds.count);
-    tanker_future_t* resolve_future =
-        tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(future);
-    tanker_future_destroy(resolve_future);
-    for (int i = 0; i < userIds.count; ++i)
-      free(user_ids[i]);
-    free(user_ids);
-  }].then(^(NSNumber* ptrValue) {
-    b64char* group_id = (b64char*)numberToPtr(ptrValue);
-    NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
-    tanker_free_buffer(group_id);
-    return groupId;
-  });
+           tanker_future_t* future =
+               tanker_create_group((tanker_t*)self.cTanker, (char const* const*)user_ids, userIds.count);
+           tanker_future_t* resolve_future =
+               tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+           tanker_future_destroy(future);
+           tanker_future_destroy(resolve_future);
+           for (int i = 0; i < userIds.count; ++i)
+             free(user_ids[i]);
+           free(user_ids);
+         }]
+      .then(^(NSNumber* ptrValue) {
+        b64char* group_id = (b64char*)numberToPtr(ptrValue);
+        NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
+        tanker_free_buffer(group_id);
+        return groupId;
+      });
 }
 
-- (nonnull PMKPromise*)updateMembersOfGroup:(NSString*)groupId
-                                        add:(NSArray<NSString*>*)usersToAdd
+- (nonnull PMKPromise*)updateMembersOfGroup:(NSString*)groupId add:(NSArray<NSString*>*)usersToAdd
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
     char** users_to_add = convertStringstoCStrings(usersToAdd);
 
-    tanker_future_t* future = tanker_update_group_members((tanker_t*)self.cTanker, utf8_groupid, (char const* const*)users_to_add, usersToAdd.count);
+    tanker_future_t* future = tanker_update_group_members(
+        (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)users_to_add, usersToAdd.count);
     tanker_future_t* resolve_future =
-    tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+        tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
     tanker_future_destroy(future);
     tanker_future_destroy(resolve_future);
     for (int i = 0; i < usersToAdd.count; ++i)
@@ -311,7 +313,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 - (nonnull PMKPromise*)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
                                 options:(nonnull TKRShareOptions*)options
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     char** resource_ids = convertStringstoCStrings(resourceIDs);
     char** user_ids = convertStringstoCStrings(options.shareWithUsers);
     char** group_ids = convertStringstoCStrings(options.shareWithGroups);
@@ -355,7 +357,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                            dispatch_promise(^{
                              handler();
                            });
-                           }
+                         }
                            error:&err];
   // Err cannot fail as the event is a valid tanker event
   assert(!err);
@@ -366,7 +368,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   NSNumber* evt = [NSNumber numberWithInt:TANKER_EVENT_DEVICE_REVOKED];
   NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onDeviceRevoked];
-  
+
   NSError* err = nil;
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
@@ -402,12 +404,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)registerUnlock:(nonnull TKRUnlockOptions*)options
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     char const* utf8_password = options.password ? [options.password cStringUsingEncoding:NSUTF8StringEncoding] : NULL;
     char const* utf8_email = options.email ? [options.email cStringUsingEncoding:NSUTF8StringEncoding] : NULL;
     tanker_future_t* setup_future = tanker_register_unlock((tanker_t*)self.cTanker, utf8_email, utf8_password);
     tanker_future_t* resolve_future =
-    tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+        tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
     tanker_future_destroy(setup_future);
     tanker_future_destroy(resolve_future);
   }];
@@ -415,7 +417,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)setupUnlockWithPassword:(nonnull NSString*)password
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
     tanker_future_t* setup_future = tanker_setup_unlock((tanker_t*)self.cTanker, NULL, utf8_password);
     tanker_future_t* resolve_future =
@@ -427,7 +429,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)updateUnlockPassword:(nonnull NSString*)newPassword
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     char const* utf8_password = [newPassword cStringUsingEncoding:NSUTF8StringEncoding];
     tanker_future_t* update_future = tanker_update_unlock((tanker_t*)self.cTanker, NULL, utf8_password, NULL);
     tanker_future_t* resolve_future =
@@ -439,7 +441,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<TKRUnlockKey*>*)generateAndRegisterUnlockKey
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
            tanker_expected_t* unlock_key_fut = tanker_generate_and_register_unlock_key((tanker_t*)self.cTanker);
            tanker_future_t* resolve_future = tanker_future_then(
                unlock_key_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
@@ -460,7 +462,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<NSNumber*>*)isUnlockAlreadySetUp
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     tanker_future_t* already_future = tanker_is_unlock_already_set_up((tanker_t*)self.cTanker);
     tanker_future_t* resolve_future =
         tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
@@ -471,10 +473,10 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<NSNumber*>*)hasRegisteredUnlockMethods
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     tanker_future_t* already_future = tanker_has_registered_unlock_methods((tanker_t*)self.cTanker);
     tanker_future_t* resolve_future =
-    tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+        tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
     tanker_future_destroy(already_future);
     tanker_future_destroy(resolve_future);
   }];
@@ -482,10 +484,11 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<NSNumber*>*)hasRegisteredUnlockMethod:(NSUInteger)method
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
-    tanker_future_t* already_future = tanker_has_registered_unlock_method((tanker_t*)self.cTanker, (enum tanker_unlock_method)method);
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
+    tanker_future_t* already_future =
+        tanker_has_registered_unlock_method((tanker_t*)self.cTanker, (enum tanker_unlock_method)method);
     tanker_future_t* resolve_future =
-    tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+        tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
     tanker_future_destroy(already_future);
     tanker_future_destroy(resolve_future);
   }];
@@ -493,29 +496,29 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<NSArray*>*)registeredUnlockMethods
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
-    tanker_future_t* already_future = tanker_registered_unlock_methods((tanker_t*)self.cTanker);
-    tanker_future_t* resolve_future =
-    tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(already_future);
-    tanker_future_destroy(resolve_future);
-  }]
-  .then(^(NSNumber* methods) {
-    long imethods = methods.integerValue;
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
+           tanker_future_t* already_future = tanker_registered_unlock_methods((tanker_t*)self.cTanker);
+           tanker_future_t* resolve_future = tanker_future_then(
+               already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+           tanker_future_destroy(already_future);
+           tanker_future_destroy(resolve_future);
+         }]
+      .then(^(NSNumber* methods) {
+        long imethods = methods.integerValue;
 
-    NSMutableArray* ret = [[NSMutableArray alloc] init];
-    if (imethods & TANKER_UNLOCK_METHOD_EMAIL)
-      [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodEmail]];
-    if (imethods & TANKER_UNLOCK_METHOD_PASSWORD)
-      [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodPassword]];
+        NSMutableArray* ret = [[NSMutableArray alloc] init];
+        if (imethods & TANKER_UNLOCK_METHOD_EMAIL)
+          [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodEmail]];
+        if (imethods & TANKER_UNLOCK_METHOD_PASSWORD)
+          [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodPassword]];
 
-    return ret;
-  });
+        return ret;
+      });
 }
 
 - (nonnull PMKPromise*)unlockCurrentDeviceWithUnlockKey:(nonnull TKRUnlockKey*)unlockKey
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     b64char const* utf8UnlockKey = [unlockKey.value cStringUsingEncoding:NSUTF8StringEncoding];
     // tanker copies the validation code
     tanker_future_t* validate_future =
@@ -529,7 +532,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)unlockCurrentDeviceWithPassword:(nonnull NSString*)password
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     b64char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
     tanker_future_t* unlock_future = tanker_unlock_current_device_with_password((tanker_t*)self.cTanker, utf8_password);
     tanker_future_t* resolve_future =
@@ -541,11 +544,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)unlockCurrentDeviceWithVerificationCode:(nonnull NSString*)verificationCode
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     b64char const* utf8_code = [verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
-    tanker_future_t* unlock_future = tanker_unlock_current_device_with_verification_code((tanker_t*)self.cTanker, utf8_code);
+    tanker_future_t* unlock_future =
+        tanker_unlock_current_device_with_verification_code((tanker_t*)self.cTanker, utf8_code);
     tanker_future_t* resolve_future =
-    tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+        tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
     tanker_future_destroy(unlock_future);
     tanker_future_destroy(resolve_future);
   }];
@@ -553,11 +557,11 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)revokeDevice:(nonnull NSString*)deviceId
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     char const* device_id = [deviceId cStringUsingEncoding:NSUTF8StringEncoding];
     tanker_future_t* revoke_future = tanker_revoke_device((tanker_t*)self.cTanker, device_id);
     tanker_future_t* resolve_future =
-    tanker_future_then(revoke_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+        tanker_future_then(revoke_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
     tanker_future_destroy(revoke_future);
     tanker_future_destroy(resolve_future);
   }];
@@ -565,7 +569,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise*)close
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
     tanker_future_t* close_future = tanker_close((tanker_t*)self.cTanker);
     tanker_future_t* resolve_future =
         tanker_future_then(close_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);

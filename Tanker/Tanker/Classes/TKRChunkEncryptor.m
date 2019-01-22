@@ -56,7 +56,7 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
   __block uint64_t* c_indexes = convertIndexesToPointer(indexes);
 
   return
-      [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
         tanker_future_t* remove_future = tanker_chunk_encryptor_remove(self.cChunkEncryptor, c_indexes, indexes.count);
         tanker_future_t* resolve_future =
             tanker_future_then(remove_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);

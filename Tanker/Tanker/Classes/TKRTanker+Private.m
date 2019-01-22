@@ -47,7 +47,7 @@
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
   return
-      [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
         if (!encrypted_buffer)
         {
           [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)encrypted_size];
@@ -108,7 +108,7 @@
   __block uint64_t decrypted_size = 0;
 
   return
-      [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
         tanker_expected_t* expected_decrypted_size = tanker_decrypted_size(encrypted_buffer, encrypted_size);
         decrypted_size = (uint64_t)unwrapAndFreeExpected(expected_decrypted_size);
 

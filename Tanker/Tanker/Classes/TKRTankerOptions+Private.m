@@ -8,7 +8,7 @@
 
 @dynamic sdkType;
 
-- (void)setSdkType:(NSString *)value
+- (void)setSdkType:(NSString*)value
 {
   objc_setAssociatedObject(self, @selector(sdkType), value, OBJC_ASSOCIATION_RETAIN);
 }

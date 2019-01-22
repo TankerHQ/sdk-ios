@@ -46,7 +46,7 @@
                                               seal:(nullable NSData*)seal
                                            options:(nullable TKRDecryptionOptions*)options
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
            tanker_future_t* chunk_encryptor_future = nil;
            if (!seal)
              chunk_encryptor_future = tanker_make_chunk_encryptor(tanker.cTanker);
@@ -79,7 +79,7 @@
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
   return
-      [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
         if (!encrypted_buffer)
         {
           [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)encrypted_size];
@@ -149,7 +149,7 @@
   __block uint64_t decrypted_size = 0;
 
   return
-      [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
         tanker_expected_t* expected_decrypted_size =
             tanker_chunk_encryptor_decrypted_size(encrypted_buffer, encrypted_size);
         decrypted_size = (uint64_t)unwrapAndFreeExpected(expected_decrypted_size);
