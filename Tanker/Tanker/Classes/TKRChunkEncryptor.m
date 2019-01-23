@@ -31,9 +31,12 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
 
 - (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData atIndex:(NSUInteger)index
 {
-  return [self encryptDataFromDataImpl:clearData atIndex:index].then(^(PtrAndSizePair* hack) {
-    return convertToNSData(hack);
-  });
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+           [self encryptDataFromDataImpl:clearData atIndex:index completionHandler:adapter];
+         }]
+      .then(^(PtrAndSizePair* hack) {
+        return convertToNSData(hack);
+      });
 }
 
 - (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText atIndex:(NSUInteger)index

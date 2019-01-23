@@ -1,6 +1,7 @@
 
 #import "PromiseKit.h"
 #import "TKRChunkEncryptor+Private.h"
+#import "TKRError.h"
 #import "TKRTanker+Private.h"
 #import "TKRUtils+Private.h"
 
@@ -78,37 +79,46 @@
 }
 
 // MARK: Instance methods
-- (nonnull PMKPromise*)encryptDataFromDataImpl:(nonnull NSData*)clearData atIndex:(NSUInteger)index
+- (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
+                        atIndex:(NSUInteger)index
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
 {
   uint64_t encrypted_size = tanker_chunk_encryptor_encrypted_size(clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
-  return
-      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-        if (!encrypted_buffer)
-        {
-          [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)encrypted_size];
-        }
-        tanker_future_t* chunk_encrypt_future = tanker_chunk_encryptor_encrypt_at(
-            self.cChunkEncryptor, encrypted_buffer, clearData.bytes, clearData.length, index);
-        tanker_future_t* resolve_future = tanker_future_then(
-            chunk_encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-        tanker_future_destroy(chunk_encrypt_future);
-        tanker_future_destroy(resolve_future);
-      }]
-          .catch(^(NSError* err) {
-            free(encrypted_buffer);
-            // let users write a .catch continuation by returning the NSError.
-            return err;
-          })
-          .then(^{
-            AntiARCRetain(clearData);
+  if (!encrypted_buffer)
+  {
+    NSError* err = [NSError
+        errorWithDomain:TKRErrorDomain
+                   code:TKRErrorOther
+               userInfo:@{
+                 NSLocalizedDescriptionKey :
+                     [NSString stringWithCString:"could not allocate encrypted buffer" encoding:NSUTF8StringEncoding]
+               }];
+    handler(nil, err);
+    return;
+  }
 
-            PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-            hack.ptrValue = (uintptr_t)encrypted_buffer;
-            hack.ptrSize = (NSUInteger)encrypted_size;
-            return hack;
-          });
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      free(encrypted_buffer);
+      handler(nil, err);
+    }
+    else
+    {
+      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+      hack.ptrValue = ptrToNumber(encrypted_buffer).unsignedLongValue;
+      hack.ptrSize = encrypted_size;
+      handler(hack, nil);
+    }
+  };
+  tanker_future_t* chunk_encrypt_future = tanker_chunk_encryptor_encrypt_at(
+      self.cChunkEncryptor, encrypted_buffer, clearData.bytes, clearData.length, index);
+  tanker_future_t* resolve_future =
+      tanker_future_then(chunk_encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(chunk_encrypt_future);
+  tanker_future_destroy(resolve_future);
 }
 
 - (nonnull PMKPromise*)sealImplWithOptions:(nonnull TKREncryptionOptions*)options
