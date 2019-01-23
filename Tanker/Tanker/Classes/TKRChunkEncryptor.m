@@ -105,9 +105,9 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
 
 - (void)dealloc
 {
-  tanker_expected_t* destroy_expected = tanker_chunk_encryptor_destroy(self.cChunkEncryptor);
-  tanker_future_destroy(destroy_expected);
-  self.tanker = nil;
+  tanker_future_t* destroy_future = tanker_chunk_encryptor_destroy(self.cChunkEncryptor);
+  tanker_future_wait(destroy_future);
+  tanker_future_destroy(destroy_future);
 }
 
 // MARK: Properties
