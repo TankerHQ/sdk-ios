@@ -3,6 +3,7 @@
 
 #import <PromiseKit/fwd.h>
 
+#import "TKRCompletionHandlers.h"
 #import "TKREncryptionOptions.h"
 
 @interface TKRChunkEncryptor : NSObject
@@ -18,10 +19,11 @@
 
  @param clearText the string to encrypt.
  @param index the index at which to insert the chunk.
-
- @return a Promise<NSData*> containing the encrypted chunk.
+ @param handler the block which will be called with the encrypted chunk.
  */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText atIndex:(NSUInteger)index;
+- (void)encryptDataFromString:(nonnull NSString*)clearText
+                      atIndex:(NSUInteger)index
+            completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt data and create or replace a chunk at the given index.
@@ -31,10 +33,11 @@
 
  @param clearData data to encrypt.
  @param index the index at which to insert the chunk.
-
- @return a Promise<NSData*> containing the encrypted chunk.
+ @param handler the block which will be called with the encrypted chunk.
  */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData atIndex:(NSUInteger)index;
+- (void)encryptDataFromData:(nonnull NSData*)clearData
+                    atIndex:(NSUInteger)index
+          completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt a string and append the result in a new chunk.
@@ -43,19 +46,17 @@
  There are no requirements on Unicode Normalization Form (NFC/NFD/NFKC/NFKD).
 
  @param clearText the string to encrypt.
-
- @return a Promise<NSData*> containing the encrypted chunk.
+ @param handler the block which will be called with the encrypted chunk.
 */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText;
+- (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt data and append the result in a new chunk.
 
  @param clearData data to encrypt.
-
- @return a Promise<NSData*> containing the encrypted chunk.
+ @param handler the block which will be called with the encrypted chunk.
  */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData;
+- (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Remove chunks at given indexes.

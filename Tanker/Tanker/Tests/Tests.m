@@ -86,6 +86,13 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* trustchainID)
   return opts;
 }
 
+id hang(void (^handler)(PMKAdapter))
+{
+  return [PMKPromise hang:[PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+                       handler(adapter);
+                     }]];
+}
+
 SpecBegin(TankerSpecs)
 
     describe(@"Tanker Bindings", ^{
@@ -810,7 +817,9 @@ SpecBegin(TankerSpecs)
           TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
+          NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+          });
           NSString* decryptedText = [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunk atIndex:0]];
 
           expect(decryptedText).to.equal(clearText);
@@ -821,7 +830,9 @@ SpecBegin(TankerSpecs)
           TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
 
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromData:clearData]];
+          NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromData:clearData completionHandler:adapter];
+          });
           NSData* decryptedData = [PMKPromise hang:[chunkEncryptor decryptDataFromData:encryptedChunk atIndex:0]];
 
           expect(decryptedData).to.equal(clearData);
@@ -832,7 +843,9 @@ SpecBegin(TankerSpecs)
           TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText atIndex:2]];
+          NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText atIndex:2 completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(3);
 
           NSString* decryptedText = [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunk atIndex:2]];
@@ -843,7 +856,9 @@ SpecBegin(TankerSpecs)
           TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
 
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromData:clearData atIndex:2]];
+          NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromData:clearData atIndex:2 completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(3);
 
           NSData* decryptedData = [PMKPromise hang:[chunkEncryptor decryptDataFromData:encryptedChunk atIndex:2]];
@@ -857,7 +872,9 @@ SpecBegin(TankerSpecs)
           NSMutableArray* encryptedChunks = [NSMutableArray arrayWithCapacity:3];
 
           for (int i = 0; i < 3; ++i)
-            encryptedChunks[i] = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
+            encryptedChunks[i] = hang(^(PMKAdapter adapter) {
+              [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+            });
           expect(chunkEncryptor.count).to.equal(3);
 
           NSError* err;
@@ -886,7 +903,10 @@ SpecBegin(TankerSpecs)
           TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
+
+          NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(1);
 
           NSData* seal = [PMKPromise hang:[chunkEncryptor seal]];
@@ -914,7 +934,9 @@ SpecBegin(TankerSpecs)
           TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
+          NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(1);
 
           TKREncryptionOptions* opts = [TKREncryptionOptions defaultOptions];

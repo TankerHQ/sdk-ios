@@ -29,29 +29,35 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
 
 // MARK: Instance methods
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData atIndex:(NSUInteger)index
+- (void)encryptDataFromData:(nonnull NSData*)clearData
+                    atIndex:(NSUInteger)index
+          completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-           [self encryptDataFromDataImpl:clearData atIndex:index completionHandler:adapter];
-         }]
-      .then(^(PtrAndSizePair* hack) {
-        return convertToNSData(hack);
-      });
+  [self encryptDataFromDataImpl:clearData
+                        atIndex:index
+              completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+                if (err)
+                  handler(nil, err);
+                else
+                  handler(convertToNSData(hack), nil);
+              }];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText atIndex:(NSUInteger)index
+- (void)encryptDataFromString:(nonnull NSString*)clearText
+                      atIndex:(NSUInteger)index
+            completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromData:convertStringToData(clearText) atIndex:index];
+  [self encryptDataFromData:convertStringToData(clearText) atIndex:index completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData
+- (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromData:clearData atIndex:self.count];
+  [self encryptDataFromData:clearData atIndex:self.count completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText
+- (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromData:convertStringToData(clearText)];
+  [self encryptDataFromData:convertStringToData(clearText) completionHandler:handler];
 }
 
 - (void)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes error:(NSError* _Nullable* _Nonnull)err
