@@ -174,19 +174,28 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptor
 {
-  return [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:nil options:nil];
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+    [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:nil options:nil completionHandler:adapter];
+  }];
 }
 
 - (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
 {
   // TODO harmonize APIs taking defaultOptions vs. nullable.
-  return [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:seal options:[TKRDecryptionOptions defaultOptions]];
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+    [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self
+                                              seal:seal
+                                           options:[TKRDecryptionOptions defaultOptions]
+                                 completionHandler:adapter];
+  }];
 }
 
 - (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
                                                               options:(nonnull TKRDecryptionOptions*)options
 {
-  return [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:seal options:options];
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+    [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:seal options:options completionHandler:adapter];
+  }];
 }
 
 - (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText

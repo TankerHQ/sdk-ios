@@ -42,34 +42,39 @@
 }
 
 // MARK: Class methods
-+ (nonnull PMKPromise*)chunkEncryptorWithTKRTanker:(nonnull TKRTanker*)tanker
-                                              seal:(nullable NSData*)seal
-                                           options:(nullable TKRDecryptionOptions*)options
++ (void)chunkEncryptorWithTKRTanker:(nonnull TKRTanker*)tanker
+                               seal:(nullable NSData*)seal
+                            options:(nullable TKRDecryptionOptions*)options
+                  completionHandler:(nonnull void (^)(TKRChunkEncryptor*, NSError*))handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-           tanker_future_t* chunk_encryptor_future = nil;
-           if (!seal)
-             chunk_encryptor_future = tanker_make_chunk_encryptor(tanker.cTanker);
-           else
-           {
-             tanker_decrypt_options_t opts = TANKER_DECRYPT_OPTIONS_INIT;
-             opts.timeout = options.timeout * 1000;
-             chunk_encryptor_future =
-                 tanker_make_chunk_encryptor_from_seal(tanker.cTanker, seal.bytes, seal.length, &opts);
-           }
-           tanker_future_t* resolve_future = tanker_future_then(
-               chunk_encryptor_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-           tanker_future_destroy(chunk_encryptor_future);
-           tanker_future_destroy(resolve_future);
-         }]
-      .then(^(NSNumber* ptrValue) {
-        AntiARCRetain(seal);
-        tanker_chunk_encryptor_t* chunk_encryptor = numberToPtr(ptrValue);
-        TKRChunkEncryptor* ret = [[TKRChunkEncryptor alloc] init];
-        ret.tanker = tanker;
-        ret.cChunkEncryptor = chunk_encryptor;
-        return ret;
-      });
+  tanker_future_t* chunk_encryptor_future = nil;
+  if (!seal)
+    chunk_encryptor_future = tanker_make_chunk_encryptor(tanker.cTanker);
+  else
+  {
+    tanker_decrypt_options_t opts = TANKER_DECRYPT_OPTIONS_INIT;
+    opts.timeout = options.timeout * 1000;
+    chunk_encryptor_future = tanker_make_chunk_encryptor_from_seal(tanker.cTanker, seal.bytes, seal.length, &opts);
+  }
+
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    // Need to retain the seal to avoid reading a dangling pointer in the C code.
+    AntiARCRetain(seal);
+    if (err)
+      handler(nil, err);
+    else
+    {
+      tanker_chunk_encryptor_t* chunk_encryptor = numberToPtr(ptrValue);
+      TKRChunkEncryptor* ret = [[TKRChunkEncryptor alloc] init];
+      ret.tanker = tanker;
+      ret.cChunkEncryptor = chunk_encryptor;
+      handler(ret, nil);
+    }
+  };
+  tanker_future_t* resolve_future = tanker_future_then(
+      chunk_encryptor_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(chunk_encryptor_future);
+  tanker_future_destroy(resolve_future);
 }
 
 // MARK: Instance methods

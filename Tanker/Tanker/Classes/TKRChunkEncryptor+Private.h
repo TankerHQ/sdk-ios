@@ -14,9 +14,10 @@
 @property TKRTanker* tanker;
 @property void* cChunkEncryptor;
 
-+ (nonnull PMKPromise<TKRChunkEncryptor*>*)chunkEncryptorWithTKRTanker:(nonnull TKRTanker*)tanker
-                                                                  seal:(nullable NSData*)seal
-                                                               options:(nullable TKRDecryptionOptions*)options;
++ (void)chunkEncryptorWithTKRTanker:(nonnull TKRTanker*)tanker
+                               seal:(nullable NSData*)seal
+                            options:(nullable TKRDecryptionOptions*)options
+                  completionHandler:(nonnull void (^)(TKRChunkEncryptor*, NSError*))handler;
 
 - (nonnull PMKPromise<NSData*>*)encryptDataFromDataImpl:(nonnull NSData*)clearData atIndex:(NSUInteger)index;
 - (nonnull PMKPromise<NSData*>*)decryptDataFromDataImpl:(nonnull NSData*)cipherData atIndex:(NSUInteger)index;
