@@ -154,47 +154,52 @@
       });
 }
 
-- (nonnull PMKPromise*)decryptDataFromDataImpl:(nonnull NSData*)cipherData atIndex:(NSUInteger)index
+- (void)decryptDataFromDataImpl:(nonnull NSData*)cipherData
+                        atIndex:(NSUInteger)index
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
 {
   // declare here to be available in then/catch blocks.
   uint8_t const* encrypted_buffer = (uint8_t const*)cipherData.bytes;
   uint64_t encrypted_size = cipherData.length;
 
-  __block uint8_t* decrypted_buffer = nil;
-  __block uint64_t decrypted_size = 0;
+  tanker_expected_t* expected_decrypted_size = tanker_chunk_encryptor_decrypted_size(encrypted_buffer, encrypted_size);
+  uint64_t decrypted_size = (uint64_t)unwrapAndFreeExpected(expected_decrypted_size);
 
-  return
-      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-        tanker_expected_t* expected_decrypted_size =
-            tanker_chunk_encryptor_decrypted_size(encrypted_buffer, encrypted_size);
-        decrypted_size = (uint64_t)unwrapAndFreeExpected(expected_decrypted_size);
+  uint8_t* decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
+  if (!decrypted_buffer)
+  {
+    NSError* err = [NSError
+        errorWithDomain:TKRErrorDomain
+                   code:TKRErrorOther
+               userInfo:@{
+                 NSLocalizedDescriptionKey :
+                     [NSString stringWithCString:"could not allocate decrypted buffer" encoding:NSUTF8StringEncoding]
+               }];
+    handler(nil, err);
+    return;
+  }
 
-        decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
-        if (!decrypted_buffer)
-        {
-          [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)decrypted_size];
-        }
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      free(decrypted_buffer);
+      handler(nil, err);
+    }
+    else
+    {
+      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+      hack.ptrValue = ptrToNumber(decrypted_buffer).unsignedLongValue;
+      hack.ptrSize = decrypted_size;
+      handler(hack, nil);
+    }
+  };
 
-        tanker_future_t* decrypt_chunk_future = tanker_chunk_encryptor_decrypt(
-            self.cChunkEncryptor, decrypted_buffer, encrypted_buffer, encrypted_size, index);
-        tanker_future_t* resolve_future = tanker_future_then(
-            decrypt_chunk_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-        tanker_future_destroy(decrypt_chunk_future);
-        tanker_future_destroy(resolve_future);
-      }]
-          .catch(^(NSError* err) {
-            if (decrypted_buffer)
-              free(decrypted_buffer);
-            return err;
-          })
-          .then(^{
-            AntiARCRetain(cipherData);
-
-            PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-            hack.ptrValue = (uintptr_t)decrypted_buffer;
-            hack.ptrSize = (NSUInteger)decrypted_size;
-            return hack;
-          });
+  tanker_future_t* decrypt_chunk_future =
+      tanker_chunk_encryptor_decrypt(self.cChunkEncryptor, decrypted_buffer, encrypted_buffer, encrypted_size, index);
+  tanker_future_t* resolve_future =
+      tanker_future_then(decrypt_chunk_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(decrypt_chunk_future);
+  tanker_future_destroy(resolve_future);
 }
 
 @end

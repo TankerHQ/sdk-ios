@@ -24,7 +24,9 @@
                         atIndex:(NSUInteger)index
               completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler;
 
-- (nonnull PMKPromise<NSData*>*)decryptDataFromDataImpl:(nonnull NSData*)cipherData atIndex:(NSUInteger)index;
+- (void)decryptDataFromDataImpl:(nonnull NSData*)cipherData
+                        atIndex:(NSUInteger)index
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler;
 
 - (nonnull PMKPromise<NSData*>*)sealImplWithOptions:(nonnull TKREncryptionOptions*)options;
 

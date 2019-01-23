@@ -66,21 +66,27 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
 
 - (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index
 {
-  return [self decryptDataFromDataImpl:cipherText atIndex:index].then(^(PtrAndSizePair* hack) {
-    uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+           [self decryptDataFromDataImpl:cipherText atIndex:index completionHandler:adapter];
+         }]
+      .then(^(PtrAndSizePair* hack) {
+        uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
 
-    return [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
-                                          length:hack.ptrSize
-                                        encoding:NSUTF8StringEncoding
-                                    freeWhenDone:YES];
-  });
+        return [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
+                                              length:hack.ptrSize
+                                            encoding:NSUTF8StringEncoding
+                                        freeWhenDone:YES];
+      });
 }
 
 - (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index
 {
-  return [self decryptDataFromDataImpl:cipherText atIndex:index].then(^(PtrAndSizePair* hack) {
-    return convertToNSData(hack);
-  });
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+           [self decryptDataFromDataImpl:cipherText atIndex:index completionHandler:adapter];
+         }]
+      .then(^(PtrAndSizePair* hack) {
+        return convertToNSData(hack);
+      });
 }
 
 - (nonnull PMKPromise<NSData*>*)seal
