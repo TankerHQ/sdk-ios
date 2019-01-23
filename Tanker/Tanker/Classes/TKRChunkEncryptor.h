@@ -66,13 +66,12 @@
  Note: removing an encrypted chunk will not leave a gap. Previous indexes might be invalidated depending on their
  position relative to removed chunks.
 
- @param indexes Indexes at which to remove chunks.
+ @param indexes indexes at which to remove chunks.
+ @param err output parameter set when an error occurs, or set to nil.
 
  @pre indexes only contain in-bounds indexes.
-
- @return an empty promise.
  */
-- (nonnull PMKPromise*)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes;
+- (void)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes error:(NSError* _Nullable* _Nonnull)err;
 
 /*!
  @brief Decrypt an encrypted chunk and return the decrypted string.

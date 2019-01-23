@@ -860,8 +860,10 @@ SpecBegin(TankerSpecs)
             encryptedChunks[i] = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
           expect(chunkEncryptor.count).to.equal(3);
 
-          [PMKPromise hang:[chunkEncryptor removeAtIndexes:@[ @2, @0, @2 ]]];
+          NSError* err;
+          [chunkEncryptor removeAtIndexes:@[ @2, @0, @2 ] error:&err];
 
+          expect(err).to.beNil();
           expect(chunkEncryptor.count).to.equal(1);
 
           NSString* decryptedText =
@@ -872,8 +874,10 @@ SpecBegin(TankerSpecs)
         it(@"should fail to remove out of bounds indexes", ^{
           TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
 
-          NSError* err = [PMKPromise hang:[chunkEncryptor removeAtIndexes:@[ @0 ]]];
+          NSError* err;
 
+          [chunkEncryptor removeAtIndexes:@[ @0 ] error:&err];
+          expect(err).notTo.beNil();
           expect(err.domain).to.equal(TKRErrorDomain);
           expect(err.code).to.equal(TKRErrorChunkIndexOutOfRange);
         });

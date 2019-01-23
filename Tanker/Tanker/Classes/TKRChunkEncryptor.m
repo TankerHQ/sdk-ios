@@ -51,25 +51,14 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
   return [self encryptDataFromData:convertStringToData(clearText)];
 }
 
-- (nonnull PMKPromise*)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes
+- (void)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes error:(NSError* _Nullable* _Nonnull)err
 {
-  __block uint64_t* c_indexes = convertIndexesToPointer(indexes);
-
-  return
-      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-        tanker_future_t* remove_future = tanker_chunk_encryptor_remove(self.cChunkEncryptor, c_indexes, indexes.count);
-        tanker_future_t* resolve_future =
-            tanker_future_then(remove_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-        tanker_future_destroy(remove_future);
-        tanker_future_destroy(resolve_future);
-      }]
-          .catch(^(NSError* err) {
-            free(c_indexes);
-            return err;
-          })
-          .then(^{
-            free(c_indexes);
-          });
+  uint64_t* c_indexes = convertIndexesToPointer(indexes);
+  tanker_expected_t* expected_remove = tanker_chunk_encryptor_remove(self.cChunkEncryptor, c_indexes, indexes.count);
+  free(c_indexes);
+  NSError* optErr = getOptionalFutureError(expected_remove);
+  *err = optErr;
+  tanker_future_destroy(expected_remove);
 }
 
 - (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index
