@@ -42,20 +42,21 @@ NSError* getOptionalFutureError(void* future)
 // and https://stackoverflow.com/a/14207961/4116453
 void* resolvePromise(void* future, void* arg)
 {
-  TKRAdapter resolve = (__bridge_transfer typeof(TKRAdapter))arg;
-
   NSError* optErr = getOptionalFutureError(future);
-  if (optErr)
-    resolve(nil, optErr);
-  else
+  NSNumber* ptrValue = nil;
+
+  if (!optErr)
   {
     void* ptr = tanker_future_get_voidptr((tanker_future_t*)future);
     // uintptr_t is an optional type, but has been in the macOS SDK since 10.0 (2001).
     // It doesn't look safe, but it is. As long as the uintptr_t value is left untouched.
     // https://developer.apple.com/library/content/documentation/General/Conceptual/CocoaTouch64BitGuide/ConvertingYourAppto64-Bit/ConvertingYourAppto64-Bit.html
-    NSNumber* ptrValue = [NSNumber numberWithUnsignedLongLong:(uintptr_t)ptr];
-    resolve(ptrValue, nil);
+    ptrValue = [NSNumber numberWithUnsignedLongLong:(uintptr_t)ptr];
   }
+  dispatch_async(dispatch_get_main_queue(), ^{
+    TKRAdapter resolve = (__bridge_transfer typeof(TKRAdapter))arg;
+    resolve(ptrValue, optErr);
+  });
   return nil;
 }
 
