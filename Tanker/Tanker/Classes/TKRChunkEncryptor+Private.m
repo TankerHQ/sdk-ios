@@ -14,6 +14,16 @@
   void* retained##value = (__bridge_retained void*)value; \
   (void)retained##value
 
+static NSError* createAllocError(char const* message)
+{
+  return [NSError
+      errorWithDomain:TKRErrorDomain
+                 code:TKRErrorOther
+             userInfo:@{
+               NSLocalizedDescriptionKey : [NSString stringWithCString:message encoding:NSUTF8StringEncoding]
+             }];
+}
+
 @implementation TKRChunkEncryptor (Private)
 
 @dynamic tanker;
@@ -87,14 +97,7 @@
 
   if (!encrypted_buffer)
   {
-    NSError* err = [NSError
-        errorWithDomain:TKRErrorDomain
-                   code:TKRErrorOther
-               userInfo:@{
-                 NSLocalizedDescriptionKey :
-                     [NSString stringWithCString:"could not allocate encrypted buffer" encoding:NSUTF8StringEncoding]
-               }];
-    handler(nil, err);
+    handler(nil, createAllocError("could not allocate encrypted buffer"));
     return;
   }
 
@@ -128,14 +131,7 @@
 
   if (!seal_buffer)
   {
-    NSError* err = [NSError
-        errorWithDomain:TKRErrorDomain
-                   code:TKRErrorOther
-               userInfo:@{
-                 NSLocalizedDescriptionKey :
-                     [NSString stringWithCString:"could not allocate seal buffer" encoding:NSUTF8StringEncoding]
-               }];
-    handler(nil, err);
+    handler(nil, createAllocError("could not allocate seal buffer"));
     return;
   }
 
@@ -147,7 +143,6 @@
     }
     else
     {
-
       PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
       hack.ptrValue = ptrToNumber(seal_buffer).unsignedLongValue;
       hack.ptrSize = seal_size;
