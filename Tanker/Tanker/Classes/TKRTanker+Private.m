@@ -1,7 +1,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import "PromiseKit.h"
 #import "TKRTanker+Private.h"
 #import "TKRUtils+Private.h"
 
@@ -59,6 +58,14 @@
     }
     else
     {
+      // So, why don't we use NSMutableData? It looks perfect for the job!
+      //
+      // NSMutableData is broken, every *WithNoCopy functions will copy and free the buffer you give to
+      // it. In addition, giving freeWhenDone:YES will cause a double free and crash the program. We could create
+      // the NSMutableData upfront and carry the internal pointer around, but it is not possible to retrieve the
+      // pointer and tell NSMutableData to not free it anymore.
+      //
+      // So let's return a uintptr_t...
       PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
       hack.ptrValue = (uintptr_t)encrypted_buffer;
       hack.ptrSize = (NSUInteger)encrypted_size;
@@ -97,59 +104,53 @@
   free(group_ids);
 }
 
-- (nonnull PMKPromise<NSData*>*)decryptDataFromDataImpl:(nonnull NSData*)cipherData
-                                                options:(nonnull TKRDecryptionOptions*)options
+- (void)decryptDataFromDataImpl:(NSData*)cipherData
+                        options:(TKRDecryptionOptions*)options
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
 {
-  // declare here to be available in then/catch blocks.
   uint8_t const* encrypted_buffer = (uint8_t const*)cipherData.bytes;
   uint64_t encrypted_size = cipherData.length;
 
   __block uint8_t* decrypted_buffer = nil;
   __block uint64_t decrypted_size = 0;
 
-  return
-      [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-        tanker_expected_t* expected_decrypted_size = tanker_decrypted_size(encrypted_buffer, encrypted_size);
-        decrypted_size = (uint64_t)unwrapAndFreeExpected(expected_decrypted_size);
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    // Force cipherData to be retained until the tanker_future is done
+    // to avoid reading a dangling pointer
+    AntiARCRetain(cipherData);
 
-        decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
-        if (!decrypted_buffer)
-        {
-          [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)decrypted_size];
-        }
+    if (err)
+    {
+      free(decrypted_buffer);
+      handler(nil, err);
+    }
+    else
+    {
+      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+      hack.ptrValue = (uintptr_t)decrypted_buffer;
+      hack.ptrSize = (NSUInteger)decrypted_size;
+      handler(hack, nil);
+    }
+  };
 
-        tanker_decrypt_options_t opts = TANKER_DECRYPT_OPTIONS_INIT;
-        opts.timeout = options.timeout * 1000;
-        tanker_future_t* decrypt_future =
-            tanker_decrypt((tanker_t*)self.cTanker, decrypted_buffer, encrypted_buffer, encrypted_size, &opts);
-        // ensures cipherText lives while the promise does by telling ARC to retain it
-        tanker_future_t* resolve_future =
-            tanker_future_then(decrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-        tanker_future_destroy(decrypt_future);
-        tanker_future_destroy(resolve_future);
-      }]
-          .catch(^(NSError* err) {
-            free(decrypted_buffer);
-            return err;
-          })
-          .then(^{
-            // Force cipherData to be retained until the tanker_future is done
-            // to avoid reading a dangling pointer
-            AntiARCRetain(cipherData);
+  tanker_expected_t* expected_decrypted_size = tanker_decrypted_size(encrypted_buffer, encrypted_size);
+  decrypted_size = (uint64_t)unwrapAndFreeExpected(expected_decrypted_size);
 
-            // So, why don't we use NSMutableData? It looks perfect for the job!
-            //
-            // NSMutableData is broken, every *WithNoCopy functions will copy and free the buffer you give to
-            // it. In addition, giving freeWhenDone:YES will cause a double free and crash the program. We could create
-            // the NSMutableData upfront and carry the internal pointer around, but it is not possible to retrieve the
-            // pointer and tell NSMutableData to not free it anymore.
-            //
-            // So let's return a uintptr_t...
-            PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-            hack.ptrValue = (uintptr_t)decrypted_buffer;
-            hack.ptrSize = (NSUInteger)decrypted_size;
-            return hack;
-          });
+  decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
+  if (!decrypted_buffer)
+  {
+    [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)decrypted_size];
+  }
+
+  tanker_decrypt_options_t opts = TANKER_DECRYPT_OPTIONS_INIT;
+  opts.timeout = options.timeout * 1000;
+  tanker_future_t* decrypt_future =
+      tanker_decrypt((tanker_t*)self.cTanker, decrypted_buffer, encrypted_buffer, encrypted_size, &opts);
+  // ensures cipherText lives while the promise does by telling ARC to retain it
+  tanker_future_t* resolve_future =
+      tanker_future_then(decrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(decrypt_future);
+  tanker_future_destroy(resolve_future);
 }
 
 - (nullable NSNumber*)setEvent:(nonnull NSNumber*)evt
