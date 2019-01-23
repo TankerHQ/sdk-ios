@@ -820,7 +820,9 @@ SpecBegin(TankerSpecs)
           NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
             [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
           });
-          NSString* decryptedText = [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunk atIndex:0]];
+          NSString* decryptedText = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptStringFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(clearText);
           expect(chunkEncryptor.count).to.equal(1);
@@ -833,7 +835,9 @@ SpecBegin(TankerSpecs)
           NSData* encryptedChunk = hang(^(PMKAdapter adapter) {
             [chunkEncryptor encryptDataFromData:clearData completionHandler:adapter];
           });
-          NSData* decryptedData = [PMKPromise hang:[chunkEncryptor decryptDataFromData:encryptedChunk atIndex:0]];
+          NSData* decryptedData = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptDataFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedData).to.equal(clearData);
           expect(chunkEncryptor.count).to.equal(1);
@@ -848,7 +852,9 @@ SpecBegin(TankerSpecs)
           });
           expect(chunkEncryptor.count).to.equal(3);
 
-          NSString* decryptedText = [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunk atIndex:2]];
+          NSString* decryptedText = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptStringFromData:encryptedChunk atIndex:2 completionHandler:adapter];
+          });
           expect(decryptedText).to.equal(clearText);
         });
 
@@ -861,7 +867,9 @@ SpecBegin(TankerSpecs)
           });
           expect(chunkEncryptor.count).to.equal(3);
 
-          NSData* decryptedData = [PMKPromise hang:[chunkEncryptor decryptDataFromData:encryptedChunk atIndex:2]];
+          NSData* decryptedData = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptDataFromData:encryptedChunk atIndex:2 completionHandler:adapter];
+          });
           expect(decryptedData).to.equal(clearData);
         });
 
@@ -883,8 +891,9 @@ SpecBegin(TankerSpecs)
           expect(err).to.beNil();
           expect(chunkEncryptor.count).to.equal(1);
 
-          NSString* decryptedText =
-              [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunks[1] atIndex:0]];
+          NSString* decryptedText = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptStringFromData:encryptedChunks[1] atIndex:0 completionHandler:adapter];
+          });
           expect(decryptedText).to.equal(clearText);
         });
 
@@ -917,8 +926,9 @@ SpecBegin(TankerSpecs)
               [PMKPromise hang:[tanker makeChunkEncryptorFromSeal:seal options:opts]];
           expect(chunkEncryptorBis.count).to.equal(1);
 
-          NSString* decryptedText =
-              [PMKPromise hang:[chunkEncryptorBis decryptStringFromData:encryptedChunk atIndex:0]];
+          NSString* decryptedText = hang(^(PMKAdapter adapter) {
+            [chunkEncryptorBis decryptStringFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(clearText);
         });
@@ -944,8 +954,9 @@ SpecBegin(TankerSpecs)
           NSData* seal = [PMKPromise hang:[chunkEncryptor sealWithOptions:opts]];
 
           TKRChunkEncryptor* bobChunkEncryptor = [PMKPromise hang:[bobTanker makeChunkEncryptorFromSeal:seal]];
-          NSString* decryptedText =
-              [PMKPromise hang:[bobChunkEncryptor decryptStringFromData:encryptedChunk atIndex:0]];
+          NSString* decryptedText = hang(^(PMKAdapter adapter) {
+            [bobChunkEncryptor decryptStringFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(clearText);
         });

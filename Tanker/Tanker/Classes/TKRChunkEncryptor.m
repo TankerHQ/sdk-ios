@@ -70,29 +70,40 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
   tanker_future_destroy(expected_remove);
 }
 
-- (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index
+- (void)decryptStringFromData:(nonnull NSData*)cipherText
+                      atIndex:(NSUInteger)index
+            completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-           [self decryptDataFromDataImpl:cipherText atIndex:index completionHandler:adapter];
-         }]
-      .then(^(PtrAndSizePair* hack) {
-        uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+  [self decryptDataFromDataImpl:cipherText
+                        atIndex:index
+              completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+                if (err)
+                  handler(nil, err);
+                else
+                {
+                  uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
 
-        return [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
-                                              length:hack.ptrSize
-                                            encoding:NSUTF8StringEncoding
-                                        freeWhenDone:YES];
-      });
+                  NSString* ret = [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
+                                                                 length:hack.ptrSize
+                                                               encoding:NSUTF8StringEncoding
+                                                           freeWhenDone:YES];
+                  handler(ret, nil);
+                }
+              }];
 }
 
-- (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index
+- (void)decryptDataFromData:(nonnull NSData*)cipherText
+                    atIndex:(NSUInteger)index
+          completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-           [self decryptDataFromDataImpl:cipherText atIndex:index completionHandler:adapter];
-         }]
-      .then(^(PtrAndSizePair* hack) {
-        return convertToNSData(hack);
-      });
+  [self decryptDataFromDataImpl:cipherText
+                        atIndex:index
+              completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+                if (err)
+                  handler(nil, err);
+                else
+                  handler(convertToNSData(hack), nil);
+              }];
 }
 
 - (nonnull PMKPromise<NSData*>*)seal

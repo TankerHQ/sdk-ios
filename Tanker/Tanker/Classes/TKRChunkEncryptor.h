@@ -79,24 +79,26 @@
 
  @param cipherText the encrypted chunk.
  @param index the index of cipherText
+ @param handler the block which will be called with the decrypted chunk, as a string.
 
  @pre cipherText was returned by one of TKRChunkEncryptor encrypt methods.
-
- @return a Promise<NSString*> containing the decrypted string.
  */
-- (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index;
+- (void)decryptStringFromData:(nonnull NSData*)cipherText
+                      atIndex:(NSUInteger)index
+            completionHandler:(nonnull TKRDecryptedStringHandler)handler;
 
 /*!
  @brief Decrypt an encrypted chunk and return the decrypted data.
 
  @param cipherText the encrypted chunk.
  @param index the index of cipherText
+ @param handler the block which will be called with the decrypted chunk.
 
  @pre cipherText was returned by one of TKRChunkEncryptor encrypt methods.
-
- @return a Promise<NSData*> containing the decrypted data.
  */
-- (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index;
+- (void)decryptDataFromData:(nonnull NSData*)cipherText
+                    atIndex:(NSUInteger)index
+          completionHandler:(nonnull TKRDecryptedDataHandler)handler;
 
 /*!
  @brief Seal the ChunkEncryptor and share the seal with the user's registered devices.
