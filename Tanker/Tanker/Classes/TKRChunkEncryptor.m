@@ -96,9 +96,12 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
 
 - (nonnull PMKPromise<NSData*>*)sealWithOptions:(nonnull TKREncryptionOptions*)options
 {
-  return [self sealImplWithOptions:options].then(^(PtrAndSizePair* hack) {
-    return convertToNSData(hack);
-  });
+  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+           [self sealImplWithOptions:options completionHandler:adapter];
+         }]
+      .then(^(PtrAndSizePair* hack) {
+        return convertToNSData(hack);
+      });
 }
 
 - (void)dealloc

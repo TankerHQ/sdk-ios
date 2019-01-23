@@ -7,8 +7,6 @@
 #import "TKRTanker.h"
 #import "TKRUtils+Private.h"
 
-#import <PromiseKit/fwd.h>
-
 @interface TKRChunkEncryptor (Private)
 
 // We must retain the TKRTanker object.
@@ -28,6 +26,7 @@
                         atIndex:(NSUInteger)index
               completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler;
 
-- (nonnull PMKPromise<NSData*>*)sealImplWithOptions:(nonnull TKREncryptionOptions*)options;
+- (void)sealImplWithOptions:(nonnull TKREncryptionOptions*)options
+          completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler;
 
 @end

@@ -1,5 +1,4 @@
 
-#import "PromiseKit.h"
 #import "TKRChunkEncryptor+Private.h"
 #import "TKRError.h"
 #import "TKRTanker+Private.h"
@@ -121,37 +120,55 @@
   tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)sealImplWithOptions:(nonnull TKREncryptionOptions*)options
+- (void)sealImplWithOptions:(nonnull TKREncryptionOptions*)options
+          completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
 {
   uint64_t seal_size = tanker_chunk_encryptor_seal_size(self.cChunkEncryptor);
-  __block uint8_t* seal_buffer = (uint8_t*)malloc(seal_size);
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
-           tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
+  uint8_t* seal_buffer = (uint8_t*)malloc(seal_size);
 
-           char** user_ids = convertStringstoCStrings(options.shareWithUsers);
-           char** group_ids = convertStringstoCStrings(options.shareWithGroups);
+  if (!seal_buffer)
+  {
+    NSError* err = [NSError
+        errorWithDomain:TKRErrorDomain
+                   code:TKRErrorOther
+               userInfo:@{
+                 NSLocalizedDescriptionKey :
+                     [NSString stringWithCString:"could not allocate seal buffer" encoding:NSUTF8StringEncoding]
+               }];
+    handler(nil, err);
+    return;
+  }
 
-           encryption_options.recipient_uids = (char const* const*)user_ids;
-           encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
-           encryption_options.recipient_gids = (char const* const*)group_ids;
-           encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
-           tanker_future_t* seal_future =
-               tanker_chunk_encryptor_seal(self.cChunkEncryptor, seal_buffer, &encryption_options);
-           tanker_future_t* resolve_future =
-               tanker_future_then(seal_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-           tanker_future_destroy(seal_future);
-           tanker_future_destroy(resolve_future);
-         }]
-      .catch(^(NSError* err) {
-        free(seal_buffer);
-        return err;
-      })
-      .then(^{
-        PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-        hack.ptrValue = ptrToNumber(seal_buffer).unsignedLongValue;
-        hack.ptrSize = seal_size;
-        return hack;
-      });
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      free(seal_buffer);
+      handler(nil, err);
+    }
+    else
+    {
+
+      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+      hack.ptrValue = ptrToNumber(seal_buffer).unsignedLongValue;
+      hack.ptrSize = seal_size;
+      handler(hack, nil);
+    }
+  };
+
+  tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
+
+  char** user_ids = convertStringstoCStrings(options.shareWithUsers);
+  char** group_ids = convertStringstoCStrings(options.shareWithGroups);
+
+  encryption_options.recipient_uids = (char const* const*)user_ids;
+  encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
+  encryption_options.recipient_gids = (char const* const*)group_ids;
+  encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
+  tanker_future_t* seal_future = tanker_chunk_encryptor_seal(self.cChunkEncryptor, seal_buffer, &encryption_options);
+  tanker_future_t* resolve_future =
+      tanker_future_then(seal_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(seal_future);
+  tanker_future_destroy(resolve_future);
 }
 
 - (void)decryptDataFromDataImpl:(nonnull NSData*)cipherData
