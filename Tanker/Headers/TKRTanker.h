@@ -6,13 +6,13 @@
 #import "TKRChunkEncryptor.h"
 #import "TKRDecryptionOptions.h"
 #import "TKREncryptionOptions.h"
-#import "TKRShareOptions.h"
-#import "TKRUnlockOptions.h"
-#import "TKRUnlockMethods.h"
 #import "TKREvents.h"
+#import "TKRShareOptions.h"
 #import "TKRStatus.h"
 #import "TKRTankerOptions.h"
 #import "TKRUnlockKey.h"
+#import "TKRUnlockMethods.h"
+#import "TKRUnlockOptions.h"
 
 #define TKRErrorDomain @"TKRErrorDomain"
 
@@ -66,22 +66,22 @@
 
 /*!
  @brief Register a handler called when the current device is revoked.
- 
+
  @discussion The handler will be called as soon as the device is revoked.
- 
+
  @param handler This block will be called without any argument, and will be run on a background queue.
- 
+
  @return an event handler id.
  */
 - (nonnull NSNumber*)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler;
 /*!
  @brief Register a handler called when new devices have been unlocked for the current user since their last connection.
- 
+
  @discussion The handler will be called as soon as the device is unlocked or new devices
              have been unlocked for the current user since his last connection
- 
+
  @param handler This block will be called without any argument, and will be run on a background queue.
- 
+
  @return an event handler id.
  */
 - (nonnull NSNumber*)connectDeviceCreatedHandler:(nonnull TKRDeviceCreatedHandler)handler;
@@ -170,9 +170,9 @@
 
 /*!
  @brief Unlock the current device using the verification code sent to the email registered with registerUnlock.
- 
+
  @param verificationCode the code sent to the registered email.
- 
+
  @return a void promise.
  */
 - (nonnull PMKPromise*)unlockCurrentDeviceWithVerificationCode:(nonnull NSString*)verificationCode;
@@ -379,8 +379,7 @@
 
  @return a void promise.
  */
-- (nonnull PMKPromise*)updateMembersOfGroup:(nonnull NSString*)groupId
-                                        add:(nonnull NSArray<NSString*>*)usersToAdd;
+- (nonnull PMKPromise*)updateMembersOfGroup:(nonnull NSString*)groupId add:(nonnull NSArray<NSString*>*)usersToAdd;
 
 /*!
  @brief Share multiple encrypted resources to multiple users.
@@ -398,12 +397,13 @@
 
 /*!
  @brief Revoke a device from its deviceId
- 
+
  @param deviceId device ID to revoke.
- 
+
  @pre @a deviceId must be the ID of one of the current user's devices.
- 
- @return a void promise. The promise being resolved does not mean that the device has been revoked yet. You have to use the TKRDeviceRevokedHandler.
+
+ @return a void promise. The promise being resolved does not mean that the device has been revoked yet. You have to use
+ the TKRDeviceRevokedHandler.
  */
 - (nonnull PMKPromise*)revokeDevice:(nonnull NSString*)deviceId;
 
