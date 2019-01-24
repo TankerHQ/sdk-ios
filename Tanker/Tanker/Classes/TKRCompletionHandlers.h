@@ -27,3 +27,13 @@ typedef void (^TKRDecryptedDataHandler)(NSData* decryptedData, NSError* err);
  */
 typedef void (^TKRDecryptedStringHandler)(NSString* decryptedString,
                                           NSError* err);
+
+/*!
+ @typedef TKRSealHandler
+ @brief Block which will be called when a @see TKRChunkEncryptor gets sealed.
+
+ @param seal the seal, nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRSealHandler)(NSData* seal, NSError* err);
+

@@ -1,8 +1,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import <PromiseKit/fwd.h>
-
 #import "TKRCompletionHandlers.h"
 #import "TKREncryptionOptions.h"
 
@@ -103,18 +101,17 @@
 /*!
  @brief Seal the ChunkEncryptor and share the seal with the user's registered devices.
 
- @return a Promise<NSData*> containing the seal.
+ @param handler the block which will be called with the seal.
  */
-- (nonnull PMKPromise<NSData*>*)seal;
+- (void)sealWithCompletionHandler:(nonnull TKRSealHandler)handler;
 
 /*!
  @brief Seal the ChunkEncryptor, with custom options.
 
- @param options Custom encryption options.
-
- @return a Promise<NSData*> containing the seal.
+ @param options custom encryption options.
+ @param handler the block which will be called with the seal.
  */
-- (nonnull PMKPromise<NSData*>*)sealWithOptions:(nonnull TKREncryptionOptions*)options;
+- (void)sealWithOptions:(nonnull TKREncryptionOptions*)options completionHandler:(nonnull TKRSealHandler)handler;
 
 - (void)dealloc;
 

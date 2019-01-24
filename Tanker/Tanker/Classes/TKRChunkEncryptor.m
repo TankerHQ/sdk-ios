@@ -1,7 +1,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import "PromiseKit.h"
 #import "TKRChunkEncryptor+Private.h"
 #import "TKRError.h"
 #import "TKRUtils+Private.h"
@@ -106,19 +105,20 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
               }];
 }
 
-- (nonnull PMKPromise<NSData*>*)seal
+- (void)sealWithCompletionHandler:(nonnull TKRSealHandler)handler
 {
-  return [self sealWithOptions:[TKREncryptionOptions defaultOptions]];
+  [self sealWithOptions:[TKREncryptionOptions defaultOptions] completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)sealWithOptions:(nonnull TKREncryptionOptions*)options
+- (void)sealWithOptions:(nonnull TKREncryptionOptions*)options completionHandler:(nonnull TKRSealHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-           [self sealImplWithOptions:options completionHandler:adapter];
-         }]
-      .then(^(PtrAndSizePair* hack) {
-        return convertToNSData(hack);
-      });
+  [self sealImplWithOptions:options
+          completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+            if (err)
+              handler(nil, err);
+            else
+              handler(convertToNSData(hack), nil);
+          }];
 }
 
 - (void)dealloc

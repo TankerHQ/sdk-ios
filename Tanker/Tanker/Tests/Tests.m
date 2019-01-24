@@ -918,12 +918,13 @@ SpecBegin(TankerSpecs)
           });
           expect(chunkEncryptor.count).to.equal(1);
 
-          NSData* seal = [PMKPromise hang:[chunkEncryptor seal]];
+          NSData* seal = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor sealWithCompletionHandler:adapter];
+          });
 
           TKRDecryptionOptions* opts = [TKRDecryptionOptions defaultOptions];
           opts.timeout = 0;
-          TKRChunkEncryptor* chunkEncryptorBis =
-              [PMKPromise hang:[tanker makeChunkEncryptorFromSeal:seal options:opts]];
+          TKRChunkEncryptor* chunkEncryptorBis = [PMKPromise hang:[tanker makeChunkEncryptorFromSeal:seal options:opts]];
           expect(chunkEncryptorBis.count).to.equal(1);
 
           NSString* decryptedText = hang(^(PMKAdapter adapter) {
@@ -951,7 +952,9 @@ SpecBegin(TankerSpecs)
 
           TKREncryptionOptions* opts = [TKREncryptionOptions defaultOptions];
           opts.shareWithUsers = @[ bobID ];
-          NSData* seal = [PMKPromise hang:[chunkEncryptor sealWithOptions:opts]];
+          NSData* seal = hang(^(PMKAdapter adapter) {
+            [chunkEncryptor sealWithOptions:opts completionHandler:adapter];
+          });
 
           TKRChunkEncryptor* bobChunkEncryptor = [PMKPromise hang:[bobTanker makeChunkEncryptorFromSeal:seal]];
           NSString* decryptedText = hang(^(PMKAdapter adapter) {
