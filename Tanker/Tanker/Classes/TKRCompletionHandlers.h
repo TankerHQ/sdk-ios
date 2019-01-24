@@ -1,5 +1,8 @@
 #import <Foundation/Foundation.h>
 
+@class TKRUnlockKey;
+@class TKRChunkEncryptor;
+
 /*!
  @typedef TKREncryptedDataHandler
  @brief Block which will be called when data has been encrypted.
@@ -37,3 +40,57 @@ typedef void (^TKRDecryptedStringHandler)(NSString* decryptedString,
  */
 typedef void (^TKRSealHandler)(NSData* seal, NSError* err);
 
+/*!
+ @typedef TKRBooleanHandler
+ @brief Block which will be called with either @YES or @NO.
+
+ @param b either @YES or NO.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRBooleanHandler)(NSNumber* b, NSError* err);
+
+/*!
+ @typedef TKRArrayHandler
+ @brief Block which will be called with a NSArray*.
+
+ @param a an array containing some values.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRArrayHandler)(NSArray* a, NSError* err);
+
+/*!
+ @typedef TKRArrayHandler
+ @brief Block which will be called with a NSError*, or nil.
+
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRErrorHandler)(NSError* err);
+
+/*!
+ @typedef TKRStringHandler
+ @brief Block which will be called with a string.
+
+ @param str the string, or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRStringHandler)(NSString* str, NSError* err);
+
+/*!
+ @typedef TKRUnlockKeyHandler
+ @brief Block which will be called with a string.
+
+ @param key the unlock key, or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRUnlockKeyHandler)(TKRUnlockKey* key, NSError* err);
+
+/*!
+ @typedef TKRChunkEncryptorHandler
+ @brief Block which will be called when a @see TKRChunkEncryptor has been
+ created.
+
+ @param chunkEncryptor the @see TKRChunkEncryptor, or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRChunkEncryptorHandler)(TKRChunkEncryptor* chunkEncryptor,
+                                         NSError* err);

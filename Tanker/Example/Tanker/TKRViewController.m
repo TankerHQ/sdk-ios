@@ -1,8 +1,6 @@
 #import "TKRViewController.h"
 #import "TKRTanker.h"
 
-@import PromiseKit;
-
 @interface TKRViewController ()
 @property(weak, nonatomic) IBOutlet UILabel* versionField;
 @end

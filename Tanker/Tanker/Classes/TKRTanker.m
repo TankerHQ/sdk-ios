@@ -1,7 +1,5 @@
 #import <Foundation/Foundation.h>
 
-#import "PromiseKit.h"
-
 #import "TKRChunkEncryptor+Private.h"
 #import "TKRTanker+Private.h"
 #import "TKRTankerOptions+Private.h"
@@ -15,6 +13,11 @@
 #include <tanker/tanker.h>
 
 #define TANKER_IOS_VERSION @"dev"
+
+static void dispatchInBackground(id block)
+{
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), block);
+}
 
 static void logHandler(char const* category, char level, char const* message)
 {
@@ -141,134 +144,147 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   }
 }
 
-- (nonnull PMKPromise*)openWithUserID:(nonnull NSString*)userID userToken:(nonnull NSString*)userToken
+- (void)openWithUserID:(nonnull NSString*)userID
+             userToken:(nonnull NSString*)userToken
+     completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    char const* user_id = [userID cStringUsingEncoding:NSUTF8StringEncoding];
-    char const* user_token = [userToken cStringUsingEncoding:NSUTF8StringEncoding];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
 
-    tanker_future_t* open_future = tanker_open((tanker_t*)self.cTanker, user_id, user_token);
-    tanker_future_t* resolve_future =
-        tanker_future_then(open_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(open_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  char const* user_id = [userID cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* user_token = [userToken cStringUsingEncoding:NSUTF8StringEncoding];
+
+  tanker_future_t* open_future = tanker_open((tanker_t*)self.cTanker, user_id, user_token);
+  tanker_future_t* resolve_future =
+      tanker_future_then(open_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(open_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise<NSString*>*)deviceID
+- (void)deviceIDWithCompletionHandler:(nonnull TKRStringHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-           tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
-           tanker_future_t* resolve_future = tanker_future_then(
-               device_id_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-           tanker_future_destroy(device_id_future);
-           tanker_future_destroy(resolve_future);
-         }]
-      .then(^(NSNumber* ptrValue) {
-        b64char* device_id = (b64char*)numberToPtr(ptrValue);
-        NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
-        tanker_free_buffer(device_id);
-        return ret;
-      });
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      b64char* device_id = (b64char*)numberToPtr(ptrValue);
+      NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
+      tanker_free_buffer(device_id);
+      handler(ret, nil);
+    }
+  };
+  tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
+  tanker_future_t* resolve_future =
+      tanker_future_then(device_id_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(device_id_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptor
+- (void)makeChunkEncryptorWithCompletionHandler:(nonnull TKRChunkEncryptorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-    [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:nil options:nil completionHandler:adapter];
-  }];
+  [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:nil options:nil completionHandler:handler];
 }
 
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
+- (void)makeChunkEncryptorFromSeal:(nonnull NSData*)seal completionHandler:(nonnull TKRChunkEncryptorHandler)handler
 {
   // TODO harmonize APIs taking defaultOptions vs. nullable.
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-    [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self
-                                              seal:seal
-                                           options:[TKRDecryptionOptions defaultOptions]
-                                 completionHandler:adapter];
-  }];
+  [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self
+                                            seal:seal
+                                         options:[TKRDecryptionOptions defaultOptions]
+                               completionHandler:handler];
 }
 
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
-                                                              options:(nonnull TKRDecryptionOptions*)options
+- (void)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
+                           options:(nonnull TKRDecryptionOptions*)options
+                 completionHandler:(nonnull TKRChunkEncryptorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-    [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:seal options:options completionHandler:adapter];
-  }];
+  [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:seal options:options completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText
+- (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromString:clearText options:[TKREncryptionOptions defaultOptions]];
+  [self encryptDataFromString:clearText options:[TKREncryptionOptions defaultOptions] completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText
-                                              options:(nonnull TKREncryptionOptions*)options
+- (void)encryptDataFromString:(nonnull NSString*)clearText
+                      options:(nonnull TKREncryptionOptions*)options
+            completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
-           resolve(convertStringToData(clearText));
-         }]
-      .then(^(NSData* clearData) {
-        return [self encryptDataFromData:clearData options:options];
-      });
+  [self encryptDataFromData:convertStringToData(clearText) options:options completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText
-                                                options:(nonnull TKRDecryptionOptions*)options
+- (void)decryptStringFromData:(nonnull NSData*)cipherText
+                      options:(nonnull TKRDecryptionOptions*)options
+            completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-           [self decryptDataFromDataImpl:cipherText options:options completionHandler:adapter];
-         }]
-      .then(^(PtrAndSizePair* hack) {
-        uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
 
-        return [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
-                                              length:hack.ptrSize
-                                            encoding:NSUTF8StringEncoding
-                                        freeWhenDone:YES];
-      });
+      NSString* ret = [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
+                                                     length:hack.ptrSize
+                                                   encoding:NSUTF8StringEncoding
+                                               freeWhenDone:YES];
+      handler(ret, nil);
+    }
+  };
+  [self decryptDataFromDataImpl:cipherText options:options completionHandler:adapter];
 }
 
-- (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText
+- (void)decryptStringFromData:(nonnull NSData*)cipherText completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
-  return [self decryptStringFromData:cipherText options:[TKRDecryptionOptions defaultOptions]];
+  [self decryptStringFromData:cipherText options:[TKRDecryptionOptions defaultOptions] completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData
+- (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromData:clearData options:[TKREncryptionOptions defaultOptions]];
+  [self encryptDataFromData:clearData options:[TKREncryptionOptions defaultOptions] completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData
-                                            options:(nonnull TKREncryptionOptions*)options
+- (void)encryptDataFromData:(nonnull NSData*)clearData
+                    options:(nonnull TKREncryptionOptions*)options
+          completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-           [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
-         }]
-      .then(^(PtrAndSizePair* hack) {
-        uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      uint8_t* encrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
 
-        return [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
-      });
+      NSData* ret = [NSData dataWithBytesNoCopy:encrypted_buffer length:hack.ptrSize freeWhenDone:YES];
+      handler(ret, nil);
+    }
+  };
+  [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
 }
 
-- (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherData
-                                            options:(nonnull TKRDecryptionOptions*)options
+- (void)decryptDataFromData:(nonnull NSData*)cipherData
+                    options:(nonnull TKRDecryptionOptions*)options
+          completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-           [self decryptDataFromDataImpl:cipherData options:options completionHandler:adapter];
-         }]
-      .then(^(PtrAndSizePair* hack) {
-        uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
 
-        return [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
-      });
+      NSData* ret = [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
+      handler(ret, nil);
+    }
+  };
+  [self decryptDataFromDataImpl:cipherData options:options completionHandler:adapter];
 }
 
-- (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherData
+- (void)decryptDataFromData:(nonnull NSData*)cipherData completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
-  return [self decryptDataFromData:cipherData options:[TKRDecryptionOptions defaultOptions]];
+  [self decryptDataFromData:cipherData options:[TKRDecryptionOptions defaultOptions] completionHandler:handler];
 }
 
 - (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)cipherData error:(NSError* _Nullable* _Nonnull)error
@@ -283,80 +299,89 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return ret;
 }
 
-- (nonnull PMKPromise<NSString*>*)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds
+- (void)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds completionHandler:(nonnull TKRStringHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-           char** user_ids = convertStringstoCStrings(userIds);
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      b64char* group_id = (b64char*)numberToPtr(ptrValue);
+      NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
+      tanker_free_buffer(group_id);
+      handler(groupId, nil);
+    }
+  };
+  char** user_ids = convertStringstoCStrings(userIds);
 
-           tanker_future_t* future =
-               tanker_create_group((tanker_t*)self.cTanker, (char const* const*)user_ids, userIds.count);
-           tanker_future_t* resolve_future =
-               tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-           tanker_future_destroy(future);
-           tanker_future_destroy(resolve_future);
-           for (int i = 0; i < userIds.count; ++i)
-             free(user_ids[i]);
-           free(user_ids);
-         }]
-      .then(^(NSNumber* ptrValue) {
-        b64char* group_id = (b64char*)numberToPtr(ptrValue);
-        NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
-        tanker_free_buffer(group_id);
-        return groupId;
-      });
+  tanker_future_t* future = tanker_create_group((tanker_t*)self.cTanker, (char const* const*)user_ids, userIds.count);
+  tanker_future_t* resolve_future =
+      tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(future);
+  tanker_future_destroy(resolve_future);
+  for (int i = 0; i < userIds.count; ++i)
+    free(user_ids[i]);
+  free(user_ids);
 }
 
-- (nonnull PMKPromise*)updateMembersOfGroup:(NSString*)groupId add:(NSArray<NSString*>*)usersToAdd
+- (void)updateMembersOfGroup:(NSString*)groupId
+                         add:(NSArray<NSString*>*)usersToAdd
+           completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
-    char** users_to_add = convertStringstoCStrings(usersToAdd);
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
 
-    tanker_future_t* future = tanker_update_group_members(
-        (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)users_to_add, usersToAdd.count);
-    tanker_future_t* resolve_future =
-        tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(future);
-    tanker_future_destroy(resolve_future);
-    for (int i = 0; i < usersToAdd.count; ++i)
-      free(users_to_add[i]);
-    free(users_to_add);
-  }];
+  char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
+  char** users_to_add = convertStringstoCStrings(usersToAdd);
+
+  tanker_future_t* future = tanker_update_group_members(
+      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)users_to_add, usersToAdd.count);
+  tanker_future_t* resolve_future =
+      tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(future);
+  tanker_future_destroy(resolve_future);
+  for (int i = 0; i < usersToAdd.count; ++i)
+    free(users_to_add[i]);
+  free(users_to_add);
 }
 
-- (nonnull PMKPromise*)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
-                                options:(nonnull TKRShareOptions*)options
+- (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
+                 options:(nonnull TKRShareOptions*)options
+       completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    char** resource_ids = convertStringstoCStrings(resourceIDs);
-    char** user_ids = convertStringstoCStrings(options.shareWithUsers);
-    char** group_ids = convertStringstoCStrings(options.shareWithGroups);
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
 
-    tanker_future_t* share_future = tanker_share((tanker_t*)self.cTanker,
-                                                 (char const* const*)user_ids,
-                                                 options.shareWithUsers.count,
-                                                 (char const* const*)group_ids,
-                                                 options.shareWithGroups.count,
-                                                 (char const* const*)resource_ids,
-                                                 resourceIDs.count);
+  char** resource_ids = convertStringstoCStrings(resourceIDs);
+  char** user_ids = convertStringstoCStrings(options.shareWithUsers);
+  char** group_ids = convertStringstoCStrings(options.shareWithGroups);
 
-    tanker_future_t* resolve_future =
-        tanker_future_then(share_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+  tanker_future_t* share_future = tanker_share((tanker_t*)self.cTanker,
+                                               (char const* const*)user_ids,
+                                               options.shareWithUsers.count,
+                                               (char const* const*)group_ids,
+                                               options.shareWithGroups.count,
+                                               (char const* const*)resource_ids,
+                                               resourceIDs.count);
 
-    tanker_future_destroy(share_future);
-    tanker_future_destroy(resolve_future);
+  tanker_future_t* resolve_future =
+      tanker_future_then(share_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
 
-    // No need to retain anything, tanker_share copies everything.
-    for (int i = 0; i < resourceIDs.count; ++i)
-      free(resource_ids[i]);
-    free(resource_ids);
-    for (int i = 0; i < options.shareWithUsers.count; ++i)
-      free(user_ids[i]);
-    free(user_ids);
-    for (int i = 0; i < options.shareWithGroups.count; ++i)
-      free(group_ids[i]);
-    free(group_ids);
-  }];
+  tanker_future_destroy(share_future);
+  tanker_future_destroy(resolve_future);
+
+  // No need to retain anything, tanker_share copies everything.
+  for (int i = 0; i < resourceIDs.count; ++i)
+    free(resource_ids[i]);
+  free(resource_ids);
+  for (int i = 0; i < options.shareWithUsers.count; ++i)
+    free(user_ids[i]);
+  free(user_ids);
+  for (int i = 0; i < options.shareWithGroups.count; ++i)
+    free(group_ids[i]);
+  free(group_ids);
 }
 
 - (nonnull NSNumber*)connectUnlockRequiredHandler:(nonnull TKRUnlockRequiredHandler)handler
@@ -368,9 +393,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
                          handler:^(id unused) {
-                           dispatch_promise(^{
-                             handler();
-                           });
+                           dispatchInBackground(handler);
                          }
                            error:&err];
   // Err cannot fail as the event is a valid tanker event
@@ -387,9 +410,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
                          handler:^(id unused) {
-                           dispatch_promise(^{
-                             handler();
-                           });
+                           dispatchInBackground(handler);
                          }
                            error:&err];
   // Err cannot fail as the event is a valid tanker event
@@ -406,9 +427,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
                          handler:^(id unused) {
-                           dispatch_promise(^{
-                             handler();
-                           });
+                           dispatchInBackground(handler);
                          }
                            error:&err];
   // Err cannot fail as the event is a valid tanker event
@@ -416,180 +435,192 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return ret;
 }
 
-- (nonnull PMKPromise*)registerUnlock:(nonnull TKRUnlockOptions*)options
+- (void)registerUnlock:(nonnull TKRUnlockOptions*)options completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    char const* utf8_password = options.password ? [options.password cStringUsingEncoding:NSUTF8StringEncoding] : NULL;
-    char const* utf8_email = options.email ? [options.email cStringUsingEncoding:NSUTF8StringEncoding] : NULL;
-    tanker_future_t* setup_future = tanker_register_unlock((tanker_t*)self.cTanker, utf8_email, utf8_password);
-    tanker_future_t* resolve_future =
-        tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(setup_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+
+  char const* utf8_password = options.password ? [options.password cStringUsingEncoding:NSUTF8StringEncoding] : NULL;
+  char const* utf8_email = options.email ? [options.email cStringUsingEncoding:NSUTF8StringEncoding] : NULL;
+  tanker_future_t* setup_future = tanker_register_unlock((tanker_t*)self.cTanker, utf8_email, utf8_password);
+  tanker_future_t* resolve_future =
+      tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(setup_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)setupUnlockWithPassword:(nonnull NSString*)password
+- (void)setupUnlockWithPassword:(nonnull NSString*)password completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
-    tanker_future_t* setup_future = tanker_setup_unlock((tanker_t*)self.cTanker, NULL, utf8_password);
-    tanker_future_t* resolve_future =
-        tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(setup_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+
+  char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_future_t* setup_future = tanker_setup_unlock((tanker_t*)self.cTanker, NULL, utf8_password);
+  tanker_future_t* resolve_future =
+      tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(setup_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)updateUnlockPassword:(nonnull NSString*)newPassword
+- (void)updateUnlockPassword:(nonnull NSString*)newPassword completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    char const* utf8_password = [newPassword cStringUsingEncoding:NSUTF8StringEncoding];
-    tanker_future_t* update_future = tanker_update_unlock((tanker_t*)self.cTanker, NULL, utf8_password, NULL);
-    tanker_future_t* resolve_future =
-        tanker_future_then(update_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(update_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+  char const* utf8_password = [newPassword cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_future_t* update_future = tanker_update_unlock((tanker_t*)self.cTanker, NULL, utf8_password, NULL);
+  tanker_future_t* resolve_future =
+      tanker_future_then(update_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(update_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise<TKRUnlockKey*>*)generateAndRegisterUnlockKey
+- (void)generateAndRegisterUnlockKeyWithCompletionHandler:(nonnull TKRUnlockKeyHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-           tanker_expected_t* unlock_key_fut = tanker_generate_and_register_unlock_key((tanker_t*)self.cTanker);
-           tanker_future_t* resolve_future = tanker_future_then(
-               unlock_key_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      b64char* unlock_key = (b64char*)numberToPtr(ptrValue);
+      NSString* unlockKey = [NSString stringWithCString:unlock_key encoding:NSUTF8StringEncoding];
 
-           tanker_future_destroy(unlock_key_fut);
-           tanker_future_destroy(resolve_future);
-         }]
-      .then(^(NSNumber* ptrValue) {
-        b64char* unlock_key = (b64char*)numberToPtr(ptrValue);
-        NSString* unlockKey = [NSString stringWithCString:unlock_key encoding:NSUTF8StringEncoding];
+      TKRUnlockKey* ret = [[TKRUnlockKey alloc] init];
+      ret.valuePrivate = unlockKey;
+      tanker_free_buffer(unlock_key);
+      handler(ret, nil);
+    }
+  };
 
-        TKRUnlockKey* ret = [[TKRUnlockKey alloc] init];
-        ret.valuePrivate = unlockKey;
-        tanker_free_buffer(unlock_key);
-        return ret;
-      });
+  tanker_expected_t* unlock_key_fut = tanker_generate_and_register_unlock_key((tanker_t*)self.cTanker);
+  tanker_future_t* resolve_future =
+      tanker_future_then(unlock_key_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+
+  tanker_future_destroy(unlock_key_fut);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise<NSNumber*>*)isUnlockAlreadySetUp
+- (void)isUnlockAlreadySetUpWithCompletionHandler:(nonnull TKRBooleanHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    tanker_future_t* already_future = tanker_is_unlock_already_set_up((tanker_t*)self.cTanker);
-    tanker_future_t* resolve_future =
-        tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(already_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  tanker_future_t* already_future = tanker_is_unlock_already_set_up((tanker_t*)self.cTanker);
+  tanker_future_t* resolve_future =
+      tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)handler);
+  tanker_future_destroy(already_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise<NSNumber*>*)hasRegisteredUnlockMethods
+- (void)hasRegisteredUnlockMethodsWithCompletionHandler:(nonnull TKRBooleanHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    tanker_future_t* already_future = tanker_has_registered_unlock_methods((tanker_t*)self.cTanker);
-    tanker_future_t* resolve_future =
-        tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(already_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  tanker_future_t* already_future = tanker_has_registered_unlock_methods((tanker_t*)self.cTanker);
+  tanker_future_t* resolve_future =
+      tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)handler);
+  tanker_future_destroy(already_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise<NSNumber*>*)hasRegisteredUnlockMethod:(NSUInteger)method
+- (void)hasRegisteredUnlockMethod:(NSUInteger)method completionHandler:(nonnull TKRBooleanHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    tanker_future_t* already_future =
-        tanker_has_registered_unlock_method((tanker_t*)self.cTanker, (enum tanker_unlock_method)method);
-    tanker_future_t* resolve_future =
-        tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(already_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  tanker_future_t* already_future =
+      tanker_has_registered_unlock_method((tanker_t*)self.cTanker, (enum tanker_unlock_method)method);
+  tanker_future_t* resolve_future =
+      tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)handler);
+  tanker_future_destroy(already_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise<NSArray*>*)registeredUnlockMethods
+- (void)registeredUnlockMethodsWithCompletionHandler:(nonnull TKRArrayHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-           tanker_future_t* already_future = tanker_registered_unlock_methods((tanker_t*)self.cTanker);
-           tanker_future_t* resolve_future = tanker_future_then(
-               already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-           tanker_future_destroy(already_future);
-           tanker_future_destroy(resolve_future);
-         }]
-      .then(^(NSNumber* methods) {
-        long imethods = methods.integerValue;
+  TKRAdapter adapter = ^(NSNumber* methods, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      long imethods = methods.integerValue;
 
-        NSMutableArray* ret = [[NSMutableArray alloc] init];
-        if (imethods & TANKER_UNLOCK_METHOD_EMAIL)
-          [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodEmail]];
-        if (imethods & TANKER_UNLOCK_METHOD_PASSWORD)
-          [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodPassword]];
-
-        return ret;
-      });
+      NSMutableArray* ret = [[NSMutableArray alloc] init];
+      if (imethods & TANKER_UNLOCK_METHOD_EMAIL)
+        [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodEmail]];
+      if (imethods & TANKER_UNLOCK_METHOD_PASSWORD)
+        [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodPassword]];
+      handler(ret, nil);
+    }
+  };
+  tanker_future_t* already_future = tanker_registered_unlock_methods((tanker_t*)self.cTanker);
+  tanker_future_t* resolve_future =
+      tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(already_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)unlockCurrentDeviceWithUnlockKey:(nonnull TKRUnlockKey*)unlockKey
+- (void)unlockCurrentDeviceWithUnlockKey:(nonnull TKRUnlockKey*)unlockKey
+                       completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    b64char const* utf8UnlockKey = [unlockKey.value cStringUsingEncoding:NSUTF8StringEncoding];
-    // tanker copies the validation code
-    tanker_future_t* validate_future =
-        tanker_unlock_current_device_with_unlock_key((tanker_t*)self.cTanker, utf8UnlockKey);
-    tanker_future_t* resolve_future =
-        tanker_future_then(validate_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(validate_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+  b64char const* utf8UnlockKey = [unlockKey.value cStringUsingEncoding:NSUTF8StringEncoding];
+  // tanker copies the validation code
+  tanker_future_t* validate_future =
+      tanker_unlock_current_device_with_unlock_key((tanker_t*)self.cTanker, utf8UnlockKey);
+  tanker_future_t* resolve_future =
+      tanker_future_then(validate_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(validate_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)unlockCurrentDeviceWithPassword:(nonnull NSString*)password
+- (void)unlockCurrentDeviceWithPassword:(nonnull NSString*)password completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    b64char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
-    tanker_future_t* unlock_future = tanker_unlock_current_device_with_password((tanker_t*)self.cTanker, utf8_password);
-    tanker_future_t* resolve_future =
-        tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(unlock_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+  b64char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_future_t* unlock_future = tanker_unlock_current_device_with_password((tanker_t*)self.cTanker, utf8_password);
+  tanker_future_t* resolve_future =
+      tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(unlock_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)unlockCurrentDeviceWithVerificationCode:(nonnull NSString*)verificationCode
+- (void)unlockCurrentDeviceWithVerificationCode:(nonnull NSString*)verificationCode
+                              completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    b64char const* utf8_code = [verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
-    tanker_future_t* unlock_future =
-        tanker_unlock_current_device_with_verification_code((tanker_t*)self.cTanker, utf8_code);
-    tanker_future_t* resolve_future =
-        tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(unlock_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+  b64char const* utf8_code = [verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_future_t* unlock_future =
+      tanker_unlock_current_device_with_verification_code((tanker_t*)self.cTanker, utf8_code);
+  tanker_future_t* resolve_future =
+      tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(unlock_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)revokeDevice:(nonnull NSString*)deviceId
+- (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    char const* device_id = [deviceId cStringUsingEncoding:NSUTF8StringEncoding];
-    tanker_future_t* revoke_future = tanker_revoke_device((tanker_t*)self.cTanker, device_id);
-    tanker_future_t* resolve_future =
-        tanker_future_then(revoke_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(revoke_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+  char const* device_id = [deviceId cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_future_t* revoke_future = tanker_revoke_device((tanker_t*)self.cTanker, device_id);
+  tanker_future_t* resolve_future =
+      tanker_future_then(revoke_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(revoke_future);
+  tanker_future_destroy(resolve_future);
 }
 
-- (nonnull PMKPromise*)close
+- (void)closeWithCompletionHandler:(nonnull TKRErrorHandler)handler
 {
-  return [PMKPromise promiseWithAdapter:^(PMKAdapter resolve) {
-    tanker_future_t* close_future = tanker_close((tanker_t*)self.cTanker);
-    tanker_future_t* resolve_future =
-        tanker_future_then(close_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-    tanker_future_destroy(close_future);
-    tanker_future_destroy(resolve_future);
-  }];
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+  tanker_future_t* close_future = tanker_close((tanker_t*)self.cTanker);
+  tanker_future_t* resolve_future =
+      tanker_future_then(close_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(close_future);
+  tanker_future_destroy(resolve_future);
 }
 
 - (void)dealloc
