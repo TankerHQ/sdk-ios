@@ -46,7 +46,12 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
                       atIndex:(NSUInteger)index
             completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptDataFromData:convertStringToData(clearText) atIndex:index completionHandler:handler];
+  NSError* err = nil;
+  NSData* data = convertStringToData(clearText, &err);
+  if (err)
+    handler(nil, err);
+  else
+    [self encryptDataFromData:data atIndex:index completionHandler:handler];
 }
 
 - (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
@@ -56,7 +61,12 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
 
 - (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptDataFromData:convertStringToData(clearText) completionHandler:handler];
+  NSError* err = nil;
+  NSData* data = convertStringToData(clearText, &err);
+  if (err)
+    handler(nil, err);
+  else
+    [self encryptDataFromData:data completionHandler:handler];
 }
 
 - (void)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes error:(NSError* _Nullable* _Nonnull)err

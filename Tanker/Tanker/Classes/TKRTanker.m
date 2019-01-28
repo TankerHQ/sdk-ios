@@ -212,7 +212,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                       options:(nonnull TKREncryptionOptions*)options
             completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptDataFromData:convertStringToData(clearText) options:options completionHandler:handler];
+  NSError* err = nil;
+  NSData* data = convertStringToData(clearText, &err);
+
+  if (err)
+    handler(nil, err);
+  else
+    [self encryptDataFromData:data options:options completionHandler:handler];
 }
 
 - (void)decryptStringFromData:(nonnull NSData*)cipherText
@@ -312,16 +318,19 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(groupId, nil);
     }
   };
-  char** user_ids = convertStringstoCStrings(userIds);
-
+  NSError* err = nil;
+  char** user_ids = convertStringstoCStrings(userIds, &err);
+  if (err)
+  {
+    handler(nil, err);
+    return;
+  }
   tanker_future_t* future = tanker_create_group((tanker_t*)self.cTanker, (char const* const*)user_ids, userIds.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  for (int i = 0; i < userIds.count; ++i)
-    free(user_ids[i]);
-  free(user_ids);
+  freeCStringArray(user_ids, userIds.count);
 }
 
 - (void)updateMembersOfGroup:(NSString*)groupId
@@ -333,17 +342,20 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
 
   char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
-  char** users_to_add = convertStringstoCStrings(usersToAdd);
-
+  NSError* err = nil;
+  char** users_to_add = convertStringstoCStrings(usersToAdd, &err);
+  if (err)
+  {
+    handler(err);
+    return;
+  }
   tanker_future_t* future = tanker_update_group_members(
       (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)users_to_add, usersToAdd.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  for (int i = 0; i < usersToAdd.count; ++i)
-    free(users_to_add[i]);
-  free(users_to_add);
+  freeCStringArray(users_to_add, usersToAdd.count);
 }
 
 - (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
@@ -354,9 +366,28 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(err);
   };
 
-  char** resource_ids = convertStringstoCStrings(resourceIDs);
-  char** user_ids = convertStringstoCStrings(options.shareWithUsers);
-  char** group_ids = convertStringstoCStrings(options.shareWithGroups);
+  NSError* err = nil;
+  char** resource_ids = convertStringstoCStrings(resourceIDs, &err);
+  if (err)
+  {
+    handler(err);
+    return;
+  }
+  char** user_ids = convertStringstoCStrings(options.shareWithUsers, &err);
+  if (err)
+  {
+    freeCStringArray(resource_ids, resourceIDs.count);
+    handler(err);
+    return;
+  }
+  char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
+  if (err)
+  {
+    freeCStringArray(resource_ids, resourceIDs.count);
+    freeCStringArray(user_ids, options.shareWithUsers.count);
+    handler(err);
+    return;
+  }
 
   tanker_future_t* share_future = tanker_share((tanker_t*)self.cTanker,
                                                (char const* const*)user_ids,
@@ -372,16 +403,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(share_future);
   tanker_future_destroy(resolve_future);
 
-  // No need to retain anything, tanker_share copies everything.
-  for (int i = 0; i < resourceIDs.count; ++i)
-    free(resource_ids[i]);
-  free(resource_ids);
-  for (int i = 0; i < options.shareWithUsers.count; ++i)
-    free(user_ids[i]);
-  free(user_ids);
-  for (int i = 0; i < options.shareWithGroups.count; ++i)
-    free(group_ids[i]);
-  free(group_ids);
+  freeCStringArray(resource_ids, resourceIDs.count);
+  freeCStringArray(user_ids, options.shareWithUsers.count);
+  freeCStringArray(group_ids, options.shareWithGroups.count);
 }
 
 - (nonnull NSNumber*)connectUnlockRequiredHandler:(nonnull TKRUnlockRequiredHandler)handler

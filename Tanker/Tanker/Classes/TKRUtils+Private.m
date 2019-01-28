@@ -12,6 +12,16 @@
 
 @end
 
+NSError* createNSError(char const* message, TKRError code)
+{
+  return [NSError
+      errorWithDomain:TKRErrorDomain
+                 code:code
+             userInfo:@{
+               NSLocalizedDescriptionKey : [NSString stringWithCString:message encoding:NSUTF8StringEncoding]
+             }];
+}
+
 NSNumber* ptrToNumber(void* ptr)
 {
   return [NSNumber numberWithUnsignedLong:(uintptr_t)ptr];
@@ -60,6 +70,13 @@ void* resolvePromise(void* future, void* arg)
   return nil;
 }
 
+void freeCStringArray(char** toFree, NSUInteger nbElems)
+{
+  for (int i = 0; i < nbElems; ++i)
+    free(toFree[i]);
+  free(toFree);
+}
+
 void* unwrapAndFreeExpected(void* expected)
 {
   NSError* optErr = getOptionalFutureError(expected);
@@ -75,26 +92,30 @@ void* unwrapAndFreeExpected(void* expected)
   return ptr;
 }
 
-char* copyUTF8CString(NSString* str)
+char* copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err)
 {
   size_t const length = strlen(str.UTF8String);
   char* utf8_cstr = (char*)malloc(length + 1);
   if (!utf8_cstr)
   {
-    [NSException raise:NSMallocException format:@"could not allocate %lu bytes", length];
+    *err = createNSError("could not allocate UTF-8 C string buffer", TKRErrorOther);
+    return nil;
   }
   memcpy(utf8_cstr, str.UTF8String, length);
   utf8_cstr[length] = '\0';
+  err = nil;
   return utf8_cstr;
 }
 
-NSData* convertStringToData(NSString* clearText)
+NSData* convertStringToData(NSString* clearText, NSError* _Nullable* _Nonnull err)
 {
-  char* clear_text = copyUTF8CString(clearText);
+  char* clear_text = copyUTF8CString(clearText, err);
+  if (*err)
+    return nil;
   return [NSData dataWithBytesNoCopy:clear_text length:strlen(clear_text) freeWhenDone:YES];
 }
 
-char** convertStringstoCStrings(NSArray<NSString*>* strings)
+char** convertStringstoCStrings(NSArray<NSString*>* strings, NSError* _Nullable* _Nonnull err)
 {
   if (!strings || strings.count == 0)
     return nil;
@@ -102,20 +123,22 @@ char** convertStringstoCStrings(NSArray<NSString*>* strings)
   __block char** c_strs = (char**)malloc(size_to_allocate);
   if (!c_strs)
   {
-    [NSException raise:NSMallocException format:@"could not allocate %lu bytes", size_to_allocate];
+    *err = createNSError("could not allocate array of UTF-8 C strings", TKRErrorOther);
+    return nil;
   }
 
+  __block NSError* err2 = nil;
   [strings enumerateObjectsUsingBlock:^(NSString* str, NSUInteger idx, BOOL* stop) {
-    @try
-    {
-      c_strs[idx] = copyUTF8CString(str);
-    }
-    @catch (NSException* e)
+    c_strs[idx] = copyUTF8CString(str, &err2);
+    if (err2)
     {
       for (; idx != 0; --idx)
         free(c_strs[idx]);
-      [e raise];
+      *stop = YES;
+      free(c_strs);
+      c_strs = nil;
     }
   }];
+  *err = err2;
   return c_strs;
 }

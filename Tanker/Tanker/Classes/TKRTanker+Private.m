@@ -75,14 +75,25 @@
 
   if (!encrypted_buffer)
   {
-    [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)encrypted_size];
+    handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorOther));
+    return;
   }
-
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
 
-  char** user_ids = convertStringstoCStrings(options.shareWithUsers);
-  char** group_ids = convertStringstoCStrings(options.shareWithGroups);
-
+  NSError* err = nil;
+  char** user_ids = convertStringstoCStrings(options.shareWithUsers, &err);
+  if (err)
+  {
+    handler(nil, err);
+    return;
+  }
+  char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
+  if (err)
+  {
+    freeCStringArray(user_ids, options.shareWithUsers.count);
+    handler(nil, err);
+    return;
+  }
   encryption_options.recipient_uids = (char const* const*)user_ids;
   encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
   encryption_options.recipient_gids = (char const* const*)group_ids;
@@ -96,12 +107,8 @@
       tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
-  for (int i = 0; i < options.shareWithUsers.count; ++i)
-    free(user_ids[i]);
-  free(user_ids);
-  for (int i = 0; i < options.shareWithGroups.count; ++i)
-    free(group_ids[i]);
-  free(group_ids);
+  freeCStringArray(user_ids, options.shareWithUsers.count);
+  freeCStringArray(group_ids, options.shareWithGroups.count);
 }
 
 - (void)decryptDataFromDataImpl:(NSData*)cipherData
@@ -139,9 +146,9 @@
   decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)
   {
-    [NSException raise:NSMallocException format:@"could not allocate %lu bytes", (unsigned long)decrypted_size];
+    handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorOther));
+    return;
   }
-
   tanker_decrypt_options_t opts = TANKER_DECRYPT_OPTIONS_INIT;
   opts.timeout = options.timeout * 1000;
   tanker_future_t* decrypt_future =

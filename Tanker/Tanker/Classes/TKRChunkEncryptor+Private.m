@@ -14,16 +14,6 @@
   void* retained##value = (__bridge_retained void*)value; \
   (void)retained##value
 
-static NSError* createAllocError(char const* message)
-{
-  return [NSError
-      errorWithDomain:TKRErrorDomain
-                 code:TKRErrorOther
-             userInfo:@{
-               NSLocalizedDescriptionKey : [NSString stringWithCString:message encoding:NSUTF8StringEncoding]
-             }];
-}
-
 @implementation TKRChunkEncryptor (Private)
 
 @dynamic tanker;
@@ -97,7 +87,7 @@ static NSError* createAllocError(char const* message)
 
   if (!encrypted_buffer)
   {
-    handler(nil, createAllocError("could not allocate encrypted buffer"));
+    handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorOther));
     return;
   }
 
@@ -131,7 +121,7 @@ static NSError* createAllocError(char const* message)
 
   if (!seal_buffer)
   {
-    handler(nil, createAllocError("could not allocate seal buffer"));
+    handler(nil, createNSError("could not allocate seal buffer", TKRErrorOther));
     return;
   }
 
@@ -152,18 +142,34 @@ static NSError* createAllocError(char const* message)
 
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
 
-  char** user_ids = convertStringstoCStrings(options.shareWithUsers);
-  char** group_ids = convertStringstoCStrings(options.shareWithGroups);
-
-  encryption_options.recipient_uids = (char const* const*)user_ids;
-  encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
-  encryption_options.recipient_gids = (char const* const*)group_ids;
-  encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
-  tanker_future_t* seal_future = tanker_chunk_encryptor_seal(self.cChunkEncryptor, seal_buffer, &encryption_options);
-  tanker_future_t* resolve_future =
-      tanker_future_then(seal_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(seal_future);
-  tanker_future_destroy(resolve_future);
+  NSError* err = nil;
+  char** user_ids = convertStringstoCStrings(options.shareWithUsers, &err);
+  if (err)
+    handler(nil, err);
+  else
+  {
+    char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
+    if (err)
+    {
+      freeCStringArray(user_ids, options.shareWithUsers.count);
+      handler(nil, err);
+    }
+    else
+    {
+      encryption_options.recipient_uids = (char const* const*)user_ids;
+      encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
+      encryption_options.recipient_gids = (char const* const*)group_ids;
+      encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
+      tanker_future_t* seal_future =
+          tanker_chunk_encryptor_seal(self.cChunkEncryptor, seal_buffer, &encryption_options);
+      tanker_future_t* resolve_future =
+          tanker_future_then(seal_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_destroy(seal_future);
+      tanker_future_destroy(resolve_future);
+      freeCStringArray(user_ids, options.shareWithUsers.count);
+      freeCStringArray(group_ids, options.shareWithGroups.count);
+    }
+  }
 }
 
 - (void)decryptDataFromDataImpl:(nonnull NSData*)cipherData
@@ -180,14 +186,7 @@ static NSError* createAllocError(char const* message)
   uint8_t* decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)
   {
-    NSError* err = [NSError
-        errorWithDomain:TKRErrorDomain
-                   code:TKRErrorOther
-               userInfo:@{
-                 NSLocalizedDescriptionKey :
-                     [NSString stringWithCString:"could not allocate decrypted buffer" encoding:NSUTF8StringEncoding]
-               }];
-    handler(nil, err);
+    handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorOther));
     return;
   }
 
