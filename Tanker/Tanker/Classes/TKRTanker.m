@@ -162,7 +162,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)deviceIDWithCompletionHandler:(nonnull TKRStringHandler)handler
+- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
@@ -305,7 +305,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return ret;
 }
 
-- (void)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds completionHandler:(nonnull TKRStringHandler)handler
+- (void)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds completionHandler:(nonnull TKRGroupIDHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
@@ -554,7 +554,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)registeredUnlockMethodsWithCompletionHandler:(nonnull TKRArrayHandler)handler
+- (void)registeredUnlockMethodsWithCompletionHandler:(nonnull TKRUnlockMethodsHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* methods, NSError* err) {
     if (err)

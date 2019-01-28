@@ -115,7 +115,7 @@
 
  @param handler the block called with a list of registered methods, represented as NSNumber*.
  */
-- (void)registeredUnlockMethodsWithCompletionHandler:(nonnull TKRArrayHandler)handler;
+- (void)registeredUnlockMethodsWithCompletionHandler:(nonnull TKRUnlockMethodsHandler)handler;
 
 /*!
  @brief Register one or more unlock methods
@@ -197,7 +197,7 @@
 
  @pre Status is TKRStatusOpen.
  */
-- (void)deviceIDWithCompletionHandler:(nonnull TKRStringHandler)handler;
+- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler;
 
 /*!
  @brief Close Tanker.
@@ -367,7 +367,8 @@
  @param userIds the users to add to the group.
  @param handler the block called with the group id.
  */
-- (void)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds completionHandler:(nonnull TKRStringHandler)handler;
+- (void)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds
+             completionHandler:(nonnull TKRGroupIDHandler)handler;
 
 /*!
  @brief Update a group to add the given user IDs.
