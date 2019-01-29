@@ -535,47 +535,42 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)hasRegisteredUnlockMethodsWithCompletionHandler:(nonnull TKRBooleanHandler)handler
+- (BOOL)hasRegisteredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err
 {
-  tanker_future_t* already_future = tanker_has_registered_unlock_methods((tanker_t*)self.cTanker);
-  tanker_future_t* resolve_future =
-      tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)handler);
-  tanker_future_destroy(already_future);
-  tanker_future_destroy(resolve_future);
+  tanker_expected_t* exp = tanker_has_registered_unlock_methods((tanker_t*)self.cTanker);
+
+  *err = getOptionalFutureError(exp);
+  if (*err)
+    return NO;
+  return (BOOL)unwrapAndFreeExpected(exp);
 }
 
-- (void)hasRegisteredUnlockMethod:(NSUInteger)method completionHandler:(nonnull TKRBooleanHandler)handler
+- (BOOL)hasRegisteredUnlockMethod:(TKRUnlockMethods)method error:(NSError* _Nullable* _Nonnull)err
 {
-  tanker_future_t* already_future =
+  tanker_expected_t* exp =
       tanker_has_registered_unlock_method((tanker_t*)self.cTanker, (enum tanker_unlock_method)method);
-  tanker_future_t* resolve_future =
-      tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)handler);
-  tanker_future_destroy(already_future);
-  tanker_future_destroy(resolve_future);
+
+  *err = getOptionalFutureError(exp);
+  if (*err)
+    return NO;
+  return (BOOL)unwrapAndFreeExpected(exp);
 }
 
-- (void)registeredUnlockMethodsWithCompletionHandler:(nonnull TKRUnlockMethodsHandler)handler
+- (nullable NSArray<NSNumber*>*)registeredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err
 {
-  TKRAdapter adapter = ^(NSNumber* methods, NSError* err) {
-    if (err)
-      handler(nil, err);
-    else
-    {
-      long imethods = methods.integerValue;
+  tanker_expected_t* exp = tanker_registered_unlock_methods((tanker_t*)self.cTanker);
 
-      NSMutableArray* ret = [[NSMutableArray alloc] init];
-      if (imethods & TANKER_UNLOCK_METHOD_EMAIL)
-        [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodEmail]];
-      if (imethods & TANKER_UNLOCK_METHOD_PASSWORD)
-        [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodPassword]];
-      handler(ret, nil);
-    }
-  };
-  tanker_future_t* already_future = tanker_registered_unlock_methods((tanker_t*)self.cTanker);
-  tanker_future_t* resolve_future =
-      tanker_future_then(already_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(already_future);
-  tanker_future_destroy(resolve_future);
+  *err = getOptionalFutureError(exp);
+  if (*err)
+    return nil;
+  uintptr_t imethods = (uintptr_t)unwrapAndFreeExpected(exp);
+
+  NSMutableArray* ret = [[NSMutableArray alloc] init];
+  if (imethods & TANKER_UNLOCK_METHOD_EMAIL)
+    [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodEmail]];
+  if (imethods & TANKER_UNLOCK_METHOD_PASSWORD)
+    [ret addObject:[NSNumber numberWithUnsignedInteger:TKRUnlockMethodPassword]];
+  return ret;
 }
 
 - (void)unlockCurrentDeviceWithUnlockKey:(nonnull TKRUnlockKey*)unlockKey

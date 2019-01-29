@@ -94,28 +94,35 @@
 /*!
  @brief Check if the current user has already registered an unlock method out of password and email.
 
- @discussion If @NO is passed to the completion handler, you can call registerUnlock.
+ @discussion If NO is returned, you can call registerUnlock.
 
- @param handler the block called with either @YES or @NO.
+ @param err output error parameter.
+
+ @return YES if any method has been registered, NO otherwise.
  */
-- (void)hasRegisteredUnlockMethodsWithCompletionHandler:(nonnull TKRBooleanHandler)handler;
+- (BOOL)hasRegisteredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err;
 
 /*!
  @brief Check if the current user has registered the given unlock method.
 
- @discussion If @NO is passed to the completion handler, you can call registerUnlock to register the corresponding
+ @discussion If NO is returned, you can call registerUnlock to register the corresponding
  method.
 
- @param handler the block called with either @YES or @NO.
+ @param method unlock method to check.
+ @param err output error parameter.
+
+ @return YES if the method has been registered, NO otherwise.
  */
-- (void)hasRegisteredUnlockMethod:(NSUInteger)method completionHandler:(nonnull TKRBooleanHandler)handler;
+- (BOOL)hasRegisteredUnlockMethod:(TKRUnlockMethods)method error:(NSError* _Nullable* _Nonnull)err;
 
 /*!
  @brief Get the list of the registered unlock methods.
 
- @param handler the block called with a list of registered methods, represented as NSNumber*.
+ @param err output error parameter.
+
+ @return a list of registered unlock methods, represented as NSNumber*, or nil if an error occurs.
  */
-- (void)registeredUnlockMethodsWithCompletionHandler:(nonnull TKRUnlockMethodsHandler)handler;
+- (nullable NSArray<NSNumber*>*)registeredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err;
 
 /*!
  @brief Register one or more unlock methods
@@ -355,7 +362,7 @@
  @brief Get the encrypted resource ID.
 
  @param cipherData encrypted data.
- @param error output parameter
+ @param error output error parameter.
 
  @return the resource id.
  */

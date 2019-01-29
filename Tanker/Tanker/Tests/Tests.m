@@ -707,26 +707,27 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should indicate when an unlock mechanism was set up", ^{
-          NSNumber* wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
+          NSError* err = nil;
+          BOOL wasSetUp = [hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice isUnlockAlreadySetUpWithCompletionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@NO);
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethodsWithCompletionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@NO);
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword completionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@NO);
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail completionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@NO);
-          NSArray* methods = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice registeredUnlockMethodsWithCompletionHandler:adapter];
-          });
-          expect([methods count]).to.equal(0);
+          }) boolValue];
+          expect(wasSetUp).to.equal(NO);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          NSArray* methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(0);
 
           hangWithResolver(^(PMKResolver resolve) {
             [firstDevice setupUnlockWithPassword:@"password" completionHandler:resolve];
@@ -734,26 +735,26 @@ SpecBegin(TankerSpecs)
           // ... racy
           sleep(2);
 
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
+          wasSetUp = [hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice isUnlockAlreadySetUpWithCompletionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@YES);
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethodsWithCompletionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@YES);
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword completionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@YES);
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail completionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@NO);
-          methods = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice registeredUnlockMethodsWithCompletionHandler:adapter];
-          });
-          expect([methods count]).to.equal(1);
+          }) boolValue];
+          expect(wasSetUp).to.equal(YES);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(YES);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(YES);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(1);
           expect([methods objectAtIndex:0]).to.equal(TKRUnlockMethodPassword);
         });
 
@@ -797,14 +798,14 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should setup unlock with an email", ^{
-          NSNumber* wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail completionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@NO);
-          NSArray* methods = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice registeredUnlockMethodsWithCompletionHandler:adapter];
-          });
-          expect([methods count]).to.equal(0);
+          NSError* err = nil;
+          BOOL wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          NSArray* methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(0);
 
           TKRUnlockOptions* opts = [TKRUnlockOptions defaultOptions];
           opts.email = @"bob@alice.dk";
@@ -812,14 +813,13 @@ SpecBegin(TankerSpecs)
             [firstDevice registerUnlock:opts completionHandler:resolve];
           });
 
-          wasSetUp = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail completionHandler:adapter];
-          });
-          expect(wasSetUp).to.equal(@YES);
-          methods = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice registeredUnlockMethodsWithCompletionHandler:adapter];
-          });
-          expect([methods count]).to.equal(1);
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+
+          expect(wasSetUp).to.equal(YES);
+          methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(1);
           expect([methods objectAtIndex:0]).to.equal(TKRUnlockMethodEmail);
         });
 

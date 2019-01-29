@@ -53,16 +53,6 @@ typedef void (^TKRBooleanHandler)(NSNumber* _Nullable boolean,
                                   NSError* _Nullable err);
 
 /*!
- @typedef TKRUnlockMethodsHandler
- @brief Block which will be called with an array of unlock methods.
-
- @param a an array containing unlock methods, represented as NSNumber*.
- @param err the error which occurred, or nil.
- */
-typedef void (^TKRUnlockMethodsHandler)(NSArray<NSNumber*>* _Nullable a,
-                                        NSError* _Nullable err);
-
-/*!
  @typedef TKRErrorHandler
  @brief Block which will be called with a NSError*, or nil.
 
