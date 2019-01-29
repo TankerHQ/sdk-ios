@@ -46,7 +46,7 @@ typedef void (^TKRSealHandler)(NSData* _Nullable seal, NSError* _Nullable err);
  @typedef TKRBooleanHandler
  @brief Block which will be called with either @YES or @NO.
 
- @param boolean either @YES or NO.
+ @param boolean either @YES or @NO.
  @param err the error which occurred, or nil.
  */
 typedef void (^TKRBooleanHandler)(NSNumber* _Nullable boolean,
