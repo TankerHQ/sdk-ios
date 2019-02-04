@@ -61,15 +61,15 @@
     // Need to retain the seal to avoid reading a dangling pointer in the C code.
     AntiARCRetain(seal);
     if (err)
-      handler(nil, err);
-    else
     {
-      tanker_chunk_encryptor_t* chunk_encryptor = numberToPtr(ptrValue);
-      TKRChunkEncryptor* ret = [[TKRChunkEncryptor alloc] init];
-      ret.tanker = tanker;
-      ret.cChunkEncryptor = chunk_encryptor;
-      handler(ret, nil);
+      handler(nil, err);
+      return;
     }
+    tanker_chunk_encryptor_t* chunk_encryptor = numberToPtr(ptrValue);
+    TKRChunkEncryptor* ret = [[TKRChunkEncryptor alloc] init];
+    ret.tanker = tanker;
+    ret.cChunkEncryptor = chunk_encryptor;
+    handler(ret, nil);
   };
   tanker_future_t* resolve_future = tanker_future_then(
       chunk_encryptor_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
@@ -96,14 +96,12 @@
     {
       free(encrypted_buffer);
       handler(nil, err);
+      return;
     }
-    else
-    {
-      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-      hack.ptrValue = ptrToNumber(encrypted_buffer).unsignedLongValue;
-      hack.ptrSize = encrypted_size;
-      handler(hack, nil);
-    }
+    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    hack.ptrValue = ptrToNumber(encrypted_buffer).unsignedLongValue;
+    hack.ptrSize = encrypted_size;
+    handler(hack, nil);
   };
   tanker_future_t* chunk_encrypt_future = tanker_chunk_encryptor_encrypt_at(
       self.cChunkEncryptor, encrypted_buffer, clearData.bytes, clearData.length, index);
@@ -130,14 +128,12 @@
     {
       free(seal_buffer);
       handler(nil, err);
+      return;
     }
-    else
-    {
-      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-      hack.ptrValue = ptrToNumber(seal_buffer).unsignedLongValue;
-      hack.ptrSize = seal_size;
-      handler(hack, nil);
-    }
+    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    hack.ptrValue = ptrToNumber(seal_buffer).unsignedLongValue;
+    hack.ptrSize = seal_size;
+    handler(hack, nil);
   };
 
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
@@ -145,31 +141,28 @@
   NSError* err = nil;
   char** user_ids = convertStringstoCStrings(options.shareWithUsers, &err);
   if (err)
-    handler(nil, err);
-  else
   {
-    char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
-    if (err)
-    {
-      freeCStringArray(user_ids, options.shareWithUsers.count);
-      handler(nil, err);
-    }
-    else
-    {
-      encryption_options.recipient_uids = (char const* const*)user_ids;
-      encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
-      encryption_options.recipient_gids = (char const* const*)group_ids;
-      encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
-      tanker_future_t* seal_future =
-          tanker_chunk_encryptor_seal(self.cChunkEncryptor, seal_buffer, &encryption_options);
-      tanker_future_t* resolve_future =
-          tanker_future_then(seal_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-      tanker_future_destroy(seal_future);
-      tanker_future_destroy(resolve_future);
-      freeCStringArray(user_ids, options.shareWithUsers.count);
-      freeCStringArray(group_ids, options.shareWithGroups.count);
-    }
+    handler(nil, err);
+    return;
   }
+  char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
+  if (err)
+  {
+    freeCStringArray(user_ids, options.shareWithUsers.count);
+    handler(nil, err);
+    return;
+  }
+  encryption_options.recipient_uids = (char const* const*)user_ids;
+  encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
+  encryption_options.recipient_gids = (char const* const*)group_ids;
+  encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
+  tanker_future_t* seal_future = tanker_chunk_encryptor_seal(self.cChunkEncryptor, seal_buffer, &encryption_options);
+  tanker_future_t* resolve_future =
+      tanker_future_then(seal_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(seal_future);
+  tanker_future_destroy(resolve_future);
+  freeCStringArray(user_ids, options.shareWithUsers.count);
+  freeCStringArray(group_ids, options.shareWithGroups.count);
 }
 
 - (void)decryptDataFromDataImpl:(nonnull NSData*)cipherData
@@ -195,14 +188,12 @@
     {
       free(decrypted_buffer);
       handler(nil, err);
+      return;
     }
-    else
-    {
-      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-      hack.ptrValue = ptrToNumber(decrypted_buffer).unsignedLongValue;
-      hack.ptrSize = decrypted_size;
-      handler(hack, nil);
-    }
+    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    hack.ptrValue = ptrToNumber(decrypted_buffer).unsignedLongValue;
+    hack.ptrSize = decrypted_size;
+    handler(hack, nil);
   };
 
   tanker_future_t* decrypt_chunk_future =

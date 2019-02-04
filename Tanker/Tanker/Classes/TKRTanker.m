@@ -166,14 +166,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
-      handler(nil, err);
-    else
     {
-      b64char* device_id = (b64char*)numberToPtr(ptrValue);
-      NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
-      tanker_free_buffer(device_id);
-      handler(ret, nil);
+      handler(nil, err);
+      return;
     }
+    b64char* device_id = (b64char*)numberToPtr(ptrValue);
+    NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
+    tanker_free_buffer(device_id);
+    handler(ret, nil);
   };
   tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
@@ -227,18 +227,19 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
-      handler(nil, err);
-    else
     {
-      uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
-
-      NSString* ret = [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
-                                                     length:hack.ptrSize
-                                                   encoding:NSUTF8StringEncoding
-                                               freeWhenDone:YES];
-      handler(ret, nil);
+      handler(nil, err);
+      return;
     }
+    uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+
+    NSString* ret = [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
+                                                   length:hack.ptrSize
+                                                 encoding:NSUTF8StringEncoding
+                                             freeWhenDone:YES];
+    handler(ret, nil);
   };
+
   [self decryptDataFromDataImpl:cipherText options:options completionHandler:adapter];
 }
 
@@ -258,14 +259,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
-      handler(nil, err);
-    else
     {
-      uint8_t* encrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
-
-      NSData* ret = [NSData dataWithBytesNoCopy:encrypted_buffer length:hack.ptrSize freeWhenDone:YES];
-      handler(ret, nil);
+      handler(nil, err);
+      return;
     }
+    uint8_t* encrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+
+    NSData* ret = [NSData dataWithBytesNoCopy:encrypted_buffer length:hack.ptrSize freeWhenDone:YES];
+    handler(ret, nil);
   };
   [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
 }
@@ -276,14 +277,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
-      handler(nil, err);
-    else
     {
-      uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
-
-      NSData* ret = [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
-      handler(ret, nil);
+      handler(nil, err);
+      return;
     }
+    uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+
+    NSData* ret = [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
+    handler(ret, nil);
   };
   [self decryptDataFromDataImpl:cipherData options:options completionHandler:adapter];
 }
@@ -309,14 +310,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
-      handler(nil, err);
-    else
     {
-      b64char* group_id = (b64char*)numberToPtr(ptrValue);
-      NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
-      tanker_free_buffer(group_id);
-      handler(groupId, nil);
+      handler(nil, err);
+      return;
     }
+    b64char* group_id = (b64char*)numberToPtr(ptrValue);
+    NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
+    tanker_free_buffer(group_id);
+    handler(groupId, nil);
   };
   NSError* err = nil;
   char** user_ids = convertStringstoCStrings(userIds, &err);
@@ -505,17 +506,17 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
-      handler(nil, err);
-    else
     {
-      b64char* unlock_key = (b64char*)numberToPtr(ptrValue);
-      NSString* unlockKey = [NSString stringWithCString:unlock_key encoding:NSUTF8StringEncoding];
-
-      TKRUnlockKey* ret = [[TKRUnlockKey alloc] init];
-      ret.valuePrivate = unlockKey;
-      tanker_free_buffer(unlock_key);
-      handler(ret, nil);
+      handler(nil, err);
+      return;
     }
+    b64char* unlock_key = (b64char*)numberToPtr(ptrValue);
+    NSString* unlockKey = [NSString stringWithCString:unlock_key encoding:NSUTF8StringEncoding];
+
+    TKRUnlockKey* ret = [[TKRUnlockKey alloc] init];
+    ret.valuePrivate = unlockKey;
+    tanker_free_buffer(unlock_key);
+    handler(ret, nil);
   };
 
   tanker_expected_t* unlock_key_fut = tanker_generate_and_register_unlock_key((tanker_t*)self.cTanker);

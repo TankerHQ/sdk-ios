@@ -87,17 +87,17 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
                         atIndex:index
               completionHandler:^(PtrAndSizePair* hack, NSError* err) {
                 if (err)
-                  handler(nil, err);
-                else
                 {
-                  uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
-
-                  NSString* ret = [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
-                                                                 length:hack.ptrSize
-                                                               encoding:NSUTF8StringEncoding
-                                                           freeWhenDone:YES];
-                  handler(ret, nil);
+                  handler(nil, err);
+                  return;
                 }
+                uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+
+                NSString* ret = [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
+                                                               length:hack.ptrSize
+                                                             encoding:NSUTF8StringEncoding
+                                                         freeWhenDone:YES];
+                handler(ret, nil);
               }];
 }
 

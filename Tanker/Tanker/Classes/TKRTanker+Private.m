@@ -55,22 +55,20 @@
     {
       free(encrypted_buffer);
       handler(nil, err);
+      return;
     }
-    else
-    {
-      // So, why don't we use NSMutableData? It looks perfect for the job!
-      //
-      // NSMutableData is broken, every *WithNoCopy functions will copy and free the buffer you give to
-      // it. In addition, giving freeWhenDone:YES will cause a double free and crash the program. We could create
-      // the NSMutableData upfront and carry the internal pointer around, but it is not possible to retrieve the
-      // pointer and tell NSMutableData to not free it anymore.
-      //
-      // So let's return a uintptr_t...
-      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-      hack.ptrValue = (uintptr_t)encrypted_buffer;
-      hack.ptrSize = (NSUInteger)encrypted_size;
-      handler(hack, nil);
-    }
+    // So, why don't we use NSMutableData? It looks perfect for the job!
+    //
+    // NSMutableData is broken, every *WithNoCopy functions will copy and free the buffer you give to
+    // it. In addition, giving freeWhenDone:YES will cause a double free and crash the program. We could create
+    // the NSMutableData upfront and carry the internal pointer around, but it is not possible to retrieve the
+    // pointer and tell NSMutableData to not free it anymore.
+    //
+    // So let's return a uintptr_t...
+    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    hack.ptrValue = (uintptr_t)encrypted_buffer;
+    hack.ptrSize = (NSUInteger)encrypted_size;
+    handler(hack, nil);
   };
 
   if (!encrypted_buffer)
@@ -130,14 +128,12 @@
     {
       free(decrypted_buffer);
       handler(nil, err);
+      return;
     }
-    else
-    {
-      PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
-      hack.ptrValue = (uintptr_t)decrypted_buffer;
-      hack.ptrSize = (NSUInteger)decrypted_size;
-      handler(hack, nil);
-    }
+    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    hack.ptrValue = (uintptr_t)decrypted_buffer;
+    hack.ptrSize = (NSUInteger)decrypted_size;
+    handler(hack, nil);
   };
 
   tanker_expected_t* expected_decrypted_size = tanker_decrypted_size(encrypted_buffer, encrypted_size);
