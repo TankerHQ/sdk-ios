@@ -216,7 +216,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSData* data = convertStringToData(clearText, &err);
 
   if (err)
-    handler(nil, err);
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
   else
     [self encryptDataFromData:data options:options completionHandler:handler];
 }
@@ -323,7 +325,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char** user_ids = convertStringstoCStrings(userIds, &err);
   if (err)
   {
-    handler(nil, err);
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
     return;
   }
   tanker_future_t* future = tanker_create_group((tanker_t*)self.cTanker, (char const* const*)user_ids, userIds.count);
@@ -347,7 +351,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char** users_to_add = convertStringstoCStrings(usersToAdd, &err);
   if (err)
   {
-    handler(err);
+    runOnMainQueue(^{
+      handler(err);
+    });
     return;
   }
   tanker_future_t* future = tanker_update_group_members(
@@ -371,14 +377,18 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char** resource_ids = convertStringstoCStrings(resourceIDs, &err);
   if (err)
   {
-    handler(err);
+    runOnMainQueue(^{
+      handler(err);
+    });
     return;
   }
   char** user_ids = convertStringstoCStrings(options.shareWithUsers, &err);
   if (err)
   {
     freeCStringArray(resource_ids, resourceIDs.count);
-    handler(err);
+    runOnMainQueue(^{
+      handler(err);
+    });
     return;
   }
   char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
@@ -386,7 +396,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   {
     freeCStringArray(resource_ids, resourceIDs.count);
     freeCStringArray(user_ids, options.shareWithUsers.count);
-    handler(err);
+    runOnMainQueue(^{
+      handler(err);
+    });
     return;
   }
 

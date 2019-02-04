@@ -48,6 +48,13 @@ NSError* getOptionalFutureError(void* future)
   return error;
 }
 
+void runOnMainQueue(void (^block)(void))
+{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    block();
+  });
+}
+
 // To understand the __bridge_madness: https://stackoverflow.com/a/14782488/4116453
 // and https://stackoverflow.com/a/14207961/4116453
 void* resolvePromise(void* future, void* arg)

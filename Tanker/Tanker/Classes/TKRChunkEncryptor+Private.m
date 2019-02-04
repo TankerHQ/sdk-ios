@@ -87,7 +87,9 @@
 
   if (!encrypted_buffer)
   {
-    handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorOther));
+    runOnMainQueue(^{
+      handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorOther));
+    });
     return;
   }
 
@@ -119,7 +121,9 @@
 
   if (!seal_buffer)
   {
-    handler(nil, createNSError("could not allocate seal buffer", TKRErrorOther));
+    runOnMainQueue(^{
+      handler(nil, createNSError("could not allocate seal buffer", TKRErrorOther));
+    });
     return;
   }
 
@@ -142,14 +146,18 @@
   char** user_ids = convertStringstoCStrings(options.shareWithUsers, &err);
   if (err)
   {
-    handler(nil, err);
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
     return;
   }
   char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
   if (err)
   {
     freeCStringArray(user_ids, options.shareWithUsers.count);
-    handler(nil, err);
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
     return;
   }
   encryption_options.recipient_uids = (char const* const*)user_ids;
@@ -179,7 +187,9 @@
   uint8_t* decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)
   {
-    handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorOther));
+    runOnMainQueue(^{
+      handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorOther));
+    });
     return;
   }
 

@@ -49,7 +49,9 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
   NSError* err = nil;
   NSData* data = convertStringToData(clearText, &err);
   if (err)
-    handler(nil, err);
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
   else
     [self encryptDataFromData:data atIndex:index completionHandler:handler];
 }
@@ -64,7 +66,9 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
   NSError* err = nil;
   NSData* data = convertStringToData(clearText, &err);
   if (err)
-    handler(nil, err);
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
   else
     [self encryptDataFromData:data completionHandler:handler];
 }
