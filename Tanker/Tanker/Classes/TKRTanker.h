@@ -228,7 +228,7 @@
 
  @return a Promise<TKRChunkEncryptor*>
  */
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptor;
+- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptor DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Create a Chunk Encryptor from an existing seal.
@@ -241,7 +241,7 @@
 
  @return a Promise<TKRChunkEncryptor*>
  */
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal;
+- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Create a Chunk Encryptor from an existing seal.
@@ -254,7 +254,8 @@
  @return a Promise<TKRChunkEncryptor*>
  */
 - (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
-                                                              options:(nonnull TKRDecryptionOptions*)options;
+                                                              options:(nonnull TKRDecryptionOptions*)options
+    DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Encrypt a string and share it with the user's registered devices.
