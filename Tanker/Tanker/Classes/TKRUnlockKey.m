@@ -1,7 +1,6 @@
 #import "TKRTanker+Private.h"
 #import "TKRUnlockKey+Private.h"
 #import "TKRUtils+Private.h"
-#import <PromiseKit/Promise.h>
 
 @implementation TKRUnlockKey
 

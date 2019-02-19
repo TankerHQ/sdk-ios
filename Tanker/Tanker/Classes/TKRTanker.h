@@ -1,25 +1,22 @@
 
 #import <AvailabilityMacros.h>
 #import <Foundation/Foundation.h>
-#import <PromiseKit/fwd.h>
 
 #import "TKRChunkEncryptor.h"
 #import "TKRDecryptionOptions.h"
 #import "TKREncryptionOptions.h"
-#import "TKRShareOptions.h"
-#import "TKRUnlockOptions.h"
-#import "TKRUnlockMethods.h"
 #import "TKREvents.h"
+#import "TKRShareOptions.h"
 #import "TKRStatus.h"
 #import "TKRTankerOptions.h"
 #import "TKRUnlockKey.h"
+#import "TKRUnlockMethods.h"
+#import "TKRUnlockOptions.h"
 
 #define TKRErrorDomain @"TKRErrorDomain"
 
 /*!
  @brief Tanker object
-
- @description Every method returning a PMKPromise does not throw.
  */
 @interface TKRTanker : NSObject
 
@@ -66,65 +63,73 @@
 
 /*!
  @brief Register a handler called when the current device is revoked.
- 
+
  @discussion The handler will be called as soon as the device is revoked.
- 
+
  @param handler This block will be called without any argument, and will be run on a background queue.
- 
+
  @return an event handler id.
  */
 - (nonnull NSNumber*)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler;
 /*!
  @brief Register a handler called when new devices have been unlocked for the current user since their last connection.
- 
+
  @discussion The handler will be called as soon as the device is unlocked or new devices
              have been unlocked for the current user since his last connection
- 
+
  @param handler This block will be called without any argument, and will be run on a background queue.
- 
+
  @return an event handler id.
  */
 - (nonnull NSNumber*)connectDeviceCreatedHandler:(nonnull TKRDeviceCreatedHandler)handler;
 /*!
  @brief Check if the current user has already registered an unlock key.
 
- @discussion If this method returns @NO, you can call registerUnlock or generateAndRegisterUnlockKey.
+ @discussion If @NO is passed to the completion handler, you can call registerUnlock or generateAndRegisterUnlockKey.
 
- @return a PMKPromise<NSNumber*> containing either @YES or @NO.
+ @param handler the block called with either @YES or @NO.
 */
-- (nonnull PMKPromise<NSNumber*>*)isUnlockAlreadySetUp;
+- (void)isUnlockAlreadySetUpWithCompletionHandler:(nonnull TKRBooleanHandler)handler;
 
 /*!
  @brief Check if the current user has already registered an unlock method out of password and email.
 
- @discussion If this method returns @NO, you can call registerUnlock.
+ @discussion If NO is returned, you can call registerUnlock.
 
- @return a PMKPromise<NSNumber*> containing either @YES or @NO.
+ @param err output error parameter.
+
+ @return YES if any method has been registered, NO otherwise.
  */
-- (nonnull PMKPromise<NSNumber*>*)hasRegisteredUnlockMethods;
+- (BOOL)hasRegisteredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err;
 
 /*!
  @brief Check if the current user has registered the given unlock method.
 
- @discussion If this method returns @NO, you can call registerUnlock to register the corresponding method.
+ @discussion If NO is returned, you can call registerUnlock to register the corresponding
+ method.
 
- @return a PMKPromise<NSNumber*> containing either @YES or @NO.
+ @param method unlock method to check.
+ @param err output error parameter.
+
+ @return YES if the method has been registered, NO otherwise.
  */
-- (nonnull PMKPromise<NSNumber*>*)hasRegisteredUnlockMethod:(NSUInteger)method;
+- (BOOL)hasRegisteredUnlockMethod:(TKRUnlockMethods)method error:(NSError* _Nullable* _Nonnull)err;
 
 /*!
- @brief Get the list of the unlock methods that have been registered.
+ @brief Get the list of the registered unlock methods.
 
- @return a PMKPromise<NSArray*> containing TKRUnlockMethods' values as NSNumber*.
+ @param err output error parameter.
+
+ @return a list of registered unlock methods, represented as NSNumber*, or nil if an error occurs.
  */
-- (nonnull PMKPromise<NSArray*>*)registeredUnlockMethods;
+- (nullable NSArray<NSNumber*>*)registeredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err;
 
 /*!
  @brief Register one or more unlock methods
 
- @return a void promise.
+ @param handler the block called with a NSError*, or nil.
  */
-- (nonnull PMKPromise*)registerUnlock:(nonnull TKRUnlockOptions*)options;
+- (void)registerUnlock:(nonnull TKRUnlockOptions*)options completionHandler:(TKRErrorHandler)handler;
 
 /*!
 @brief Set up a password key for the current user.
@@ -132,19 +137,20 @@
 @discussion Requires Tanker status to be opened.
 
 @param password a password to protect access to the unlock feature.
-
-@return a void promise.
+@param handler the block called with a NSError*, or nil.
 */
-- (nonnull PMKPromise*)setupUnlockWithPassword:(nonnull NSString*)password DEPRECATED_ATTRIBUTE;
+- (void)setupUnlockWithPassword:(nonnull NSString*)password
+              completionHandler:(nonnull TKRErrorHandler)handler DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Update an already existing user password
 
  @discussion Requires isUnlockAlreadySetUp == @YES.
 
- @return a void promise.
+ @param handler the block called with a NSError*, or nil.
  */
-- (nonnull PMKPromise*)updateUnlockPassword:(nonnull NSString*)newPassword DEPRECATED_ATTRIBUTE;
+- (void)updateUnlockPassword:(nonnull NSString*)newPassword
+           completionHandler:(nonnull TKRErrorHandler)handler DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Unlock the current device with an unlock key
@@ -152,30 +158,29 @@
  @discussion Once this method returns, the current device can be open.
 
  @param unlockKey An unlock key returned by generateAndRegisterUnlockKey on a previously accepted device.
+ @param handler the block called with a NSError*, or nil.
 
  @pre currentDevice.status == TKRStatusDeviceCreation
-
- @return a void promise.
  */
-- (nonnull PMKPromise*)unlockCurrentDeviceWithUnlockKey:(nonnull TKRUnlockKey*)unlockKey;
+- (void)unlockCurrentDeviceWithUnlockKey:(nonnull TKRUnlockKey*)unlockKey
+                       completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
-@brief Unlock the current device using the password set up with setupUnlockWithPassword.
+ @brief Unlock the current device using the password set up with setupUnlockWithPassword.
 
-@param password the password used with setupUnlockWithPassword.
-
-@return a void promise.
+ @param password the password used with setupUnlockWithPassword.
+ @param handler the block called with a NSError*, or nil.
  */
-- (nonnull PMKPromise*)unlockCurrentDeviceWithPassword:(nonnull NSString*)password;
+- (void)unlockCurrentDeviceWithPassword:(nonnull NSString*)password completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Unlock the current device using the verification code sent to the email registered with registerUnlock.
- 
+
  @param verificationCode the code sent to the registered email.
- 
- @return a void promise.
+ @param handler the block called with a NSError*, or nil.
  */
-- (nonnull PMKPromise*)unlockCurrentDeviceWithVerificationCode:(nonnull NSString*)verificationCode;
+- (void)unlockCurrentDeviceWithVerificationCode:(nonnull NSString*)verificationCode
+                              completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Open Tanker.
@@ -184,78 +189,78 @@
 
  @param userID The user ID.
  @param userToken The user token generated by createUserTokenWithUserID:userSecret:.
+ @param handler the block called with a NSError*, or nil.
 
  @post Status is TKRStatusOpen. Encryption operations can be used.
-
- @return a void promise.
  */
-- (nonnull PMKPromise*)openWithUserID:(nonnull NSString*)userID userToken:(nonnull NSString*)userToken;
+- (void)openWithUserID:(nonnull NSString*)userID
+             userToken:(nonnull NSString*)userToken
+     completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Retrieve the current device id.
 
- @pre Status is TKRStatusOpen.
+ @param handler the block called with the device id.
 
- @return a Promise<NSString*> containing the current device id.
+ @pre Status is TKRStatusOpen.
  */
-- (nonnull PMKPromise<NSString*>*)deviceID;
+- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler;
 
 /*!
  @brief Close Tanker.
 
  @discussion Perform Tanker cleanup actions.
 
- @post Status is TKRStatusClosed
+ @param handler the block called with a NSError*, or nil.
 
- @return a void promise.
+ @post Status is TKRStatusClosed
 */
-- (nonnull PMKPromise*)close;
+- (void)closeWithCompletionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Create a unlock key that can be used to validate devices.
 
  @discussion A new unlock key is created each time.
 
- @return a Promise<TKRUnlockKey*>.
+ @param handler the block called with the unlock key, or nil.
  */
-- (nonnull PMKPromise<TKRUnlockKey*>*)generateAndRegisterUnlockKey;
+- (void)generateAndRegisterUnlockKeyWithCompletionHandler:(nonnull TKRUnlockKeyHandler)handler;
 
 /*!
  @brief Create an empty Chunk Encryptor
 
+ @param handler the block called with the created chunk encryptor.
+
  @pre Status is TKRStatusOpen
  @post the chunk encryptor is empty
-
- @return a Promise<TKRChunkEncryptor*>
  */
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptor DEPRECATED_ATTRIBUTE;
+- (void)makeChunkEncryptorWithCompletionHandler:(nonnull TKRChunkEncryptorHandler)handler DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Create a Chunk Encryptor from an existing seal.
 
  @discussion equivalent to calling makeChunkEncryptorFromSeal:options: with default options.
 
- @param seal the seal from which the Chunk Encryptor will be created.
+ @param seal the seal from which the chunk encryptor will be created.
+ @param handler the block called with the created chunk encryptor.
 
  @pre Status is TKRStatusOpen
-
- @return a Promise<TKRChunkEncryptor*>
  */
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal DEPRECATED_ATTRIBUTE;
+- (void)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
+                 completionHandler:(nonnull TKRChunkEncryptorHandler)handler DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Create a Chunk Encryptor from an existing seal.
 
  @param seal the seal from which the Chunk Encryptor will be created.
  @param options Custom decryption options.
+ @param handler the block called with the created chunk encryptor.
 
  @pre Status is TKRStatusOpen
-
- @return a Promise<TKRChunkEncryptor*>
  */
-- (nonnull PMKPromise<TKRChunkEncryptor*>*)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
-                                                              options:(nonnull TKRDecryptionOptions*)options
-    DEPRECATED_ATTRIBUTE;
+- (void)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
+                           options:(nonnull TKRDecryptionOptions*)options
+                 completionHandler:(nonnull TKRChunkEncryptorHandler)handler DEPRECATED_ATTRIBUTE;
 
 /*!
  @brief Encrypt a string and share it with the user's registered devices.
@@ -264,10 +269,9 @@
  There are no requirements on Unicode Normalization Form (NFC/NFD/NFKC/NFKD).
 
  @param clearText The string to encrypt.
-
- @return a Promise<NSData*> containing the encrypted string.
+ @param handler the block called with the encrypted data.
  */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText;
+- (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt a string, using customized options.
@@ -277,11 +281,11 @@
 
  @param clearText The string to encrypt.
  @param options Custom encryption options.
-
- @return a Promise<NSData*> containing the encrypted string.
+ @param handler the block called with the encrypted data.
  */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText
-                                              options:(nonnull TKREncryptionOptions*)options;
+- (void)encryptDataFromString:(nonnull NSString*)clearText
+                      options:(nonnull TKREncryptionOptions*)options
+            completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt data and share it with the user's registered devices.
@@ -289,34 +293,33 @@
  @discussion equivalent to calling encryptDataFromString:options: with default options.
 
  @param clearData data to encrypt.
-
- @return a Promise<NSData*> containing the encrypted data.
+ @param handler the block called with the encrypted data.
  */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData;
+- (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt data, using customized options.
 
  @param clearData data to encrypt.
- @param options Custom encryption options.
-
- @return a Promise<NSData*> containing the encrypted data.
+ @param options custom encryption options.
+ @param handler the block called with the encrypted data.
  */
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData
-                                            options:(nonnull TKREncryptionOptions*)options;
+- (void)encryptDataFromData:(nonnull NSData*)clearData
+                    options:(nonnull TKREncryptionOptions*)options
+          completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Decrypt encrypted data as a string.
 
  @param cipherText encrypted data to decrypt.
  @param options custom decryption options.
+ @param handler the block called with the decrypted string.
 
  @pre @a cipherText was returned by encryptDataFromString or encryptDataFromString:shareWithUserIDs:.
-
- @return a Promise<NSString*> containing the decrypted string.
  */
-- (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText
-                                                options:(nonnull TKRDecryptionOptions*)options;
+- (void)decryptStringFromData:(nonnull NSData*)cipherText
+                      options:(nonnull TKRDecryptionOptions*)options
+            completionHandler:(nonnull TKRDecryptedStringHandler)handler;
 
 /*!
  @brief Decrypt encrypted data as a string.
@@ -324,10 +327,11 @@
  @discussion equivalent to calling decryptStringFromData:options: with default options.
 
  @param cipherText encrypted data to decrypt.
+ @param handler the block called with the decrypted string.
 
- @return a Promise<NSString*> containing the decrypted string.
+ @pre @a cipherText was returned by encryptDataFromString.
  */
-- (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText;
+- (void)decryptStringFromData:(nonnull NSData*)cipherText completionHandler:(nonnull TKRDecryptedStringHandler)handler;
 
 /*!
  @brief Decrypt encrypted data.
@@ -335,28 +339,30 @@
  @discussion equivalent to calling decryptDataFromData:options: with default options.
 
  @param cipherData encrypted data to decrypt.
+ @param handler the block called with the decrypted data.
 
- @pre @a cipherText was returned by encryptDataFromData or encryptDataFromData:options:
-
- @return a Promise<NSData*> containing the decrypted data.
+ @pre @a cipherText was returned by encryptDataFromData.
  */
-- (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherData;
+- (void)decryptDataFromData:(nonnull NSData*)cipherData completionHandler:(nonnull TKRDecryptedDataHandler)handler;
 
 /*!
  @brief Decrypt encrypted data.
 
  @param cipherText encrypted data to decrypt.
  @param options custom decryption options.
- @return a Promise<NSData*> containing the decrypted data.
+ @param handler the block called with the decrypted data.
+
+ @pre @a cipherText was returned by encryptDataFromData.
  */
-- (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherText
-                                            options:(nonnull TKRDecryptionOptions*)options;
+- (void)decryptDataFromData:(nonnull NSData*)cipherText
+                    options:(nonnull TKRDecryptionOptions*)options
+          completionHandler:(nonnull TKRDecryptedDataHandler)handler;
 
 /*!
  @brief Get the encrypted resource ID.
 
  @param cipherData encrypted data.
- @param error output parameter
+ @param error output error parameter.
 
  @return the resource id.
  */
@@ -366,46 +372,50 @@
  @brief Create a group with the given user IDs.
 
  @param userIds the users to add to the group.
-
- @return the group id.
+ @param handler the block called with the group id.
  */
-- (nonnull PMKPromise<NSString*>*)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds;
+- (void)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds
+             completionHandler:(nonnull TKRGroupIDHandler)handler;
 
 /*!
  @brief Update a group to add the given user IDs.
 
  @param groupId the id of the group to update.
  @param usersToAdd the users to add to the group.
-
- @return a void promise.
+ @param handler the block called with a NSError, or nil.
  */
-- (nonnull PMKPromise*)updateMembersOfGroup:(nonnull NSString*)groupId
-                                        add:(nonnull NSArray<NSString*>*)usersToAdd;
+- (void)updateMembersOfGroup:(nonnull NSString*)groupId
+                         add:(nonnull NSArray<NSString*>*)usersToAdd
+           completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Share multiple encrypted resources to multiple users.
 
  @param resourceIDs resource IDs to share.
  @param options user and group IDs to share with.
+ @param handler the block called with a NSError, or nil.
 
  @pre @a resourceIDs must contain resource IDs retrieved with the resourceIDOfEncryptedData method.
  @a userIDs must contain valid user IDs.
 
  If one of those parameters are empty, the method has no effect.
  */
-- (nonnull PMKPromise*)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
-                                options:(nonnull TKRShareOptions*)options;
+- (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
+                 options:(nonnull TKRShareOptions*)options
+       completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Revoke a device from its deviceId
- 
+
+ @discussion The handler being called with nil does not mean that the device has been revoked yet. You have to use the
+ TKRDeviceRevokedHandler.
+
  @param deviceId device ID to revoke.
- 
+ @param handler the block called with a NSError, or nil.
+
  @pre @a deviceId must be the ID of one of the current user's devices.
- 
- @return a void promise. The promise being resolved does not mean that the device has been revoked yet. You have to use the TKRDeviceRevokedHandler.
  */
-- (nonnull PMKPromise*)revokeDevice:(nonnull NSString*)deviceId;
+- (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler;
 
 - (void)dealloc;
 

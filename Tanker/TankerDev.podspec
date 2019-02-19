@@ -16,8 +16,6 @@ It's available for browsers, desktop, iOS and Android.
 
   s.ios.deployment_target = '9.0'
 
-  s.dependency 'PromiseKit/Promise', '~> 1.7'
-  s.dependency 'PromiseKit/When', '~> 1.7'
   s.source_files = 'Tanker/Classes/**/*'
   s.private_header_files = 'Tanker/Classes/**/*+Private.h'
   s.pod_target_xcconfig = {
@@ -49,7 +47,9 @@ It's available for browsers, desktop, iOS and Android.
     test_spec.source_files = 'Tanker/Tests/*.{h,m}'
     test_spec.dependency 'Specta'
     test_spec.dependency 'Expecta'
+    test_spec.dependency 'PromiseKit/Promise', '~> 1.7'
     test_spec.dependency 'PromiseKit/Hang', '~> 1.7'
+    test_spec.dependency 'PromiseKit/When', '~> 1.7'
   end
 
 end

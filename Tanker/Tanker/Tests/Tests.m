@@ -2,8 +2,8 @@
 
 #import "TKRError.h"
 #import "TKRTanker.h"
-#import "TKRUnlockKey.h"
 #import "TKRTankerOptions+Private.h"
+#import "TKRUnlockKey.h"
 
 #import "TKRTestConfig.h"
 
@@ -84,6 +84,20 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* trustchainID)
   opts.writablePath = createStorageFullpath();
   opts.sdkType = @"test";
   return opts;
+}
+
+id hangWithAdapter(void (^handler)(PMKAdapter))
+{
+  return [PMKPromise hang:[PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+                       handler(adapter);
+                     }]];
+}
+
+id hangWithResolver(void (^handler)(PMKResolver))
+{
+  return [PMKPromise hang:[PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+                       handler(resolve);
+                     }]];
 }
 
 SpecBegin(TankerSpecs)
@@ -177,11 +191,15 @@ SpecBegin(TankerSpecs)
         it(@"should return TKRStatusOpen when open is called", ^{
           NSString* userID = createUUID();
           NSString* userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
-          [PMKPromise hang:[tanker openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
 
           expect(tanker.status).to.equal(TKRStatusOpen);
 
-          [PMKPromise hang:[tanker close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker closeWithCompletionHandler:resolve];
+          });
 
           expect(tanker.status).to.equal(TKRStatusClosed);
         });
@@ -189,21 +207,34 @@ SpecBegin(TankerSpecs)
         it(@"should return a valid base64 string when retrieving the current device id", ^{
           NSString* userID = createUUID();
           NSString* userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
-          [PMKPromise hang:[tanker openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
 
-          NSString* deviceID = [PMKPromise hang:[tanker deviceID]];
+          NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker deviceIDWithCompletionHandler:adapter];
+          });
           NSData* b64Data = [[NSData alloc] initWithBase64EncodedString:deviceID options:0];
 
           expect(b64Data).toNot.beNil();
 
-          [PMKPromise hang:[tanker close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker closeWithCompletionHandler:resolve];
+          });
 
-          NSError* err = [PMKPromise hang:[tanker deviceID]];
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker deviceIDWithCompletionHandler:adapter];
+          });
+          NSLog(@"%@", [err localizedDescription]);
           expect(err.domain).to.equal(TKRErrorDomain);
 
-          [PMKPromise hang:[tanker openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
 
-          NSString* deviceIDBis = [PMKPromise hang:[tanker deviceID]];
+          NSString* deviceIDBis = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker deviceIDWithCompletionHandler:adapter];
+          });
 
           expect(deviceIDBis).to.equal(deviceID);
         });
@@ -211,7 +242,9 @@ SpecBegin(TankerSpecs)
         it(@"should throw when opening with a wrong user ID", ^{
           NSString* userID = createUUID();
           NSString* userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
-          NSError* err = [PMKPromise hang:[tanker openWithUserID:@"wrong" userToken:userToken]];
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [tanker openWithUserID:@"wrong" userToken:userToken completionHandler:resolve];
+          });
 
           expect(err.code).to.equal(TKRErrorInvalidArgument);
         });
@@ -226,31 +259,37 @@ SpecBegin(TankerSpecs)
           NSString* userID = createUUID();
           NSString* userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
 
-          [PMKPromise hang:[tanker openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
           expect(tanker.status).to.equal(TKRStatusOpen);
         });
 
         afterEach(^{
-          [PMKPromise hang:[tanker close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker closeWithCompletionHandler:resolve];
+          });
         });
 
         it(@"should decrypt an encrypted string", ^{
           NSString* clearText = @"Rosebud";
-          NSData* encryptedData = [PMKPromise hang:[tanker encryptDataFromString:clearText]];
-          NSString* decryptedText = [PMKPromise hang:[tanker decryptStringFromData:encryptedData]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker encryptDataFromString:clearText completionHandler:adapter];
+          });
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(clearText);
         });
 
-        it(@"should encrypt temporary strings", ^{
-          expect([PMKPromise
-                     hang:[tanker decryptStringFromData:[PMKPromise hang:[tanker encryptDataFromString:@"Rosebud"]]]])
-              .to.equal(@"Rosebud");
-        });
-
         it(@"should encrypt an empty string", ^{
-          NSData* encryptedData = [PMKPromise hang:[tanker encryptDataFromString:@""]];
-          NSString* decryptedText = [PMKPromise hang:[tanker decryptStringFromData:encryptedData]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker encryptDataFromString:@"" completionHandler:adapter];
+          });
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(@"");
         });
@@ -258,8 +297,12 @@ SpecBegin(TankerSpecs)
         it(@"should decrypt an encrypted data", ^{
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
 
-          NSData* encryptedData = [PMKPromise hang:[tanker encryptDataFromData:clearData]];
-          NSData* decryptedData = [PMKPromise hang:[tanker decryptDataFromData:encryptedData]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker encryptDataFromData:clearData completionHandler:adapter];
+          });
+          NSData* decryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker decryptDataFromData:encryptedData completionHandler:adapter];
+          });
 
           expect(decryptedData).to.equal(clearData);
         });
@@ -282,34 +325,51 @@ SpecBegin(TankerSpecs)
           NSString* aliceToken = createUserToken(aliceID, trustchainID, trustchainPrivateKey);
           NSString* bobToken = createUserToken(bobID, trustchainID, trustchainPrivateKey);
 
-          [PMKPromise hang:[aliceTanker openWithUserID:aliceID userToken:aliceToken]];
-          [PMKPromise hang:[bobTanker openWithUserID:bobID userToken:bobToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker openWithUserID:aliceID userToken:aliceToken completionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker openWithUserID:bobID userToken:bobToken completionHandler:resolve];
+          });
           expect(aliceTanker.status).to.equal(TKRStatusOpen);
           expect(bobTanker.status).to.equal(TKRStatusOpen);
         });
 
         afterEach(^{
-          [PMKPromise hang:[aliceTanker close]];
-          [PMKPromise hang:[bobTanker close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker closeWithCompletionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker closeWithCompletionHandler:resolve];
+          });
         });
 
         it(@"should create a group with alice and encrypt to her", ^{
-          NSString* groupId = [PMKPromise hang:[aliceTanker createGroupWithUserIDs:@[ aliceID ]]];
+          NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createGroupWithUserIDs:@[ aliceID ] completionHandler:adapter];
+          });
           NSString* clearText = @"Rosebud";
 
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions defaultOptions];
           encryptionOptions.shareWithGroups = @[ groupId ];
-          NSData* encryptedData =
-              [PMKPromise hang:[bobTanker encryptDataFromString:clearText options:encryptionOptions]];
-          NSString* decryptedString = [PMKPromise hang:[aliceTanker decryptStringFromData:encryptedData]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker encryptDataFromString:clearText options:encryptionOptions completionHandler:adapter];
+          });
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
           expect(decryptedString).to.equal(clearText);
         });
 
         it(@"should create a group with alice and share to her", ^{
-          NSString* groupId = [PMKPromise hang:[aliceTanker createGroupWithUserIDs:@[ aliceID ]]];
+          NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createGroupWithUserIDs:@[ aliceID ] completionHandler:adapter];
+          });
           NSString* clearText = @"Rosebud";
 
-          NSData* encryptedData = [PMKPromise hang:[bobTanker encryptDataFromString:clearText]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker encryptDataFromString:clearText completionHandler:adapter];
+          });
 
           NSError* err = nil;
           NSString* resourceID = [bobTanker resourceIDOfEncryptedData:encryptedData error:&err];
@@ -317,66 +377,75 @@ SpecBegin(TankerSpecs)
 
           TKRShareOptions* opts = [TKRShareOptions defaultOptions];
           opts.shareWithGroups = @[ groupId ];
-          [PMKPromise hang:[bobTanker shareResourceIDs:@[ resourceID ] options:opts]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
+          });
 
-          NSString* decryptedString = [PMKPromise hang:[aliceTanker decryptStringFromData:encryptedData]];
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
           expect(decryptedString).to.equal(clearText);
         });
 
         it(@"should allow bob to decrypt once he's added to the group", ^{
-          NSString* groupId = [PMKPromise hang:[aliceTanker createGroupWithUserIDs:@[ aliceID ]]];
+          NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createGroupWithUserIDs:@[ aliceID ] completionHandler:adapter];
+          });
           NSString* clearText = @"Rosebud";
 
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions defaultOptions];
           encryptionOptions.shareWithGroups = @[ groupId ];
-          NSData* encryptedData =
-              [PMKPromise hang:[aliceTanker encryptDataFromString:clearText options:encryptionOptions]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker encryptDataFromString:clearText completionHandler:adapter];
+          });
 
-          [PMKPromise hang:[aliceTanker updateMembersOfGroup:groupId add:@[ bobID ]]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker updateMembersOfGroup:groupId add:@[ bobID ] completionHandler:resolve];
+          });
 
-          NSString* decryptedString = [PMKPromise hang:[bobTanker decryptStringFromData:encryptedData]];
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
           expect(decryptedString).to.equal(clearText);
         });
 
-        it(@"should throw when creating an empty group", ^{
-          __block NSError* err = nil;
-          [PMKPromise hang:[aliceTanker createGroupWithUserIDs:@[]].catch(^(NSError* e) {
-            err = e;
-          })];
+        it(@"should error when creating an empty group", ^{
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createGroupWithUserIDs:@[] completionHandler:adapter];
+          });
 
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidGroupSize);
         });
 
-        it(@"should throw when adding 0 members to a group", ^{
-          NSString* groupId = [PMKPromise hang:[aliceTanker createGroupWithUserIDs:@[ aliceID ]]];
+        it(@"should error when adding 0 members to a group", ^{
+          NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createGroupWithUserIDs:@[ aliceID ] completionHandler:adapter];
+          });
 
-          __block NSError* err = nil;
-          [PMKPromise hang:[aliceTanker updateMembersOfGroup:groupId add:@[]].catch(^(NSError* e) {
-            err = e;
-          })];
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker updateMembersOfGroup:groupId add:@[] completionHandler:resolve];
+          });
 
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidGroupSize);
         });
 
-        it(@"should throw when adding members to a non-existent group", ^{
-          __block NSError* err = nil;
-          [PMKPromise
-              hang:[aliceTanker updateMembersOfGroup:@"o/Fufh9HZuv5XoZJk5X3ny+4ZeEZegoIEzRjYPP7TX0=" add:@[ bobID ]]
-                       .catch(^(NSError* e) {
-                         err = e;
-                       })];
+        it(@"should error when adding members to a non-existent group", ^{
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker updateMembersOfGroup:@"o/Fufh9HZuv5XoZJk5X3ny+4ZeEZegoIEzRjYPP7TX0="
+                                          add:@[ bobID ]
+                            completionHandler:resolve];
+          });
 
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorGroupNotFound);
         });
 
-        it(@"should throw when creating a group with non-existing members", ^{
-          __block NSError* err = nil;
-          [PMKPromise hang:[aliceTanker createGroupWithUserIDs:@[ @"no no no" ]].catch(^(NSError* e) {
-            err = e;
-          })];
+        it(@"should error when creating a group with non-existing members", ^{
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createGroupWithUserIDs:@[ @"no no no" ] completionHandler:adapter];
+          });
 
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorUserNotFound);
@@ -408,22 +477,36 @@ SpecBegin(TankerSpecs)
           NSString* bobToken = createUserToken(bobID, trustchainID, trustchainPrivateKey);
           NSString* charlieToken = createUserToken(charlieID, trustchainID, trustchainPrivateKey);
 
-          [PMKPromise hang:[aliceTanker openWithUserID:aliceID userToken:aliceToken]];
-          [PMKPromise hang:[bobTanker openWithUserID:bobID userToken:bobToken]];
-          [PMKPromise hang:[charlieTanker openWithUserID:charlieID userToken:charlieToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker openWithUserID:aliceID userToken:aliceToken completionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker openWithUserID:bobID userToken:bobToken completionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [charlieTanker openWithUserID:charlieID userToken:charlieToken completionHandler:resolve];
+          });
           expect(aliceTanker.status).to.equal(TKRStatusOpen);
           expect(bobTanker.status).to.equal(TKRStatusOpen);
           expect(charlieTanker.status).to.equal(TKRStatusOpen);
         });
 
         afterEach(^{
-          [PMKPromise hang:[aliceTanker close]];
-          [PMKPromise hang:[bobTanker close]];
-          [PMKPromise hang:[charlieTanker close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker closeWithCompletionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker closeWithCompletionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [charlieTanker closeWithCompletionHandler:resolve];
+          });
         });
 
         it(@"should return a valid base64 resourceID", ^{
-          NSData* encryptedData = [PMKPromise hang:[aliceTanker encryptDataFromString:@"Rosebud"]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptDataFromString:@"Rosebud" completionHandler:adapter];
+          });
           NSError* err = nil;
           NSString* resourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
 
@@ -445,7 +528,10 @@ SpecBegin(TankerSpecs)
 
         it(@"should share data to Bob who can decrypt it", ^{
           NSString* clearText = @"Rosebud";
-          NSData* encryptedData = [PMKPromise hang:[aliceTanker encryptDataFromString:clearText]];
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+          });
           NSError* err = nil;
           NSString* resourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
 
@@ -453,16 +539,26 @@ SpecBegin(TankerSpecs)
 
           TKRShareOptions* opts = [TKRShareOptions defaultOptions];
           opts.shareWithUsers = @[ bobID ];
-          [PMKPromise hang:[aliceTanker shareResourceIDs:@[ resourceID ] options:opts]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
+          });
 
-          NSString* decryptedString = [PMKPromise hang:[bobTanker decryptStringFromData:encryptedData]];
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
           expect(decryptedString).to.equal(clearText);
         });
 
         it(@"should share data to multiple users who can decrypt it", ^{
           __block NSString* clearText = @"Rosebud";
-          NSArray* encryptPromises =
-              @[ [aliceTanker encryptDataFromString:clearText], [aliceTanker encryptDataFromString:clearText] ];
+          NSArray* encryptPromises = @[
+            [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+              [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+            }],
+            [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+              [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+            }]
+          ];
           NSArray* encryptedTexts = [PMKPromise hang:[PMKPromise all:encryptPromises]];
 
           NSError* err = nil;
@@ -476,13 +572,23 @@ SpecBegin(TankerSpecs)
 
           TKRShareOptions* opts = [TKRShareOptions defaultOptions];
           opts.shareWithUsers = @[ bobID, charlieID ];
-          [PMKPromise hang:[aliceTanker shareResourceIDs:resourceIDs options:opts]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker shareResourceIDs:resourceIDs options:opts completionHandler:resolve];
+          });
 
           NSArray* decryptPromises = @[
-            [bobTanker decryptStringFromData:encryptedTexts[0]],
-            [bobTanker decryptStringFromData:encryptedTexts[1]],
-            [charlieTanker decryptStringFromData:encryptedTexts[0]],
-            [charlieTanker decryptStringFromData:encryptedTexts[1]]
+            [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+              [bobTanker decryptStringFromData:encryptedTexts[0] completionHandler:adapter];
+            }],
+            [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+              [bobTanker decryptStringFromData:encryptedTexts[1] completionHandler:adapter];
+            }],
+            [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+              [charlieTanker decryptStringFromData:encryptedTexts[0] completionHandler:adapter];
+            }],
+            [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
+              [charlieTanker decryptStringFromData:encryptedTexts[1] completionHandler:adapter];
+            }]
           ];
           NSArray* decryptedTexts = [PMKPromise hang:[PMKPromise all:decryptPromises]];
 
@@ -493,58 +599,77 @@ SpecBegin(TankerSpecs)
 
         it(@"should have no effect to share to nobody", ^{
           NSString* clearText = @"Rosebud";
-          NSData* encryptedData = [PMKPromise hang:[aliceTanker encryptDataFromString:clearText]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+          });
           NSError* err = nil;
           NSString* resourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
           expect(err).to.beNil();
 
           TKRShareOptions* opts = [TKRShareOptions defaultOptions];
-          id value = [PMKPromise hang:[aliceTanker shareResourceIDs:@[ resourceID ] options:opts]];
-          expect(value).toNot.beKindOf([NSError class]);
+          err = hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
+          });
+          expect(err).beNil();
         });
 
         it(@"should have no effect to share nothing", ^{
           TKRShareOptions* opts = [TKRShareOptions defaultOptions];
           opts.shareWithUsers = @[ bobID, charlieID ];
-          id value = [PMKPromise hang:[aliceTanker shareResourceIDs:@[] options:opts]];
-          expect(value).toNot.beKindOf([NSError class]);
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker shareResourceIDs:@[] options:opts completionHandler:resolve];
+          });
+          expect(err).to.beNil();
         });
 
         it(@"should share directly when encrypting a string", ^{
           NSString* clearText = @"Rosebud";
           encryptionOptions.shareWithUsers = @[ bobID, charlieID ];
-          NSData* encryptedData =
-              [PMKPromise hang:[aliceTanker encryptDataFromString:clearText options:encryptionOptions]];
 
-          NSString* decryptedText = [PMKPromise hang:[bobTanker decryptStringFromData:encryptedData]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptDataFromString:clearText options:encryptionOptions completionHandler:adapter];
+          });
+
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
           expect(decryptedText).to.equal(clearText);
-          decryptedText = [PMKPromise hang:[charlieTanker decryptStringFromData:encryptedData]];
+          decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [charlieTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
           expect(decryptedText).to.equal(clearText);
         });
 
         it(@"should share directly when encrypting data", ^{
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
           encryptionOptions.shareWithUsers = @[ bobID, charlieID ];
-          NSData* encryptedData =
-              [PMKPromise hang:[aliceTanker encryptDataFromData:clearData options:encryptionOptions]];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptDataFromData:clearData options:encryptionOptions completionHandler:adapter];
+          });
 
-          NSData* decryptedData = [PMKPromise hang:[bobTanker decryptDataFromData:encryptedData]];
-          expect(decryptedData).to.equal(clearData);
-          decryptedData = [PMKPromise hang:[charlieTanker decryptDataFromData:encryptedData]];
-          expect(decryptedData).to.equal(clearData);
+          NSData* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptDataFromData:encryptedData completionHandler:adapter];
+          });
+          expect(decryptedText).to.equal(clearData);
+          decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [charlieTanker decryptDataFromData:encryptedData completionHandler:adapter];
+          });
+          expect(decryptedText).to.equal(clearData);
         });
 
         it(@"should wait for the given timeout", ^{
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
-          NSData* encryptedData = [PMKPromise hang:[aliceTanker encryptDataFromData:clearData]];
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptDataFromData:clearData completionHandler:adapter];
+          });
 
           TKRDecryptionOptions* opts = [TKRDecryptionOptions defaultOptions];
           opts.timeout = 0;
-          NSError* err = [PMKPromise hang:[bobTanker decryptDataFromData:encryptedData options:opts]];
-          expect(err).toNot.beNil();
-          expect(err.code).to.equal(TKRErrorResourceKeyNotFound);
 
-          err = [PMKPromise hang:[bobTanker decryptStringFromData:encryptedData options:opts]];
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptDataFromData:encryptedData options:opts completionHandler:adapter];
+          });
 
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorResourceKeyNotFound);
@@ -566,183 +691,270 @@ SpecBegin(TankerSpecs)
 
           userID = createUUID();
           userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
-          [PMKPromise hang:[firstDevice openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
           expect(firstDevice.status).to.equal(TKRStatusOpen);
         });
 
         afterEach(^{
-          [PMKPromise hang:[firstDevice close]];
-          [PMKPromise hang:[secondDevice close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice closeWithCompletionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice closeWithCompletionHandler:resolve];
+          });
         });
 
         it(@"should indicate when an unlock mechanism was set up", ^{
-          NSNumber* wasSetUp = [PMKPromise hang:[firstDevice isUnlockAlreadySetUp]];
-          expect(wasSetUp).to.equal(@NO);
-          wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethods]];
-          expect(wasSetUp).to.equal(@NO);
-          wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword]];
-          expect(wasSetUp).to.equal(@NO);
-          wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail]];
-          expect(wasSetUp).to.equal(@NO);
-          NSArray* methods = [PMKPromise hang:[firstDevice registeredUnlockMethods]];
-          expect([methods count]).to.equal(0);
+          NSError* err = nil;
+          BOOL wasSetUp = [hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice isUnlockAlreadySetUpWithCompletionHandler:adapter];
+          }) boolValue];
+          expect(wasSetUp).to.equal(NO);
 
-          [PMKPromise hang:[firstDevice setupUnlockWithPassword:@"password"]];
+          wasSetUp = [firstDevice hasRegisteredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          NSArray* methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(0);
+
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice setupUnlockWithPassword:@"password" completionHandler:resolve];
+          });
           // ... racy
           sleep(2);
 
-          wasSetUp = [PMKPromise hang:[firstDevice isUnlockAlreadySetUp]];
-          expect(wasSetUp).to.equal(@YES);
-          wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethods]];
-          expect(wasSetUp).to.equal(@YES);
-          wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword]];
-          expect(wasSetUp).to.equal(@YES);
-          wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail]];
-          expect(wasSetUp).to.equal(@NO);
-          methods = [PMKPromise hang:[firstDevice registeredUnlockMethods]];
-          expect([methods count]).to.equal(1);
+          wasSetUp = [hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice isUnlockAlreadySetUpWithCompletionHandler:adapter];
+          }) boolValue];
+          expect(wasSetUp).to.equal(YES);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(YES);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(YES);
+
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(1);
           expect([methods objectAtIndex:0]).to.equal(TKRUnlockMethodPassword);
         });
 
         it(@"should open the second device after a setup unlock", ^{
-          [PMKPromise hang:[firstDevice setupUnlockWithPassword:@"password"]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice setupUnlockWithPassword:@"password" completionHandler:resolve];
+          });
           sleep(1);
 
           [secondDevice connectUnlockRequiredHandler:^(void) {
             // safe to hang, since this is run on a background queue.
-            [PMKPromise hang:[secondDevice unlockCurrentDeviceWithPassword:@"password"]];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithPassword:@"password" completionHandler:resolve];
+            });
           }];
 
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
           expect(secondDevice.status).to.equal(TKRStatusOpen);
         });
 
         it(@"should open the second device after a register unlock", ^{
           TKRUnlockOptions* opts = [TKRUnlockOptions defaultOptions];
           opts.password = @"password";
-          [PMKPromise hang:[firstDevice registerUnlock:opts]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice registerUnlock:opts completionHandler:resolve];
+          });
           sleep(1);
 
           [secondDevice connectUnlockRequiredHandler:^(void) {
-            // must not hang here, it would block tconcurrent's thread
-            [secondDevice unlockCurrentDeviceWithPassword:@"password"];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithPassword:@"password" completionHandler:resolve];
+            });
           }];
 
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
           expect(secondDevice.status).to.equal(TKRStatusOpen);
         });
 
         it(@"should setup unlock with an email", ^{
-          NSNumber* wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail]];
-          expect(wasSetUp).to.equal(@NO);
-          NSArray* methods = [PMKPromise hang:[firstDevice registeredUnlockMethods]];
-          expect([methods count]).to.equal(0);
+          NSError* err = nil;
+          BOOL wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+          expect(wasSetUp).to.equal(NO);
+
+          NSArray* methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(0);
 
           TKRUnlockOptions* opts = [TKRUnlockOptions defaultOptions];
           opts.email = @"bob@alice.dk";
-          [PMKPromise hang:[firstDevice registerUnlock:opts]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice registerUnlock:opts completionHandler:resolve];
+          });
 
-          wasSetUp = [PMKPromise hang:[firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail]];
-          expect(wasSetUp).to.equal(@YES);
-          methods = [PMKPromise hang:[firstDevice registeredUnlockMethods]];
-          expect([methods count]).to.equal(1);
+          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
+          expect(err).to.beNil();
+
+          expect(wasSetUp).to.equal(YES);
+          methods = [firstDevice registeredUnlockMethodsWithError:&err];
+          expect(err).to.beNil();
+          expect(methods.count).to.equal(1);
           expect([methods objectAtIndex:0]).to.equal(TKRUnlockMethodEmail);
         });
 
         it(@"should share encrypted data with every accepted device", ^{
-          [PMKPromise hang:[firstDevice setupUnlockWithPassword:@"password"]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice setupUnlockWithPassword:@"password" completionHandler:resolve];
+          });
           sleep(1);
           [secondDevice connectUnlockRequiredHandler:^{
-            [secondDevice unlockCurrentDeviceWithPassword:@"password"];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithPassword:@"password" completionHandler:resolve];
+            });
           }];
 
           NSString* clearText = @"Rosebud";
 
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
-          NSData* encryptedText = [PMKPromise hang:[secondDevice encryptDataFromString:clearText]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
+          NSData* encryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [secondDevice encryptDataFromString:clearText completionHandler:adapter];
+          });
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice decryptStringFromData:encryptedText completionHandler:adapter];
+          });
 
-          NSString* decryptedText = [PMKPromise hang:[firstDevice decryptStringFromData:encryptedText]];
           expect(decryptedText).to.equal(clearText);
         });
 
         it(@"should accept a device with a previously generated unlock key", ^{
-          TKRUnlockKey* unlockKey = [PMKPromise hang:[firstDevice generateAndRegisterUnlockKey]];
+          TKRUnlockKey* unlockKey = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice generateAndRegisterUnlockKeyWithCompletionHandler:adapter];
+          });
           expect(unlockKey).toNot.beNil();
 
           [secondDevice connectUnlockRequiredHandler:^{
-            [secondDevice unlockCurrentDeviceWithUnlockKey:unlockKey];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithUnlockKey:unlockKey completionHandler:resolve];
+            });
           }];
 
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
 
           expect(secondDevice.status).to.equal(TKRStatusOpen);
         });
 
         it(@"should accept a device with a previously generated password key", ^{
           NSString* password = @"p4ssw0rd";
-          [PMKPromise hang:[firstDevice setupUnlockWithPassword:password]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice setupUnlockWithPassword:password completionHandler:resolve];
+          });
 
           [secondDevice connectUnlockRequiredHandler:^{
-            [secondDevice unlockCurrentDeviceWithPassword:password];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithPassword:password completionHandler:resolve];
+            });
           }];
 
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
 
           expect(secondDevice.status).to.equal(TKRStatusOpen);
         });
 
-        it(@"should throw when adding a device with an invalid password key", ^{
+        it(@"should error when adding a device with an invalid password key", ^{
           NSString* password = @"p4ssw0rd";
-          [PMKPromise hang:[firstDevice setupUnlockWithPassword:password]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice setupUnlockWithPassword:password completionHandler:resolve];
+          });
 
           __block NSError* err = nil;
           waitUntil(^(DoneCallback done) {
             [secondDevice connectUnlockRequiredHandler:^{
-              NSString* invalidPassword = @"invalid";
-              [secondDevice unlockCurrentDeviceWithPassword:invalidPassword].catch(^(NSError* e) {
-                err = e;
-                done();
-              });
+              [secondDevice unlockCurrentDeviceWithPassword:@"invalid"
+                                          completionHandler:^(NSError* e) {
+                                            err = e;
+                                            done();
+                                          }];
             }];
-            [secondDevice openWithUserID:userID userToken:userToken];
+            [secondDevice openWithUserID:userID
+                               userToken:userToken
+                       completionHandler:^(NSError* unused){
+                       }];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidUnlockPassword);
         });
 
-        it(@"should throw when trying to unlock a device and setup has not been done", ^{
-          NSString* password = @"p4ssw0rd";
-
+        it(@"should error when trying to unlock a device and setup has not been done", ^{
           __block NSError* err = nil;
           waitUntil(^(DoneCallback done) {
             [secondDevice connectUnlockRequiredHandler:^{
-              [secondDevice unlockCurrentDeviceWithPassword:password].catch(^(NSError* e) {
-                err = e;
-                done();
-              });
+              [secondDevice unlockCurrentDeviceWithPassword:@"p4ssw0rd"
+                                          completionHandler:^(NSError* e) {
+                                            err = e;
+                                            done();
+                                          }];
             }];
-            [secondDevice openWithUserID:userID userToken:userToken];
+            [secondDevice openWithUserID:userID
+                               userToken:userToken
+                       completionHandler:^(NSError* unused){
+                       }];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidUnlockKey);
         });
 
         it(@"should update an unlock password", ^{
-          [PMKPromise hang:[firstDevice setupUnlockWithPassword:@"password"]];
-
-          [PMKPromise hang:[firstDevice updateUnlockPassword:@"new password"]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice setupUnlockWithPassword:@"password" completionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice updateUnlockPassword:@"new password" completionHandler:resolve];
+          });
 
           [secondDevice connectUnlockRequiredHandler:^{
-            [secondDevice unlockCurrentDeviceWithPassword:@"new password"];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithPassword:@"new password" completionHandler:resolve];
+            });
           }];
 
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
 
           expect(secondDevice.status).to.equal(TKRStatusOpen);
         });
 
         it(@"should throw when trying to unlock a device and setup has not been done", ^{
-          NSError* err = [PMKPromise hang:[firstDevice updateUnlockPassword:@"password"]];
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice updateUnlockPassword:@"password" completionHandler:resolve];
+          });
 
           expect(err).toNot.beNil();
           expect(err.domain).to.equal(TKRErrorDomain);
@@ -754,12 +966,16 @@ SpecBegin(TankerSpecs)
           __block NSError* err = nil;
           waitUntil(^(DoneCallback done) {
             [secondDevice connectUnlockRequiredHandler:^{
-              [secondDevice unlockCurrentDeviceWithUnlockKey:unlockKey].catch(^(NSError* e) {
-                err = e;
-                done();
-              });
+              [secondDevice unlockCurrentDeviceWithUnlockKey:unlockKey
+                                           completionHandler:^(NSError* e) {
+                                             err = e;
+                                             done();
+                                           }];
             }];
-            [secondDevice openWithUserID:userID userToken:userToken];
+            [secondDevice openWithUserID:userID
+                               userToken:userToken
+                       completionHandler:^(NSError* unused){
+                       }];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidUnlockKey);
@@ -767,18 +983,30 @@ SpecBegin(TankerSpecs)
 
         it(@"should decrypt old resources on second device", ^{
           NSString* password = @"p4ssw0rd";
-          [PMKPromise hang:[firstDevice setupUnlockWithPassword:password]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice setupUnlockWithPassword:password completionHandler:resolve];
+          });
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedData = [PMKPromise hang:[firstDevice encryptDataFromString:clearText]];
-          [PMKPromise hang:[firstDevice close]];
+          NSData* encryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice encryptDataFromString:clearText completionHandler:adapter];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [firstDevice closeWithCompletionHandler:resolve];
+          });
 
           [secondDevice connectUnlockRequiredHandler:^{
-            [secondDevice unlockCurrentDeviceWithPassword:password];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithPassword:password completionHandler:resolve];
+            });
           }];
 
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
-          NSString* decryptedText = [PMKPromise hang:[secondDevice decryptStringFromData:encryptedData]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [secondDevice decryptStringFromData:encryptedText completionHandler:adapter];
+          });
           expect(decryptedText).to.equal(clearText);
         });
       });
@@ -791,109 +1019,159 @@ SpecBegin(TankerSpecs)
           NSString* userID = createUUID();
           NSString* userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
 
-          [PMKPromise hang:[tanker openWithUserID:userID userToken:userToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
           expect(tanker.status).to.equal(TKRStatusOpen);
         });
 
         afterEach(^{
-          [PMKPromise hang:[tanker close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker closeWithCompletionHandler:resolve];
+          });
         });
 
         it(@"should create a new TKRChunkEncryptor", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           expect(chunkEncryptor.count).to.equal(0);
         });
 
         it(@"should append a new encrypted chunk from a string and decrypt it", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
-          NSString* decryptedText = [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunk atIndex:0]];
+          NSData* encryptedChunk = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+          });
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptStringFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(clearText);
           expect(chunkEncryptor.count).to.equal(1);
         });
 
         it(@"should append a new encrypted chunk from data and decrypt it", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromData:clearData]];
-          NSData* decryptedData = [PMKPromise hang:[chunkEncryptor decryptDataFromData:encryptedChunk atIndex:0]];
+          NSData* encryptedChunk = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromData:clearData completionHandler:adapter];
+          });
+          NSData* decryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptDataFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedData).to.equal(clearData);
           expect(chunkEncryptor.count).to.equal(1);
         });
 
         it(@"should encrypt a string at a given index, filling gaps with holes", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText atIndex:2]];
+          NSData* encryptedChunk = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText atIndex:2 completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(3);
 
-          NSString* decryptedText = [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunk atIndex:2]];
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptStringFromData:encryptedChunk atIndex:2 completionHandler:adapter];
+          });
           expect(decryptedText).to.equal(clearText);
         });
 
         it(@"should encrypt data at a given index, filling gaps with holes", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromData:clearData atIndex:2]];
+          NSData* encryptedChunk = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromData:clearData atIndex:2 completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(3);
 
-          NSData* decryptedData = [PMKPromise hang:[chunkEncryptor decryptDataFromData:encryptedChunk atIndex:2]];
+          NSData* decryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptDataFromData:encryptedChunk atIndex:2 completionHandler:adapter];
+          });
           expect(decryptedData).to.equal(clearData);
         });
 
         it(@"should remove chunks at given indexes", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           NSString* clearText = @"Rosebud";
           NSMutableArray* encryptedChunks = [NSMutableArray arrayWithCapacity:3];
 
           for (int i = 0; i < 3; ++i)
-            encryptedChunks[i] = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
+            encryptedChunks[i] = hangWithAdapter(^(PMKAdapter adapter) {
+              [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+            });
           expect(chunkEncryptor.count).to.equal(3);
 
-          [PMKPromise hang:[chunkEncryptor removeAtIndexes:@[ @2, @0, @2 ]]];
+          NSError* err;
+          [chunkEncryptor removeAtIndexes:@[ @2, @0, @2 ] error:&err];
 
+          expect(err).to.beNil();
           expect(chunkEncryptor.count).to.equal(1);
 
-          NSString* decryptedText =
-              [PMKPromise hang:[chunkEncryptor decryptStringFromData:encryptedChunks[1] atIndex:0]];
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor decryptStringFromData:encryptedChunks[1] atIndex:0 completionHandler:adapter];
+          });
           expect(decryptedText).to.equal(clearText);
         });
 
         it(@"should fail to remove out of bounds indexes", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
-          NSError* err = [PMKPromise hang:[chunkEncryptor removeAtIndexes:@[ @0 ]]];
+          NSError* err;
 
+          [chunkEncryptor removeAtIndexes:@[ @0 ] error:&err];
+          expect(err).notTo.beNil();
           expect(err.domain).to.equal(TKRErrorDomain);
           expect(err.code).to.equal(TKRErrorChunkIndexOutOfRange);
         });
 
         it(@"should seal and be able to open from a seal", ^{
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
+
+          NSData* encryptedChunk = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(1);
 
-          NSData* seal = [PMKPromise hang:[chunkEncryptor seal]];
+          NSData* seal = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor sealWithCompletionHandler:adapter];
+          });
 
           TKRDecryptionOptions* opts = [TKRDecryptionOptions defaultOptions];
           opts.timeout = 0;
-          TKRChunkEncryptor* chunkEncryptorBis =
-              [PMKPromise hang:[tanker makeChunkEncryptorFromSeal:seal options:opts]];
+          TKRChunkEncryptor* chunkEncryptorBis = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorFromSeal:seal options:opts completionHandler:adapter];
+          });
           expect(chunkEncryptorBis.count).to.equal(1);
 
-          NSString* decryptedText =
-              [PMKPromise hang:[chunkEncryptorBis decryptStringFromData:encryptedChunk atIndex:0]];
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptorBis decryptStringFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(clearText);
         });
@@ -903,110 +1181,149 @@ SpecBegin(TankerSpecs)
           NSString* bobID = createUUID();
           NSString* bobToken = createUserToken(bobID, trustchainID, trustchainPrivateKey);
 
-          [PMKPromise hang:[bobTanker openWithUserID:bobID userToken:bobToken]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker openWithUserID:bobID userToken:bobToken completionHandler:resolve];
+          });
           expect(bobTanker.status).to.equal(TKRStatusOpen);
 
-          TKRChunkEncryptor* chunkEncryptor = [PMKPromise hang:[tanker makeChunkEncryptor]];
+          TKRChunkEncryptor* chunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker makeChunkEncryptorWithCompletionHandler:adapter];
+          });
 
           NSString* clearText = @"Rosebud";
-          NSData* encryptedChunk = [PMKPromise hang:[chunkEncryptor encryptDataFromString:clearText]];
+          NSData* encryptedChunk = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor encryptDataFromString:clearText completionHandler:adapter];
+          });
           expect(chunkEncryptor.count).to.equal(1);
 
           TKREncryptionOptions* opts = [TKREncryptionOptions defaultOptions];
           opts.shareWithUsers = @[ bobID ];
-          NSData* seal = [PMKPromise hang:[chunkEncryptor sealWithOptions:opts]];
+          NSData* seal = hangWithAdapter(^(PMKAdapter adapter) {
+            [chunkEncryptor sealWithOptions:opts completionHandler:adapter];
+          });
 
-          TKRChunkEncryptor* bobChunkEncryptor = [PMKPromise hang:[bobTanker makeChunkEncryptorFromSeal:seal]];
-          NSString* decryptedText =
-              [PMKPromise hang:[bobChunkEncryptor decryptStringFromData:encryptedChunk atIndex:0]];
+          TKRChunkEncryptor* bobChunkEncryptor = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker makeChunkEncryptorFromSeal:seal completionHandler:adapter];
+          });
+          NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobChunkEncryptor decryptStringFromData:encryptedChunk atIndex:0 completionHandler:adapter];
+          });
 
           expect(decryptedText).to.equal(clearText);
         });
       });
-      
+
       describe(@"revocation", ^{
         __block TKRTanker* tanker;
         __block TKRTanker* secondDevice;
         __block NSString* userID;
         __block NSString* userToken;
-        
+
         beforeEach(^{
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           userID = createUUID();
           userToken = createUserToken(userID, trustchainID, trustchainPrivateKey);
-          
+
           secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(trustchainURL, trustchainID)];
           expect(secondDevice).toNot.beNil();
-          
-          [PMKPromise hang:[tanker openWithUserID:userID userToken:userToken]];
+
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
           expect(tanker.status).to.equal(TKRStatusOpen);
-          
-          TKRUnlockKey* unlockKey = [PMKPromise hang:[tanker generateAndRegisterUnlockKey]];
+
+          TKRUnlockKey* unlockKey = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker generateAndRegisterUnlockKeyWithCompletionHandler:adapter];
+          });
           expect(unlockKey).toNot.beNil();
-          
+
           [secondDevice connectUnlockRequiredHandler:^{
-            [secondDevice unlockCurrentDeviceWithUnlockKey:unlockKey];
+            hangWithResolver(^(PMKResolver resolve) {
+              [secondDevice unlockCurrentDeviceWithUnlockKey:unlockKey completionHandler:resolve];
+            });
           }];
-          
-          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice openWithUserID:userID userToken:userToken completionHandler:resolve];
+          });
           expect(secondDevice.status).to.equal(TKRStatusOpen);
         });
-        
+
         afterEach(^{
-          [PMKPromise hang:[tanker close]];
-          [PMKPromise hang:[secondDevice close]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker closeWithCompletionHandler:resolve];
+          });
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice closeWithCompletionHandler:resolve];
+          });
         });
-        
+
         it(@"can self revoke", ^{
           __block bool revoked = false;
-          NSString* deviceID = [PMKPromise hang:[tanker deviceID]];
+          NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker deviceIDWithCompletionHandler:adapter];
+          });
           [tanker connectDeviceRevokedHandler:^(void) {
             revoked = true;
           }];
-          [PMKPromise hang:[tanker revokeDevice:deviceID]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [tanker revokeDevice:deviceID completionHandler:resolve];
+          });
           sleep(1);
           expect(tanker.status).to.equal(TKRStatusClosed);
           expect(revoked).to.equal(true);
         });
-        
+
         it(@"can revoke another device", ^{
           __block bool revoked = false;
-          
-          NSString* deviceID = [PMKPromise hang:[tanker deviceID]];
+
+          NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker deviceIDWithCompletionHandler:adapter];
+          });
           [tanker connectDeviceRevokedHandler:^(void) {
             revoked = true;
           }];
-          [PMKPromise hang:[secondDevice revokeDevice:deviceID]];
+          hangWithResolver(^(PMKResolver resolve) {
+            [secondDevice revokeDevice:deviceID completionHandler:resolve];
+          });
           sleep(1);
           expect(tanker.status).to.equal(TKRStatusClosed);
           expect(revoked).to.equal(true);
         });
-        
+
         it(@"rejects a revocation of another user's device", ^{
           TKRTanker* bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(bobTanker).toNot.beNil();
-          
+
           NSString* bobID = createUUID();
           NSString* bobToken = createUserToken(bobID, trustchainID, trustchainPrivateKey);
-          
-          [PMKPromise hang:[bobTanker openWithUserID:bobID userToken:bobToken]];
+
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker openWithUserID:bobID userToken:bobToken completionHandler:resolve];
+          });
           expect(bobTanker.status).to.equal(TKRStatusOpen);
-          
+
           __block bool revoked = false;
-          NSString* deviceID = [PMKPromise hang:[tanker deviceID]];
+          NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker deviceIDWithCompletionHandler:adapter];
+          });
           [tanker connectDeviceRevokedHandler:^(void) {
             revoked = true;
           }];
-          NSError* err = [PMKPromise hang:[bobTanker revokeDevice:deviceID]];
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker revokeDevice:deviceID completionHandler:resolve];
+          });
           sleep(1);
-          
+
           expect(err.domain).to.equal(TKRErrorDomain);
           expect(err.code).to.equal(TKRErrorDeviceNotFound);
-          
+
           expect(tanker.status).to.equal(TKRStatusOpen);
           expect(revoked).to.equal(false);
-          
-          [PMKPromise hang:[bobTanker close]];
+
+          hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker closeWithCompletionHandler:resolve];
+          });
         });
       });
     });

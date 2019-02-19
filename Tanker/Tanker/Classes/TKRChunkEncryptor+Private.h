@@ -5,8 +5,7 @@
 #import "TKRDecryptionOptions.h"
 #import "TKREncryptionOptions.h"
 #import "TKRTanker.h"
-
-#import <PromiseKit/fwd.h>
+#import "TKRUtils+Private.h"
 
 @interface TKRChunkEncryptor (Private)
 
@@ -14,13 +13,20 @@
 @property TKRTanker* tanker;
 @property void* cChunkEncryptor;
 
-+ (nonnull PMKPromise<TKRChunkEncryptor*>*)chunkEncryptorWithTKRTanker:(nonnull TKRTanker*)tanker
-                                                                  seal:(nullable NSData*)seal
-                                                               options:(nullable TKRDecryptionOptions*)options;
++ (void)chunkEncryptorWithTKRTanker:(nonnull TKRTanker*)tanker
+                               seal:(nullable NSData*)seal
+                            options:(nullable TKRDecryptionOptions*)options
+                  completionHandler:(nonnull void (^)(TKRChunkEncryptor*, NSError*))handler;
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromDataImpl:(nonnull NSData*)clearData atIndex:(NSUInteger)index;
-- (nonnull PMKPromise<NSData*>*)decryptDataFromDataImpl:(nonnull NSData*)cipherData atIndex:(NSUInteger)index;
+- (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
+                        atIndex:(NSUInteger)index
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler;
 
-- (nonnull PMKPromise<NSData*>*)sealImplWithOptions:(nonnull TKREncryptionOptions*)options;
+- (void)decryptDataFromDataImpl:(nonnull NSData*)cipherData
+                        atIndex:(NSUInteger)index
+              completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler;
+
+- (void)sealImplWithOptions:(nonnull TKREncryptionOptions*)options
+          completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler;
 
 @end

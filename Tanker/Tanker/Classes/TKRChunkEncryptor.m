@@ -1,7 +1,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import "PromiseKit.h"
 #import "TKRChunkEncryptor+Private.h"
 #import "TKRError.h"
 #import "TKRUtils+Private.h"
@@ -29,85 +28,118 @@ static uint64_t* convertIndexesToPointer(NSArray* indexes)
 
 // MARK: Instance methods
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData atIndex:(NSUInteger)index
+- (void)encryptDataFromData:(nonnull NSData*)clearData
+                    atIndex:(NSUInteger)index
+          completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromDataImpl:clearData atIndex:index].then(^(PtrAndSizePair* hack) {
-    return convertToNSData(hack);
-  });
+  [self encryptDataFromDataImpl:clearData
+                        atIndex:index
+              completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+                if (err)
+                  handler(nil, err);
+                else
+                  handler(convertToNSData(hack), nil);
+              }];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText atIndex:(NSUInteger)index
+- (void)encryptDataFromString:(nonnull NSString*)clearText
+                      atIndex:(NSUInteger)index
+            completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromData:convertStringToData(clearText) atIndex:index];
+  NSError* err = nil;
+  NSData* data = convertStringToData(clearText, &err);
+  if (err)
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
+  else
+    [self encryptDataFromData:data atIndex:index completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromData:(nonnull NSData*)clearData
+- (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromData:clearData atIndex:self.count];
+  [self encryptDataFromData:clearData atIndex:self.count completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)encryptDataFromString:(nonnull NSString*)clearText
+- (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  return [self encryptDataFromData:convertStringToData(clearText)];
+  NSError* err = nil;
+  NSData* data = convertStringToData(clearText, &err);
+  if (err)
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
+  else
+    [self encryptDataFromData:data completionHandler:handler];
 }
 
-- (nonnull PMKPromise*)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes
+- (void)removeAtIndexes:(nonnull NSArray<NSNumber*>*)indexes error:(NSError* _Nullable* _Nonnull)err
 {
-  __block uint64_t* c_indexes = convertIndexesToPointer(indexes);
-
-  return
-      [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
-        tanker_future_t* remove_future = tanker_chunk_encryptor_remove(self.cChunkEncryptor, c_indexes, indexes.count);
-        tanker_future_t* resolve_future =
-            tanker_future_then(remove_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)resolve);
-        tanker_future_destroy(remove_future);
-        tanker_future_destroy(resolve_future);
-      }]
-          .catch(^(NSError* err) {
-            free(c_indexes);
-            return err;
-          })
-          .then(^{
-            free(c_indexes);
-          });
+  uint64_t* c_indexes = convertIndexesToPointer(indexes);
+  tanker_expected_t* expected_remove = tanker_chunk_encryptor_remove(self.cChunkEncryptor, c_indexes, indexes.count);
+  free(c_indexes);
+  NSError* optErr = getOptionalFutureError(expected_remove);
+  *err = optErr;
+  tanker_future_destroy(expected_remove);
 }
 
-- (nonnull PMKPromise<NSString*>*)decryptStringFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index
+- (void)decryptStringFromData:(nonnull NSData*)cipherText
+                      atIndex:(NSUInteger)index
+            completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
-  return [self decryptDataFromDataImpl:cipherText atIndex:index].then(^(PtrAndSizePair* hack) {
-    uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
+  [self decryptDataFromDataImpl:cipherText
+                        atIndex:index
+              completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+                if (err)
+                {
+                  handler(nil, err);
+                  return;
+                }
+                uint8_t* decrypted_buffer = (uint8_t*)((uintptr_t)hack.ptrValue);
 
-    return [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
-                                          length:hack.ptrSize
-                                        encoding:NSUTF8StringEncoding
-                                    freeWhenDone:YES];
-  });
+                NSString* ret = [[NSString alloc] initWithBytesNoCopy:decrypted_buffer
+                                                               length:hack.ptrSize
+                                                             encoding:NSUTF8StringEncoding
+                                                         freeWhenDone:YES];
+                handler(ret, nil);
+              }];
 }
 
-- (nonnull PMKPromise<NSData*>*)decryptDataFromData:(nonnull NSData*)cipherText atIndex:(NSUInteger)index
+- (void)decryptDataFromData:(nonnull NSData*)cipherText
+                    atIndex:(NSUInteger)index
+          completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
-  return [self decryptDataFromDataImpl:cipherText atIndex:index].then(^(PtrAndSizePair* hack) {
-    return convertToNSData(hack);
-  });
+  [self decryptDataFromDataImpl:cipherText
+                        atIndex:index
+              completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+                if (err)
+                  handler(nil, err);
+                else
+                  handler(convertToNSData(hack), nil);
+              }];
 }
 
-- (nonnull PMKPromise<NSData*>*)seal
+- (void)sealWithCompletionHandler:(nonnull TKRSealHandler)handler
 {
-  return [self sealWithOptions:[TKREncryptionOptions defaultOptions]];
+  [self sealWithOptions:[TKREncryptionOptions defaultOptions] completionHandler:handler];
 }
 
-- (nonnull PMKPromise<NSData*>*)sealWithOptions:(nonnull TKREncryptionOptions*)options
+- (void)sealWithOptions:(nonnull TKREncryptionOptions*)options completionHandler:(nonnull TKRSealHandler)handler
 {
-  return [self sealImplWithOptions:options].then(^(PtrAndSizePair* hack) {
-    return convertToNSData(hack);
-  });
+  [self sealImplWithOptions:options
+          completionHandler:^(PtrAndSizePair* hack, NSError* err) {
+            if (err)
+              handler(nil, err);
+            else
+              handler(convertToNSData(hack), nil);
+          }];
 }
 
 - (void)dealloc
 {
-  tanker_expected_t* destroy_expected = tanker_chunk_encryptor_destroy(self.cChunkEncryptor);
-  tanker_future_destroy(destroy_expected);
-  self.tanker = nil;
+  tanker_future_t* destroy_future = tanker_chunk_encryptor_destroy(self.cChunkEncryptor);
+  tanker_future_wait(destroy_future);
+  tanker_future_destroy(destroy_future);
 }
 
 // MARK: Properties
