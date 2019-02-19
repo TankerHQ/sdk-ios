@@ -35,7 +35,7 @@ def main() -> None:
 
     if args.command == "generate-test-config":
         src_path = Path(__file__).abspath().parent
-        ci.ios.generate_test_config(src_path, config_name="dev")
+        ci.ios.generate_test_config(src_path / "Tanker/Tests", config_name="dev")
         return
 
     debug = not args.release
@@ -43,7 +43,7 @@ def main() -> None:
     if all_archs:
         archs = ci.ios.ARCHS
     else:
-        archs = ['x86_64']
+        archs = ['x86_64', 'x86']
     native_from_sources = not args.deployed_native
 
     ui.info_1(
@@ -64,7 +64,6 @@ def main() -> None:
     )
 
     deps_handler.handle_cpp_deps()
-
 
 
 if __name__ == "__main__":
