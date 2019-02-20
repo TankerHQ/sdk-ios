@@ -35,6 +35,4 @@ Carthage/Build
 # `pod install` in .travis.yml
 #
 Pods/
-
-# Generated during CI
-Tanker.podspec
+Libraries/
