@@ -1,43 +1,64 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[cocoapods-badge]: https://img.shields.io/static/v1.svg?label=Cocoapods&message=compatible&color=brightgreen
+[last-commit-badge]: https://img.shields.io/github/last-commit/TankerHQ/sdk-ios.svg?label=Last%20commit&logo=github
+[license-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+[license-link]: https://opensource.org/licenses/Apache-2.0
+[platform-badge]: https://img.shields.io/static/v1.svg?label=Platform&message=ios&color=lightgrey
 
-# Tanker iOS SDK
+<img src="https://cdn.jsdelivr.net/gh/TankerHQ/sdk-js@v1.10.1/src/public/tanker.png" alt="Tanker logo" width="180" />
 
-## Table of Contents
+[![License][license-badge]][license-link]
+![Cocoapods][cocoapods-badge]
+![Platform][platform-badge]
+![Last Commit][last-commit-badge]
 
- * [Overview](#overview)
- * [Setup](#setup)
- * [Contributing](#contributing)
- * [Documentation](#documentation)
- * [License and Terms](#license-and-terms)
+# Encryption SDK for iOS
+
+[Overview](#overview) · [Getting started](#getting-started) · [Documentation](#documentation) · [Release notes](#release-notes) · [Contributing](#contributing) · [License](#license)
 
 ## Overview
 
-[The Tanker SDK](https://tanker.io) provides an easy-to-use SDK allowing you to protect your users'
-data.
+Tanker is an open-source client SDK that can be embedded in any application.
+
+It leverages powerful **client-side encryption** of any type of data, textual or binary, but without performance loss and assuring a **seamless end-user experience**. No cryptographic skills are required.
+
+## Getting started
 
 The Tanker iOS SDK is distributed on CocoaPods.
 
-For more information about usage, visit the
-[Tanker SDK guide](https://tanker.io/docs/latest/guide/getting-started/?language=ios).
+You just need to add the following lines to your `Podfile`:
 
-This repository only contains objective-c bindings. The core library can be found [here](https://github.com/TankerHQ/sdk-native).
+```ruby
+source 'https://github.com/CocoaPods/Specs.git'
+source 'https://github.com/TankerHQ/PodSpecs.git'
 
-### Setup
+target 'YourApp' do
+  use_frameworks!
+  pod 'Tanker', '~> X.Y.Z'
+end
+```
 
-We are actively working to allow external developers to build and test this sdk from source.
-
-## Contributing
-
-We welcome feedback. Feel free to open any issue on the Github bug tracker
+Tanker also provides open-source **[Android](https://github.com/TankerHQ/sdk-android)** and **[JavaScript](https://github.com/TankerHQ/sdk-js)** SDKs.
 
 ## Documentation
 
-* [Guide](https://tanker.io/docs/latest/guide/getting-started/?language=ios)
-* [API Documentation](https://tanker.io/docs/latest/api/tanker/?language=ios)
-* [Changelog](https://tanker.io/docs/latest/changelog/?language=ios)
+For more details and code examples, please refer to:
 
+* [SDK implementation guide](https://tanker.io/docs/latest/guide/getting-started/?language=ios)
+* [API reference](https://tanker.io/docs/latest/api/tanker/?language=ios)
+* [Product overview](https://tanker.io/product)
 
-## License and Terms
+Or fiddle with the [quickstart examples](https://github.com/TankerHQ/quickstart-examples) to see the Tanker SDKs integrated in a collection of demo apps.
 
-The Tanker iOS SDK is licensed under the
-[Apache License, version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+## Release notes
+
+Detailed changes for each release are documented in the [release notes](https://github.com/TankerHQ/sdk-ios/releases).
+
+## Contributing
+
+We welcome feedback. Feel free to open any issue on the Github bug tracker.
+
+We are actively working to allow external developers to build and test this sdk from source.
+
+## License
+
+The Tanker iOS SDK is licensed under the [Apache License, version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
