@@ -1,6 +1,6 @@
 #import "TKRDecryptionOptions.h"
 
-#import "tanker/tanker.h"
+#import "ctanker.h"
 
 @implementation TKRDecryptionOptions
 

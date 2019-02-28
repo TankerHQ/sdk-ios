@@ -4,7 +4,7 @@
 #import "TKRTanker+Private.h"
 #import "TKRUtils+Private.h"
 
-#include <tanker.h>
+#include "ctanker.h"
 
 #include <objc/runtime.h>
 

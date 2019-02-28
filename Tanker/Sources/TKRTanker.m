@@ -9,8 +9,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <tanker.h>
-#include <tanker/tanker.h>
+#include "ctanker.h"
 
 #define TANKER_IOS_VERSION @"dev"
 

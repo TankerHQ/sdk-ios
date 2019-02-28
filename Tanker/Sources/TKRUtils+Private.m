@@ -3,7 +3,7 @@
 #import "TKRTanker.h"
 #import "TKRUtils+Private.h"
 
-#include <tanker/tanker.h>
+#include "ctanker.h"
 
 @implementation PtrAndSizePair
 
