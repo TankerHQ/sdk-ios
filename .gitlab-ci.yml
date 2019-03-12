@@ -8,7 +8,7 @@ stages:
 before_script:
     - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
     - dmenv install
-    - dmenv run -- python run-ci.py update-conan-config --platform darwin
+    - dmenv run -- python run-ci.py --isolate-conan-user-home update-conan-config
 
 check/deployed-native:
   stage: check
@@ -16,7 +16,7 @@ check/deployed-native:
   except:
     - tags
   script:
-    - dmenv run -- python run-ci.py check
+    - dmenv run -- python run-ci.py --isolate-conan-user-home check
   tags:
     - macos
 
@@ -26,7 +26,7 @@ check/native-from-sources:
   except:
     - tags
   script:
-    - dmenv run -- python run-ci.py check --native-from-sources
+    - dmenv run -- python run-ci.py --isolate-conan-user-home check --native-from-sources
   tags:
     - macos
 
