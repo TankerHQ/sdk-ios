@@ -28,8 +28,8 @@ It's available for browsers, desktop, iOS and Android.
 
   # Workaround Cocoapods issue with headers having the same filename
   s.subspec "core" do |ss|
-    ss.source_files = 'Headers/tanker.h', 'Headers/tanker/*.h'
-    ss.private_header_files = 'Headers/tanker.h', 'Headers/tanker/*'
+    ss.source_files = 'Headers/ctanker.h', 'Headers/ctanker/*.h'
+    ss.private_header_files = 'Headers/ctanker.h', 'Headers/ctanker/*'
     libs = Dir['Libraries/lib*.a']
     ss.vendored_libraries = libs
     ss.libraries = ['c++', 'c++abi'] + libs.collect{|l| l[/lib(.*).a/, 1]}

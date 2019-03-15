@@ -11,9 +11,8 @@
 @import Specta;
 @import PromiseKit;
 
-#include "tanker.h"
-#include "tanker/admin.h"
-#include "tanker/user_token.h"
+#include "ctanker.h"
+#include "ctanker/user_token.h"
 
 NSError* getOptionalFutureError(tanker_future_t* fut)
 {

@@ -7,7 +7,7 @@
 #include <objc/runtime.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <tanker.h>
+#include "ctanker.h"
 
 // I prefer not to expose it in a private header, hence the copy
 #define AntiARCRetain(value)                              \

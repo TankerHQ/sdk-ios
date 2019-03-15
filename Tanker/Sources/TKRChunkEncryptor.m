@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <tanker/chunk_encryptor.h>
+#include <ctanker/chunk_encryptor.h>
 
 static NSData* convertToNSData(PtrAndSizePair* hack)
 {
