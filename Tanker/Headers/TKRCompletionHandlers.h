@@ -1,7 +1,26 @@
 #import <Foundation/Foundation.h>
 
+#import "TKRSignInResult.h"
+
 @class TKRUnlockKey;
-@class TKRChunkEncryptor;
+
+/*!
+ @typedef TKRSignUpHandler
+ @brief Block which will be called when signing up.
+ 
+ @param result the sign-up result (as an NSNumber*), or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRSignUpHandler)(NSNumber* _Nullable result, NSError* _Nullable err);
+
+/*!
+ @typedef TKRSignInHandler
+ @brief Block which will be called when signing in.
+ 
+ @param result the sign-in result (as an NSNumber*), or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRSignInHandler)(NSNumber* _Nullable result, NSError* _Nullable err);
 
 /*!
  @typedef TKREncryptedDataHandler
@@ -32,15 +51,6 @@ typedef void (^TKRDecryptedDataHandler)(NSData* _Nullable decryptedData,
  */
 typedef void (^TKRDecryptedStringHandler)(NSString* _Nullable decryptedString,
                                           NSError* _Nullable err);
-
-/*!
- @typedef TKRSealHandler
- @brief Block which will be called when a @see TKRChunkEncryptor gets sealed.
-
- @param seal the seal, nil if an error occurred.
- @param err the error which occurred, or nil.
- */
-typedef void (^TKRSealHandler)(NSData* _Nullable seal, NSError* _Nullable err);
 
 /*!
  @typedef TKRBooleanHandler
@@ -89,14 +99,3 @@ typedef void (^TKRGroupIDHandler)(NSString* _Nullable groupID,
  */
 typedef void (^TKRUnlockKeyHandler)(TKRUnlockKey* _Nullable key,
                                     NSError* _Nullable err);
-
-/*!
- @typedef TKRChunkEncryptorHandler
- @brief Block which will be called when a @see TKRChunkEncryptor has been
- created.
-
- @param chunkEncryptor the @see TKRChunkEncryptor, or nil if an error occurred.
- @param err the error which occurred, or nil.
- */
-typedef void (^TKRChunkEncryptorHandler)(
-    TKRChunkEncryptor* _Nullable chunkEncryptor, NSError* _Nullable err);

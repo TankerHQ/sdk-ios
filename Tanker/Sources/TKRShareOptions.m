@@ -2,7 +2,7 @@
 
 @implementation TKRShareOptions
 
-+ (instancetype)defaultOptions
++ (instancetype)options
 {
   TKRShareOptions* opts = [[self alloc] init];
   opts.shareWithUsers = @[];

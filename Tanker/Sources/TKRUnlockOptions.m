@@ -2,7 +2,7 @@
 
 @implementation TKRUnlockOptions
 
-+ (instancetype)defaultOptions
++ (instancetype)options
 {
   TKRUnlockOptions* opts = [[self alloc] init];
   opts.password = NULL;

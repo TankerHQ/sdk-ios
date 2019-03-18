@@ -21,6 +21,6 @@
 /*!
  @brief Create a TKRUnlockOptions with default values.
  */
-+ (instancetype)defaultOptions;
++ (instancetype)options;
 
 @end

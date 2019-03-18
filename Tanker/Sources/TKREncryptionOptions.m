@@ -2,7 +2,7 @@
 
 @implementation TKREncryptionOptions
 
-+ (instancetype)defaultOptions
++ (instancetype)options
 {
   TKREncryptionOptions* opts = [[self alloc] init];
   opts.shareWithUsers = @[];
