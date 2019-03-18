@@ -193,6 +193,22 @@ SpecBegin(TankerSpecs)
           });
         });
 
+        it(@"should return TKRSignInResultIdentityNotRegistered when no sign-up was performed", ^{
+          NSString* identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker signInWithIdentity:identity completionHandler:adapter];
+          });
+
+          expect(result).toNot.beNil();
+          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultIdentityNotRegistered);
+
+          result = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker signUpWithIdentity:identity completionHandler:adapter];
+          });
+          expect(result).toNot.beNil();
+          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+        });
+
         it(@"should return a valid base64 string when retrieving the current device id", ^{
           NSString* userID = createUUID();
           NSString* identity = createIdentity(userID, trustchainID, trustchainPrivateKey);
@@ -730,6 +746,32 @@ SpecBegin(TankerSpecs)
           expect(methods.count).to.equal(1);
           expect([methods objectAtIndex:0]).to.equal(TKRUnlockMethodPassword);
         });
+
+        it(@"should return TKRSignInResultVerificationNeeded when no options are provided and an unlock method was "
+           @"registered",
+           ^{
+             TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
+             unlockOptions.password = @"password";
+             hangWithResolver(^(PMKResolver resolve) {
+               [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
+             });
+             sleep(1);
+
+             NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+               [secondDevice signInWithIdentity:identity completionHandler:adapter];
+             });
+
+             expect(result).toNot.beNil();
+             expect(result.unsignedIntegerValue).to.equal(TKRSignInResultIdentityVerificationNeeded);
+
+             result = hangWithAdapter(^(PMKAdapter adapter) {
+               TKRSignInOptions* signInOptions = [TKRSignInOptions options];
+               signInOptions.password = @"password";
+               [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
+             });
+             expect(result).toNot.beNil();
+             expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+           });
 
         it(@"should open the second device after a registerUnlockWithOptions with password", ^{
           TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
