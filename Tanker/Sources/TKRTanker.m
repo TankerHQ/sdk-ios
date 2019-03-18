@@ -114,7 +114,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 // MARK: Instance methods
 
-- (void)signUpWithIdentity:(nonnull NSString *)identity authenticationMethods:(nonnull TKRAuthenticationMethods *)methods completionHandler:(nonnull TKRSignUpHandler)handler
+- (void)signUpWithIdentity:(nonnull NSString*)identity
+     authenticationMethods:(nonnull TKRAuthenticationMethods*)methods
+         completionHandler:(nonnull TKRSignUpHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     handler(ptrValue, err);
@@ -134,34 +136,38 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)signUpWithIdentity:(nonnull NSString *)identity completionHandler:(nonnull TKRSignUpHandler)handler
+- (void)signUpWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRSignUpHandler)handler
 {
-  return [self signUpWithIdentity:identity authenticationMethods:[TKRAuthenticationMethods methods] completionHandler:handler];
+  return [self signUpWithIdentity:identity
+            authenticationMethods:[TKRAuthenticationMethods methods]
+                completionHandler:handler];
 }
 
-- (void)signInWithIdentity:(nonnull NSString *)identity options:(nonnull TKRSignInOptions*)options completionHandler:(nonnull TKRSignInHandler)handler
+- (void)signInWithIdentity:(nonnull NSString*)identity
+                   options:(nonnull TKRSignInOptions*)options
+         completionHandler:(nonnull TKRSignInHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     handler(ptrValue, err);
   };
-  
+
   char const* c_identity = [identity cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_sign_in_options_t c_options = TANKER_SIGN_IN_OPTIONS_INIT;
   if (options.verificationCode != nil)
     c_options.verification_code = [options.verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
   if (options.password != nil)
     c_options.password = [options.password cStringUsingEncoding:NSUTF8StringEncoding];
-  if (options.unlockKey!= nil)
+  if (options.unlockKey != nil)
     c_options.unlock_key = [options.unlockKey.value cStringUsingEncoding:NSUTF8StringEncoding];
 
   tanker_future_t* sign_in_future = tanker_sign_in((tanker_t*)self.cTanker, c_identity, &c_options);
   tanker_future_t* resolve_future =
-  tanker_future_then(sign_in_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(sign_in_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(sign_in_future);
   tanker_future_destroy(resolve_future);
 }
 
-- (void)signInWithIdentity:(nonnull NSString *)identity completionHandler:(nonnull TKRSignInHandler)handler
+- (void)signInWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRSignInHandler)handler
 {
   [self signInWithIdentity:identity options:[TKRSignInOptions options] completionHandler:handler];
 }
@@ -206,8 +212,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     [self encryptDataFromData:data options:options completionHandler:handler];
 }
 
-- (void)decryptStringFromData:(nonnull NSData*)cipherText
-            completionHandler:(nonnull TKRDecryptedStringHandler)handler
+- (void)decryptStringFromData:(nonnull NSData*)cipherText completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -250,8 +255,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
 }
 
-- (void)decryptDataFromData:(nonnull NSData*)cipherData
-          completionHandler:(nonnull TKRDecryptedDataHandler)handler
+- (void)decryptDataFromData:(nonnull NSData*)cipherData completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -279,7 +283,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return ret;
 }
 
-- (void)createGroupWithIdentities:(nonnull NSArray<NSString*>*)identities completionHandler:(nonnull TKRGroupIDHandler)handler
+- (void)createGroupWithIdentities:(nonnull NSArray<NSString*>*)identities
+                completionHandler:(nonnull TKRGroupIDHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
@@ -301,7 +306,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     });
     return;
   }
-  tanker_future_t* future = tanker_create_group((tanker_t*)self.cTanker, (char const* const*)c_identities, identities.count);
+  tanker_future_t* future =
+      tanker_create_group((tanker_t*)self.cTanker, (char const* const*)c_identities, identities.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);

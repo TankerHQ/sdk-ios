@@ -199,7 +199,7 @@ SpecBegin(TankerSpecs)
           NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker signUpWithIdentity:identity completionHandler:adapter];
           });
-          
+
           expect(result).toNot.beNil();
           expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
 
@@ -223,7 +223,7 @@ SpecBegin(TankerSpecs)
           result = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker signInWithIdentity:identity completionHandler:adapter];
           });
-          
+
           expect(result).toNot.beNil();
           expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
 
@@ -317,7 +317,7 @@ SpecBegin(TankerSpecs)
           });
           expect(aliceResult).toNot.beNil();
           expect(aliceResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-          
+
           expect(bobResult).toNot.beNil();
           expect(bobResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
         });
@@ -421,7 +421,7 @@ SpecBegin(TankerSpecs)
         it(@"should error when adding members to a non-existent group", ^{
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker updateMembersOfGroup:@"o/Fufh9HZuv5XoZJk5X3ny+4ZeEZegoIEzRjYPP7TX0="
-                                          identitiesToAdd:@[ bobIdentity ]
+                              identitiesToAdd:@[ bobIdentity ]
                             completionHandler:resolve];
           });
 
@@ -472,10 +472,10 @@ SpecBegin(TankerSpecs)
           });
           expect(aliceResult).toNot.beNil();
           expect(aliceResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-          
+
           expect(bobResult).toNot.beNil();
           expect(bobResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-          
+
           expect(charlieResult).toNot.beNil();
           expect(charlieResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
         });
@@ -741,8 +741,7 @@ SpecBegin(TankerSpecs)
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = @"password";
-          NSNumber* result =
-          hangWithAdapter(^(PMKAdapter adapter) {
+          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
           });
           expect(result).toNot.beNil();
@@ -784,8 +783,7 @@ SpecBegin(TankerSpecs)
           sleep(1);
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = @"password";
-          NSNumber* result =
-          hangWithAdapter(^(PMKAdapter adapter) {
+          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
           });
           expect(result).toNot.beNil();
@@ -829,7 +827,7 @@ SpecBegin(TankerSpecs)
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = @"wrong";
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter){
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
           });
 
@@ -837,13 +835,15 @@ SpecBegin(TankerSpecs)
           expect(err.code).to.equal(TKRErrorInvalidUnlockPassword);
         });
 
-        it(@"should return TKRSignInResultVerificationNeeded when trying to unlock a device and setup has not been done", ^{
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter){
-            [secondDevice signInWithIdentity:identity completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultIdentityVerificationNeeded);
-        });
+        it(@"should return TKRSignInResultVerificationNeeded when trying to unlock a device and setup has not been "
+           @"done",
+           ^{
+             NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+               [secondDevice signInWithIdentity:identity completionHandler:adapter];
+             });
+             expect(result).toNot.beNil();
+             expect(result.unsignedIntegerValue).to.equal(TKRSignInResultIdentityVerificationNeeded);
+           });
 
         it(@"should update an unlock password", ^{
           TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
@@ -877,7 +877,7 @@ SpecBegin(TankerSpecs)
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
           });
-          
+
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidUnlockKey);
         });
@@ -899,10 +899,10 @@ SpecBegin(TankerSpecs)
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = @"password";
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter){
+          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
           });
-          
+
           expect(result).toNot.beNil();
           expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
 
@@ -940,8 +940,8 @@ SpecBegin(TankerSpecs)
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.unlockKey = unlockKey;
-          result = hangWithAdapter(^(PMKAdapter adapter){
-          [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
+          result = hangWithAdapter(^(PMKAdapter adapter) {
+            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
           });
           expect(result).toNot.beNil();
           expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);

@@ -4,7 +4,7 @@
 
 /*!
  @brief Tanker sign-in options
- 
+
  @discussion Each field is optional.
  */
 @interface TKRSignInOptions : NSObject
@@ -30,4 +30,3 @@
 + (instancetype)options;
 
 @end
-

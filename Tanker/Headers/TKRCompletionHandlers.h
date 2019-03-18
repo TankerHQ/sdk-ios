@@ -7,20 +7,24 @@
 /*!
  @typedef TKRSignUpHandler
  @brief Block which will be called when signing up.
- 
- @param result the sign-up result (as an NSNumber*), or nil if an error occurred.
+
+ @param result the sign-up result (as an NSNumber*), or nil if an error
+ occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRSignUpHandler)(NSNumber* _Nullable result, NSError* _Nullable err);
+typedef void (^TKRSignUpHandler)(NSNumber* _Nullable result,
+                                 NSError* _Nullable err);
 
 /*!
  @typedef TKRSignInHandler
  @brief Block which will be called when signing in.
- 
- @param result the sign-in result (as an NSNumber*), or nil if an error occurred.
+
+ @param result the sign-in result (as an NSNumber*), or nil if an error
+ occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRSignInHandler)(NSNumber* _Nullable result, NSError* _Nullable err);
+typedef void (^TKRSignInHandler)(NSNumber* _Nullable result,
+                                 NSError* _Nullable err);
 
 /*!
  @typedef TKREncryptedDataHandler

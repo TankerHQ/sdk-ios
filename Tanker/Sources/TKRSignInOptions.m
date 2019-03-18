@@ -2,7 +2,7 @@
 
 @implementation TKRSignInOptions
 
-+ (instancetype) options
++ (instancetype)options
 {
   return [[self alloc] init];
 }

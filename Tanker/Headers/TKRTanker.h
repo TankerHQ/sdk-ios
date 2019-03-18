@@ -2,12 +2,12 @@
 #import <AvailabilityMacros.h>
 #import <Foundation/Foundation.h>
 
-#import "TKRCompletionHandlers.h"
-#import "TKRSignInOptions.h"
-#import "TKREncryptionOptions.h"
 #import "TKRAuthenticationMethods.h"
+#import "TKRCompletionHandlers.h"
+#import "TKREncryptionOptions.h"
 #import "TKREvents.h"
 #import "TKRShareOptions.h"
+#import "TKRSignInOptions.h"
 #import "TKRTankerOptions.h"
 #import "TKRUnlockKey.h"
 #import "TKRUnlockMethods.h"
@@ -68,7 +68,8 @@
 /*!
  @brief Check if the current user has already registered an unlock key.
 
- @discussion If @NO is passed to the completion handler, you can call registerUnlockWithOptions or generateAndRegisterUnlockKey.
+ @discussion If @NO is passed to the completion handler, you can call registerUnlockWithOptions or
+ generateAndRegisterUnlockKey.
 
  @param handler the block called with either @YES or @NO.
 */
@@ -116,7 +117,7 @@
 
 /*!
  @brief Sign up to Tanker
- 
+
  @param identity a previously registered Tanker identity.
  @param handler the block called with the sign-up result.
  */
@@ -124,25 +125,29 @@
 
 /*!
  @brief Sign up to Tanker and set authentication methods
- 
+
  @param identity a previously registered Tanker identity.
  @param methods authentication methods to set up.
  @param handler the block called with the sign-up result.
  */
-- (void)signUpWithIdentity:(nonnull NSString*)identity authenticationMethods:(nonnull TKRAuthenticationMethods*)methods completionHandler:(nonnull TKRSignUpHandler)handler;
+- (void)signUpWithIdentity:(nonnull NSString*)identity
+     authenticationMethods:(nonnull TKRAuthenticationMethods*)methods
+         completionHandler:(nonnull TKRSignUpHandler)handler;
 
 /*!
  @brief Sign in to Tanker
- 
+
  @param identity a previously registered Tanker identity.
  @param options sign-in options.
  @param handler the block called with the sign-in result.
  */
-- (void)signInWithIdentity:(nonnull NSString*)identity options:(nonnull TKRSignInOptions*) options completionHandler:(nonnull TKRSignInHandler)handler;
+- (void)signInWithIdentity:(nonnull NSString*)identity
+                   options:(nonnull TKRSignInOptions*)options
+         completionHandler:(nonnull TKRSignInHandler)handler;
 
 /*!
  @brief Sign in to Tanker
- 
+
  @param identity a previously registered Tanker identity.
  @param handler the block called with the sign-in result.
  */
@@ -264,7 +269,7 @@
  @param handler the block called with the group id.
  */
 - (void)createGroupWithIdentities:(nonnull NSArray<NSString*>*)identities
-             completionHandler:(nonnull TKRGroupIDHandler)handler;
+                completionHandler:(nonnull TKRGroupIDHandler)handler;
 
 /*!
  @brief Update a group to add the given user IDs.

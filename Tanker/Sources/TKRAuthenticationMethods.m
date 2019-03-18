@@ -2,7 +2,7 @@
 
 @implementation TKRAuthenticationMethods
 
-+ (instancetype) methods
++ (instancetype)methods
 {
   return [[self alloc] init];
 }
