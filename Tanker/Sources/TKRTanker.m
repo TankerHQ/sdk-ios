@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRChunkEncryptor+Private.h"
 #import "TKRTanker+Private.h"
 #import "TKRTankerOptions+Private.h"
 #import "TKRUnlockKey+Private.h"
@@ -32,17 +31,6 @@ static void logHandler(char const* category, char level, char const* message)
   default:
     NSLog(@"Unknown Tanker log level: %c: [%s] %s", level, category, message);
   }
-}
-
-static void onUnlockRequired(void* unused, void* extra_arg)
-{
-  NSLog(@"onUnlockRequired called");
-  assert(!unused);
-  assert(extra_arg);
-
-  TKRUnlockRequiredHandler handler = (__bridge_transfer typeof(TKRUnlockRequiredHandler))extra_arg;
-
-  handler();
 }
 
 static void onDeviceRevoked(void* unused, void* extra_arg)
@@ -126,39 +114,62 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 // MARK: Instance methods
 
-- (nonnull NSString*)statusAsString
+- (void)signUpWithIdentity:(nonnull NSString*)identity
+     authenticationMethods:(nonnull TKRAuthenticationMethods*)methods
+         completionHandler:(nonnull TKRSignUpHandler)handler
 {
-  switch (self.status)
-  {
-  case TKRStatusOpen:
-    return @"open";
-  case TKRStatusClosed:
-    return @"closed";
-  case TKRStatusClosing:
-    return @"closing";
-  case TKRStatusUserCreation:
-    return @"user creation";
-  case TKRStatusDeviceCreation:
-    return @"device creation";
-  }
-}
-
-- (void)openWithUserID:(nonnull NSString*)userID
-             userToken:(nonnull NSString*)userToken
-     completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    handler(ptrValue, err);
   };
 
-  char const* user_id = [userID cStringUsingEncoding:NSUTF8StringEncoding];
-  char const* user_token = [userToken cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* c_identity = [identity cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_authentication_methods_t c_methods = TANKER_AUTHENTICATION_METHODS_INIT;
+  if (methods.email != nil)
+    c_methods.email = [methods.email cStringUsingEncoding:NSUTF8StringEncoding];
+  if (methods.password != nil)
+    c_methods.password = [methods.password cStringUsingEncoding:NSUTF8StringEncoding];
 
-  tanker_future_t* open_future = tanker_open((tanker_t*)self.cTanker, user_id, user_token);
+  tanker_future_t* sign_up_future = tanker_sign_up((tanker_t*)self.cTanker, c_identity, &c_methods);
   tanker_future_t* resolve_future =
-      tanker_future_then(open_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(open_future);
+      tanker_future_then(sign_up_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(sign_up_future);
   tanker_future_destroy(resolve_future);
+}
+
+- (void)signUpWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRSignUpHandler)handler
+{
+  return [self signUpWithIdentity:identity
+            authenticationMethods:[TKRAuthenticationMethods methods]
+                completionHandler:handler];
+}
+
+- (void)signInWithIdentity:(nonnull NSString*)identity
+                   options:(nonnull TKRSignInOptions*)options
+         completionHandler:(nonnull TKRSignInHandler)handler
+{
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    handler(ptrValue, err);
+  };
+
+  char const* c_identity = [identity cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_sign_in_options_t c_options = TANKER_SIGN_IN_OPTIONS_INIT;
+  if (options.verificationCode != nil)
+    c_options.verification_code = [options.verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
+  if (options.password != nil)
+    c_options.password = [options.password cStringUsingEncoding:NSUTF8StringEncoding];
+  if (options.unlockKey != nil)
+    c_options.unlock_key = [options.unlockKey.value cStringUsingEncoding:NSUTF8StringEncoding];
+
+  tanker_future_t* sign_in_future = tanker_sign_in((tanker_t*)self.cTanker, c_identity, &c_options);
+  tanker_future_t* resolve_future =
+      tanker_future_then(sign_in_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(sign_in_future);
+  tanker_future_destroy(resolve_future);
+}
+
+- (void)signInWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRSignInHandler)handler
+{
+  [self signInWithIdentity:identity options:[TKRSignInOptions options] completionHandler:handler];
 }
 
 - (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
@@ -181,30 +192,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)makeChunkEncryptorWithCompletionHandler:(nonnull TKRChunkEncryptorHandler)handler
-{
-  [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:nil options:nil completionHandler:handler];
-}
-
-- (void)makeChunkEncryptorFromSeal:(nonnull NSData*)seal completionHandler:(nonnull TKRChunkEncryptorHandler)handler
-{
-  // TODO harmonize APIs taking defaultOptions vs. nullable.
-  [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self
-                                            seal:seal
-                                         options:[TKRDecryptionOptions defaultOptions]
-                               completionHandler:handler];
-}
-
-- (void)makeChunkEncryptorFromSeal:(nonnull NSData*)seal
-                           options:(nonnull TKRDecryptionOptions*)options
-                 completionHandler:(nonnull TKRChunkEncryptorHandler)handler
-{
-  [TKRChunkEncryptor chunkEncryptorWithTKRTanker:self seal:seal options:options completionHandler:handler];
-}
-
 - (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptDataFromString:clearText options:[TKREncryptionOptions defaultOptions] completionHandler:handler];
+  [self encryptDataFromString:clearText options:[TKREncryptionOptions options] completionHandler:handler];
 }
 
 - (void)encryptDataFromString:(nonnull NSString*)clearText
@@ -222,9 +212,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     [self encryptDataFromData:data options:options completionHandler:handler];
 }
 
-- (void)decryptStringFromData:(nonnull NSData*)cipherText
-                      options:(nonnull TKRDecryptionOptions*)options
-            completionHandler:(nonnull TKRDecryptedStringHandler)handler
+- (void)decryptStringFromData:(nonnull NSData*)cipherText completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -241,17 +229,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(ret, nil);
   };
 
-  [self decryptDataFromDataImpl:cipherText options:options completionHandler:adapter];
-}
-
-- (void)decryptStringFromData:(nonnull NSData*)cipherText completionHandler:(nonnull TKRDecryptedStringHandler)handler
-{
-  [self decryptStringFromData:cipherText options:[TKRDecryptionOptions defaultOptions] completionHandler:handler];
+  [self decryptDataFromDataImpl:cipherText completionHandler:adapter];
 }
 
 - (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptDataFromData:clearData options:[TKREncryptionOptions defaultOptions] completionHandler:handler];
+  [self encryptDataFromData:clearData options:[TKREncryptionOptions options] completionHandler:handler];
 }
 
 - (void)encryptDataFromData:(nonnull NSData*)clearData
@@ -272,9 +255,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
 }
 
-- (void)decryptDataFromData:(nonnull NSData*)cipherData
-                    options:(nonnull TKRDecryptionOptions*)options
-          completionHandler:(nonnull TKRDecryptedDataHandler)handler
+- (void)decryptDataFromData:(nonnull NSData*)cipherData completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -287,12 +268,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     NSData* ret = [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
     handler(ret, nil);
   };
-  [self decryptDataFromDataImpl:cipherData options:options completionHandler:adapter];
-}
-
-- (void)decryptDataFromData:(nonnull NSData*)cipherData completionHandler:(nonnull TKRDecryptedDataHandler)handler
-{
-  [self decryptDataFromData:cipherData options:[TKRDecryptionOptions defaultOptions] completionHandler:handler];
+  [self decryptDataFromDataImpl:cipherData completionHandler:adapter];
 }
 
 - (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)cipherData error:(NSError* _Nullable* _Nonnull)error
@@ -307,7 +283,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return ret;
 }
 
-- (void)createGroupWithUserIDs:(nonnull NSArray<NSString*>*)userIds completionHandler:(nonnull TKRGroupIDHandler)handler
+- (void)createGroupWithIdentities:(nonnull NSArray<NSString*>*)identities
+                completionHandler:(nonnull TKRGroupIDHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
@@ -321,7 +298,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(groupId, nil);
   };
   NSError* err = nil;
-  char** user_ids = convertStringstoCStrings(userIds, &err);
+  char** c_identities = convertStringstoCStrings(identities, &err);
   if (err)
   {
     runOnMainQueue(^{
@@ -329,16 +306,17 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     });
     return;
   }
-  tanker_future_t* future = tanker_create_group((tanker_t*)self.cTanker, (char const* const*)user_ids, userIds.count);
+  tanker_future_t* future =
+      tanker_create_group((tanker_t*)self.cTanker, (char const* const*)c_identities, identities.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(user_ids, userIds.count);
+  freeCStringArray(c_identities, identities.count);
 }
 
-- (void)updateMembersOfGroup:(NSString*)groupId
-                         add:(NSArray<NSString*>*)usersToAdd
+- (void)updateMembersOfGroup:(nonnull NSString*)groupId
+             identitiesToAdd:(nonnull NSArray<NSString*>*)identities
            completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
@@ -347,7 +325,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
   NSError* err = nil;
-  char** users_to_add = convertStringstoCStrings(usersToAdd, &err);
+  char** identities_to_add = convertStringstoCStrings(identities, &err);
   if (err)
   {
     runOnMainQueue(^{
@@ -356,12 +334,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     return;
   }
   tanker_future_t* future = tanker_update_group_members(
-      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)users_to_add, usersToAdd.count);
+      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)identities_to_add, identities.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(users_to_add, usersToAdd.count);
+  freeCStringArray(identities_to_add, identities.count);
 }
 
 - (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
@@ -420,23 +398,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   freeCStringArray(group_ids, options.shareWithGroups.count);
 }
 
-- (nonnull NSNumber*)connectUnlockRequiredHandler:(nonnull TKRUnlockRequiredHandler)handler
-{
-  NSNumber* evt = [NSNumber numberWithInt:TANKER_EVENT_UNLOCK_REQUIRED];
-  NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onUnlockRequired];
-
-  NSError* err = nil;
-  NSNumber* ret = [self setEvent:evt
-                     callbackPtr:callbackPtr
-                         handler:^(void* unused) {
-                           dispatchInBackground(handler);
-                         }
-                           error:&err];
-  // Err cannot fail as the event is a valid tanker event
-  assert(!err);
-  return ret;
-}
-
 - (nonnull NSNumber*)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
 {
   NSNumber* evt = [NSNumber numberWithInt:TANKER_EVENT_DEVICE_REVOKED];
@@ -471,7 +432,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return ret;
 }
 
-- (void)registerUnlock:(nonnull TKRUnlockOptions*)options completionHandler:(nonnull TKRErrorHandler)handler
+- (void)registerUnlockWithOptions:(nonnull TKRUnlockOptions*)options completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
     handler(err);
@@ -483,33 +444,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* resolve_future =
       tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(setup_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)setupUnlockWithPassword:(nonnull NSString*)password completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
-  };
-
-  char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_future_t* setup_future = tanker_setup_unlock((tanker_t*)self.cTanker, NULL, utf8_password);
-  tanker_future_t* resolve_future =
-      tanker_future_then(setup_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(setup_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)updateUnlockPassword:(nonnull NSString*)newPassword completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
-  };
-  char const* utf8_password = [newPassword cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_future_t* update_future = tanker_update_unlock((tanker_t*)self.cTanker, NULL, utf8_password, NULL);
-  tanker_future_t* resolve_future =
-      tanker_future_then(update_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(update_future);
   tanker_future_destroy(resolve_future);
 }
 
@@ -585,50 +519,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return ret;
 }
 
-- (void)unlockCurrentDeviceWithUnlockKey:(nonnull TKRUnlockKey*)unlockKey
-                       completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
-  };
-  b64char const* utf8UnlockKey = [unlockKey.value cStringUsingEncoding:NSUTF8StringEncoding];
-  // tanker copies the validation code
-  tanker_future_t* validate_future =
-      tanker_unlock_current_device_with_unlock_key((tanker_t*)self.cTanker, utf8UnlockKey);
-  tanker_future_t* resolve_future =
-      tanker_future_then(validate_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(validate_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)unlockCurrentDeviceWithPassword:(nonnull NSString*)password completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
-  };
-  b64char const* utf8_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_future_t* unlock_future = tanker_unlock_current_device_with_password((tanker_t*)self.cTanker, utf8_password);
-  tanker_future_t* resolve_future =
-      tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(unlock_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)unlockCurrentDeviceWithVerificationCode:(nonnull NSString*)verificationCode
-                              completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
-  };
-  b64char const* utf8_code = [verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_future_t* unlock_future =
-      tanker_unlock_current_device_with_verification_code((tanker_t*)self.cTanker, utf8_code);
-  tanker_future_t* resolve_future =
-      tanker_future_then(unlock_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(unlock_future);
-  tanker_future_destroy(resolve_future);
-}
-
 - (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
@@ -642,15 +532,15 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)closeWithCompletionHandler:(nonnull TKRErrorHandler)handler
+- (void)signOutWithCompletionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
     handler(err);
   };
-  tanker_future_t* close_future = tanker_close((tanker_t*)self.cTanker);
+  tanker_future_t* sign_out_future = tanker_sign_out((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(close_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(close_future);
+      tanker_future_then(sign_out_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(sign_out_future);
   tanker_future_destroy(resolve_future);
 }
 
@@ -662,15 +552,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* destroy_future = tanker_destroy((tanker_t*)self.cTanker);
   tanker_future_wait(destroy_future);
   tanker_future_destroy(destroy_future);
-}
-
-// MARK: Custom accessors
-
-@synthesize status = _status;
-
-- (TKRStatus)status
-{
-  return (TKRStatus)tanker_get_status((tanker_t*)self.cTanker);
 }
 
 @end

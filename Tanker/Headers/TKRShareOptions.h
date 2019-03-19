@@ -8,7 +8,7 @@
 @interface TKRShareOptions : NSObject
 
 /*!
- @brief User IDs to share with
+ @brief Recipient public identities to share with
 
  @discussion If set, must contain registered user IDs (or be empty).
  */
@@ -22,11 +22,8 @@
 @property NSArray<NSString*>* shareWithGroups;
 
 /*!
- @brief Create a TKRShareOptions with default values.
-
- @discussion The values are those that Tanker uses if no options are provided:
- - shareWith = @[]
+ @brief Create a TKRShareOptions with empty values.
  */
-+ (instancetype)defaultOptions;
++ (instancetype)options;
 
 @end

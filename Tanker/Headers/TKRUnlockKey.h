@@ -16,9 +16,7 @@
 @property(readonly) NSString* value;
 
 /*!
-
  @description create a new unlock key from a value
-
  */
 + (nonnull TKRUnlockKey*)unlockKeyFromValue:(nonnull NSString*)value;
 @end

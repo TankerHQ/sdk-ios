@@ -9,10 +9,10 @@
 @interface TKREncryptionOptions : NSObject
 
 /*!
- @brief User IDs to share with
+ @brief Recipient public identities to share with
 
- @discussion If set, must contain registered user IDs (or be empty).
- The current user devices will be appended when encrypting.
+ @discussion If set, must contain valid public identities (or be empty).
+ The current user's identity will be appended when encrypting.
  */
 @property NSArray<NSString*>* shareWithUsers;
 
@@ -24,11 +24,8 @@
 @property NSArray<NSString*>* shareWithGroups;
 
 /*!
- @brief Create a TKREncryptionOptions with default values.
-
- @discussion The values are those that Tanker uses if no options are provided:
- - shareWith = @[]
+ @brief Create a TKREncryptionOptions with empty values.
  */
-+ (instancetype)defaultOptions;
++ (instancetype)options;
 
 @end

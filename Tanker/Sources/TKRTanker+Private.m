@@ -79,7 +79,7 @@
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
 
   NSError* err = nil;
-  char** user_ids = convertStringstoCStrings(options.shareWithUsers, &err);
+  char** recipient_public_identities = convertStringstoCStrings(options.shareWithUsers, &err);
   if (err)
   {
     handler(nil, err);
@@ -88,12 +88,12 @@
   char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
   if (err)
   {
-    freeCStringArray(user_ids, options.shareWithUsers.count);
+    freeCStringArray(recipient_public_identities, options.shareWithUsers.count);
     handler(nil, err);
     return;
   }
-  encryption_options.recipient_uids = (char const* const*)user_ids;
-  encryption_options.nb_recipient_uids = (uint32_t)options.shareWithUsers.count;
+  encryption_options.recipient_public_identities = (char const* const*)recipient_public_identities;
+  encryption_options.nb_recipient_public_identities = (uint32_t)options.shareWithUsers.count;
   encryption_options.recipient_gids = (char const* const*)group_ids;
   encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
   tanker_future_t* encrypt_future = tanker_encrypt((tanker_t*)self.cTanker,
@@ -105,12 +105,11 @@
       tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(user_ids, options.shareWithUsers.count);
+  freeCStringArray(recipient_public_identities, options.shareWithUsers.count);
   freeCStringArray(group_ids, options.shareWithGroups.count);
 }
 
 - (void)decryptDataFromDataImpl:(NSData*)cipherData
-                        options:(TKRDecryptionOptions*)options
               completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
 {
   uint8_t const* encrypted_buffer = (uint8_t const*)cipherData.bytes;
@@ -145,10 +144,8 @@
     handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorOther));
     return;
   }
-  tanker_decrypt_options_t opts = TANKER_DECRYPT_OPTIONS_INIT;
-  opts.timeout = options.timeout * 1000;
   tanker_future_t* decrypt_future =
-      tanker_decrypt((tanker_t*)self.cTanker, decrypted_buffer, encrypted_buffer, encrypted_size, &opts);
+      tanker_decrypt((tanker_t*)self.cTanker, decrypted_buffer, encrypted_buffer, encrypted_size);
   // ensures cipherText lives while the promise does by telling ARC to retain it
   tanker_future_t* resolve_future =
       tanker_future_then(decrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
