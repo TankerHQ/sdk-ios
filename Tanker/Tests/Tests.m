@@ -108,6 +108,37 @@ SpecBegin(TankerSpecs)
       __block NSString* trustchainPrivateKey;
 
       __block TKRTankerOptions* tankerOptions;
+      
+      __block void (^signUpWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity){
+        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+          [tanker signUpWithIdentity:identity completionHandler:adapter];
+        });
+        expect(result).toNot.beNil();
+        expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+      };
+      
+      __block void (^signInWithIdentity)(TKRTanker*, NSString*, TKRSignInResult) = ^(TKRTanker* tanker, NSString* identity, TKRSignInResult signInResult){
+        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+          [tanker signInWithIdentity:identity completionHandler:adapter];
+        });
+        expect(result).toNot.beNil();
+        expect(result.unsignedIntegerValue).to.equal(signInResult);
+      };
+      
+      __block void (^signInUnlockWithIdentity)(TKRTanker*, NSString*, TKRSignInOptions*, TKRSignInResult) = ^(TKRTanker* tanker, NSString* identity, TKRSignInOptions* options, TKRSignInResult signInResult){
+        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+          [tanker signInWithIdentity:identity options:options completionHandler:adapter];
+        });
+        expect(result).toNot.beNil();
+        expect(result.unsignedIntegerValue).to.equal(signInResult);
+      };
+      
+      __block void (^signOut)(TKRTanker*) = ^(TKRTanker* tanker){
+        hangWithResolver(^(PMKResolver resolve) {
+          [tanker signOutWithCompletionHandler:resolve];
+        });
+      };
+      
       beforeAll(^{
         NSString* configName = TANKER_CONFIG_NAME;
         NSString* configPath = TANKER_CONFIG_FILEPATH;
@@ -173,62 +204,34 @@ SpecBegin(TankerSpecs)
 
       describe(@"open", ^{
         __block TKRTanker* tanker;
+        __block NSString* identity;
 
         beforeEach(^{
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(tanker).toNot.beNil();
+          identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
         });
 
         it(@"should return TKRSignInResultOk when signUp is called", ^{
-          NSString* userID = createUUID();
-          NSString* identity = createIdentity(userID, trustchainID, trustchainPrivateKey);
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker signUpWithIdentity:identity completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-
-          hangWithResolver(^(PMKResolver resolve) {
-            [tanker signOutWithCompletionHandler:resolve];
-          });
+          signUpWithIdentity(tanker, identity);
+          signOut(tanker);
         });
 
         it(@"should return TKRSignInResultIdentityNotRegistered when no sign-up was performed", ^{
-          NSString* identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker signInWithIdentity:identity completionHandler:adapter];
-          });
-
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultIdentityNotRegistered);
-
-          result = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker signUpWithIdentity:identity completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signInWithIdentity(tanker, identity, TKRSignInResultIdentityNotRegistered);
+          signUpWithIdentity(tanker, identity);
         });
 
         it(@"should return a valid base64 string when retrieving the current device id", ^{
-          NSString* userID = createUUID();
-          NSString* identity = createIdentity(userID, trustchainID, trustchainPrivateKey);
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker signUpWithIdentity:identity completionHandler:adapter];
-          });
-
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signUpWithIdentity(tanker, identity);
 
           NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker deviceIDWithCompletionHandler:adapter];
           });
           NSData* b64Data = [[NSData alloc] initWithBase64EncodedString:deviceID options:0];
-
           expect(b64Data).toNot.beNil();
 
-          hangWithResolver(^(PMKResolver resolve) {
-            [tanker signOutWithCompletionHandler:resolve];
-          });
+          signOut(tanker);
 
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker deviceIDWithCompletionHandler:adapter];
@@ -236,13 +239,8 @@ SpecBegin(TankerSpecs)
           NSLog(@"%@", [err localizedDescription]);
           expect(err.domain).to.equal(TKRErrorDomain);
 
-          result = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker signInWithIdentity:identity completionHandler:adapter];
-          });
-
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-
+          signInWithIdentity(tanker, identity, TKRSignInResultOk);
+          
           NSString* deviceIDBis = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker deviceIDWithCompletionHandler:adapter];
           });
@@ -257,20 +255,12 @@ SpecBegin(TankerSpecs)
         beforeEach(^{
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(tanker).toNot.beNil();
-          NSString* userID = createUUID();
-          NSString* identity = createIdentity(userID, trustchainID, trustchainPrivateKey);
-
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker signUpWithIdentity:identity completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          NSString* identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          signUpWithIdentity(tanker, identity);
         });
 
         afterEach(^{
-          hangWithResolver(^(PMKResolver resolve) {
-            [tanker signOutWithCompletionHandler:resolve];
-          });
+          signOut(tanker);
         });
 
         it(@"should decrypt an encrypted string", ^{
@@ -325,26 +315,13 @@ SpecBegin(TankerSpecs)
           aliceIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
           bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
 
-          NSNumber* aliceResult = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker signUpWithIdentity:aliceIdentity completionHandler:adapter];
-          });
-          NSNumber* bobResult = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker signUpWithIdentity:bobIdentity completionHandler:adapter];
-          });
-          expect(aliceResult).toNot.beNil();
-          expect(aliceResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-
-          expect(bobResult).toNot.beNil();
-          expect(bobResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signUpWithIdentity(aliceTanker, aliceIdentity);
+          signUpWithIdentity(bobTanker, bobIdentity);
         });
 
         afterEach(^{
-          hangWithResolver(^(PMKResolver resolve) {
-            [aliceTanker signOutWithCompletionHandler:resolve];
-          });
-          hangWithResolver(^(PMKResolver resolve) {
-            [bobTanker signOutWithCompletionHandler:resolve];
-          });
+          signOut(aliceTanker);
+          signOut(bobTanker);
         });
 
         it(@"should create a group with alice and encrypt to her", ^{
@@ -477,35 +454,15 @@ SpecBegin(TankerSpecs)
           bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
           charlieIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
 
-          NSNumber* aliceResult = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker signUpWithIdentity:aliceIdentity completionHandler:adapter];
-          });
-          NSNumber* bobResult = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker signUpWithIdentity:bobIdentity completionHandler:adapter];
-          });
-          NSNumber* charlieResult = hangWithAdapter(^(PMKAdapter adapter) {
-            [charlieTanker signUpWithIdentity:charlieIdentity completionHandler:adapter];
-          });
-          expect(aliceResult).toNot.beNil();
-          expect(aliceResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-
-          expect(bobResult).toNot.beNil();
-          expect(bobResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-
-          expect(charlieResult).toNot.beNil();
-          expect(charlieResult.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signUpWithIdentity(aliceTanker, aliceIdentity);
+          signUpWithIdentity(bobTanker, bobIdentity);
+          signUpWithIdentity(charlieTanker, charlieIdentity);
         });
 
         afterEach(^{
-          hangWithResolver(^(PMKResolver resolve) {
-            [aliceTanker signOutWithCompletionHandler:resolve];
-          });
-          hangWithResolver(^(PMKResolver resolve) {
-            [bobTanker signOutWithCompletionHandler:resolve];
-          });
-          hangWithResolver(^(PMKResolver resolve) {
-            [charlieTanker signOutWithCompletionHandler:resolve];
-          });
+          signOut(aliceTanker);
+          signOut(bobTanker);
+          signOut(charlieTanker);
         });
 
         it(@"should return a valid base64 resourceID", ^{
@@ -675,22 +632,13 @@ SpecBegin(TankerSpecs)
           secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(trustchainURL, trustchainID)];
           expect(secondDevice).toNot.beNil();
 
-          NSString* userID = createUUID();
-          identity = createIdentity(userID, trustchainID, trustchainPrivateKey);
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice signUpWithIdentity:identity completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          signUpWithIdentity(firstDevice, identity);
         });
 
         afterEach(^{
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice signOutWithCompletionHandler:resolve];
-          });
-          hangWithResolver(^(PMKResolver resolve) {
-            [secondDevice signOutWithCompletionHandler:resolve];
-          });
+          signOut(firstDevice);
+          signOut(secondDevice);
         });
 
         it(@"should indicate when an unlock mechanism was set up", ^{
@@ -757,20 +705,11 @@ SpecBegin(TankerSpecs)
              });
              sleep(1);
 
-             NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-               [secondDevice signInWithIdentity:identity completionHandler:adapter];
-             });
+             signInWithIdentity(secondDevice, identity, TKRSignInResultIdentityVerificationNeeded);
 
-             expect(result).toNot.beNil();
-             expect(result.unsignedIntegerValue).to.equal(TKRSignInResultIdentityVerificationNeeded);
-
-             result = hangWithAdapter(^(PMKAdapter adapter) {
-               TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-               signInOptions.password = @"password";
-               [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
-             });
-             expect(result).toNot.beNil();
-             expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+             TKRSignInOptions* signInOptions = [TKRSignInOptions options];
+             signInOptions.password = @"password";
+             signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
            });
 
         it(@"should open the second device after a registerUnlockWithOptions with password", ^{
@@ -784,11 +723,7 @@ SpecBegin(TankerSpecs)
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = @"password";
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
         });
 
         it(@"should signIn with password after a signUp with password", ^{
@@ -856,11 +791,7 @@ SpecBegin(TankerSpecs)
           sleep(1);
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = @"password";
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
 
           NSString* clearText = @"Rosebud";
 
@@ -882,12 +813,7 @@ SpecBegin(TankerSpecs)
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.unlockKey = unlockKey;
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
-          });
-
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
         });
 
         it(@"should error when adding a device with an invalid password", ^{
@@ -911,11 +837,7 @@ SpecBegin(TankerSpecs)
         it(@"should return TKRSignInResultVerificationNeeded when trying to unlock a device and setup has not been "
            @"done",
            ^{
-             NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-               [secondDevice signInWithIdentity:identity completionHandler:adapter];
-             });
-             expect(result).toNot.beNil();
-             expect(result.unsignedIntegerValue).to.equal(TKRSignInResultIdentityVerificationNeeded);
+             signInWithIdentity(secondDevice, identity, TKRSignInResultIdentityVerificationNeeded);
            });
 
         it(@"should update an unlock password", ^{
@@ -932,12 +854,7 @@ SpecBegin(TankerSpecs)
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = unlockOptions.password;
 
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
-          });
-
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
         });
 
         it(@"should throw when accepting a device with an invalid unlock key", ^{
@@ -966,18 +883,11 @@ SpecBegin(TankerSpecs)
           NSData* encryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice encryptDataFromString:clearText completionHandler:adapter];
           });
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice signOutWithCompletionHandler:resolve];
-          });
+          signOut(firstDevice);
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.password = @"password";
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
-          });
-
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
 
           NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice decryptStringFromData:encryptedText completionHandler:adapter];
@@ -1000,11 +910,7 @@ SpecBegin(TankerSpecs)
           secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(trustchainURL, trustchainID)];
           expect(secondDevice).toNot.beNil();
 
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker signUpWithIdentity:identity completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signUpWithIdentity(tanker, identity);
 
           TKRUnlockKey* unlockKey = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker generateAndRegisterUnlockKeyWithCompletionHandler:adapter];
@@ -1013,20 +919,12 @@ SpecBegin(TankerSpecs)
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
           signInOptions.unlockKey = unlockKey;
-          result = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
         });
 
         afterEach(^{
-          hangWithResolver(^(PMKResolver resolve) {
-            [tanker signOutWithCompletionHandler:resolve];
-          });
-          hangWithResolver(^(PMKResolver resolve) {
-            [secondDevice signOutWithCompletionHandler:resolve];
-          });
+          signOut(tanker);
+          signOut(secondDevice);
         });
 
         it(@"can self revoke", ^{
@@ -1064,14 +962,8 @@ SpecBegin(TankerSpecs)
           TKRTanker* bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(bobTanker).toNot.beNil();
 
-          NSString* bobID = createUUID();
-          NSString* bobIdentity = createIdentity(bobID, trustchainID, trustchainPrivateKey);
-
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker signUpWithIdentity:bobIdentity completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          NSString* bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          signUpWithIdentity(bobTanker, bobIdentity);
 
           __block bool revoked = false;
           NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
@@ -1087,12 +979,9 @@ SpecBegin(TankerSpecs)
 
           expect(err.domain).to.equal(TKRErrorDomain);
           expect(err.code).to.equal(TKRErrorDeviceNotFound);
-
           expect(revoked).to.equal(false);
 
-          hangWithResolver(^(PMKResolver resolve) {
-            [bobTanker signOutWithCompletionHandler:resolve];
-          });
+          signOut(bobTanker);
         });
       });
     });
