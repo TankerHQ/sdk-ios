@@ -4,6 +4,3 @@ tanker/1.10.2-beta3@tanker/stable
 [imports]
 lib, *.a -> lib
 include, tanker* -> include
-
-[options]
-tanker:shared=False
