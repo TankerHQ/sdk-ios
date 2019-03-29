@@ -47,11 +47,4 @@ It's available for browsers, desktop, iOS and Android.
     libtanker.libraries = libnames + ['c++', 'c++abi']
   end
 
-  s.test_spec 'Tests' do |test_spec|
-    test_spec.source_files = 'Tanker/Tests/*.{h,m}'
-    test_spec.dependency 'Specta'
-    test_spec.dependency 'Expecta'
-    test_spec.dependency 'PromiseKit/Hang', '~> 1.7'
-  end
-
 end
