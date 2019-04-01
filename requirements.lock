@@ -1,4 +1,4 @@
--e git+ssh://git@tanker.local/Tanker/ci@c13bf240f8ca86f29fc09cb0135e039a494fdc50#egg=ci
+-e git+ssh://git@tanker.local/Tanker/ci@5493fba031c64bb403a5c81817a6d68d61af0ce3#egg=ci
 appdirs==1.4.3
 asn1crypto==0.24.0
 astroid==2.2.5
