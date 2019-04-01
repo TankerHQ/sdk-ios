@@ -1,9 +1,9 @@
 [requires]
-tanker/1.10.0@tanker/stable
+tanker/2.0.0-alpha2
 
 [imports]
 lib, *.a -> lib
 include, tanker* -> include
 
 [options]
-tanker:shared=False
+tanker:tankerlib_shared=False
