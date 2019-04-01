@@ -59,7 +59,7 @@ def main() -> None:
         "   archs: ", archs, "\n",
         sep="", end=""
     )
-    deps_handler = ci.ios.DepsHandler(
+    deps_handler = ci.ios.CI(
         debug=debug,
         archs=archs,
         native_from_sources=native_from_sources,
