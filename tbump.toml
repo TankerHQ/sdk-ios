@@ -4,8 +4,6 @@ current = "dev"
 regex = '''
   (dev)
   |
-  (9999)
-  |
   (
   (?P<major>\d+)
   \.
@@ -25,9 +23,9 @@ message_template = "Bump to {new_version}"
 tag_template = "v{new_version}"
 
 [[file]]
-src = "Tanker/Tanker.podspec"
-search = 's.version'
-
-[[file]]
 src = "Tanker/Sources/TKRTanker.m"
 search = '#define TANKER_IOS_VERSION @"{current_version}"'
+
+[[before_commit]]
+name = "Patch Tanker.podspec"
+cmd = "sed -i '' -e 's/9999/{new_version}' Tanker/Tanker.podspec"
