@@ -4,6 +4,8 @@ current = "dev"
 regex = '''
   (dev)
   |
+  (9999)
+  |
   (
   (?P<major>\d+)
   \.
