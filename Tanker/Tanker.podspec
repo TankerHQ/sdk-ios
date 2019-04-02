@@ -35,6 +35,8 @@ It's available for browsers, desktop, iOS and Android.
     ss.libraries = ['c++', 'c++abi'] + libs.collect{|l| l[/lib(.*).a/, 1]}
   end
 
+  # do not trigger cocoapods error because test files are missing
+  s.default_subspec = 'core'
 
   s.test_spec 'Tests' do |test_spec|
     test_spec.source_files = 'Tests/*.{h,m}'
