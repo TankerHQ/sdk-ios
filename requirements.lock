@@ -1,4 +1,5 @@
--e git+ssh://git@tanker.local/Tanker/ci@18756edf39b36f1719bfd9bcdfc59d3bf94e7b3c#egg=ci
+# Generated with dmenv 0.11.1, python 3.6.0, on Darwin
+-e git+ssh://git@tanker.local/Tanker/ci@9497c604df8d61ad68cb21f34c9de76af69f1355#egg=ci
 appdirs==1.4.3
 asn1crypto==0.24.0
 astroid==2.2.5
@@ -9,7 +10,7 @@ cffi==1.12.2
 chardet==3.0.4
 cli-ui==0.9.1
 colorama==0.4.1
-conan==1.13.0
+conan==1.14.1
 contextlib2==0.5.5
 cryptography==2.3.1
 deprecation==2.0.6
