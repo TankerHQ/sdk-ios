@@ -39,7 +39,7 @@ static void onDeviceRevoked(void* unused, void* extra_arg)
   assert(!unused);
   assert(extra_arg);
 
-  TKRDeviceRevokedHandler handler = (__bridge_transfer typeof(TKRDeviceRevokedHandler))extra_arg;
+  TKRDeviceRevokedHandler handler = (__bridge typeof(TKRDeviceRevokedHandler))extra_arg;
 
   handler();
 }
@@ -50,7 +50,7 @@ static void onDeviceCreated(void* unused, void* extra_arg)
   assert(!unused);
   assert(extra_arg);
 
-  TKRDeviceCreatedHandler handler = (__bridge_transfer typeof(TKRDeviceCreatedHandler))extra_arg;
+  TKRDeviceCreatedHandler handler = (__bridge typeof(TKRDeviceCreatedHandler))extra_arg;
 
   handler();
 }

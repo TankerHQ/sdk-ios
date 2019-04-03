@@ -779,6 +779,7 @@ SpecBegin(TankerSpecs)
           hangWithResolver(^(PMKResolver resolve) {
             [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
           });
+
           sleep(1);
 
           TKRSignInOptions* signInOptions = [TKRSignInOptions options];
