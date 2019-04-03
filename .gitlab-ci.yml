@@ -8,7 +8,7 @@ stages:
 before_script:
     - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
     - dmenv install
-    - dmenv run -- python run-ci.py update-conan-config --platform darwin
+    - dmenv run -- python run-ci.py update-conan-config
 
 check/deployed-native:
   stage: check
@@ -39,7 +39,6 @@ deploy:
     - dmenv run -- python run-ci.py deploy --git-tag ${CI_COMMIT_TAG}
   tags:
     - macos
-
 mirror:
   tags:
     - macos
