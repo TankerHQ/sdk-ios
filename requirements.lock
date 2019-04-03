@@ -1,5 +1,4 @@
-# Generated with dmenv 0.11.1, python 3.6.0, on Darwin
--e git+ssh://git@tanker.local/Tanker/ci@ca75262954db738f72af0b3f609da1bbc72d6d61#egg=ci
+-e git+ssh://git@tanker.local/Tanker/ci@1334dc9250790fb05571cf60f864fe5c6a9231dc#egg=ci
 appdirs==1.4.3
 asn1crypto==0.24.0
 astroid==2.0.4

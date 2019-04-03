@@ -34,7 +34,7 @@ static void logHandler(char const* category, char level, char const* message)
 
 static void onUnlockRequired(void* unused, void* extra_arg)
 {
-  NSLog(@"onUnlockRequired called = %ull", (uintptr_t)extra_arg);
+  NSLog(@"onUnlockRequired called");
   assert(!unused);
   assert(extra_arg);
 
