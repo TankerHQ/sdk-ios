@@ -1,8 +1,8 @@
 [version]
-current = "dev"
+current = "9999"
 
 regex = '''
-  (dev)
+  (9999)
   |
   (
   (?P<major>\d+)
@@ -23,9 +23,9 @@ message_template = "Bump to {new_version}"
 tag_template = "v{new_version}"
 
 [[file]]
-src = "Tanker/Tanker.in.podspec"
+src = "Tanker/Tanker.podspec"
 search = 's.version'
 
 [[file]]
-src = "Tanker/Tanker/Classes/TKRTanker.m"
+src = "Tanker/Sources/TKRTanker.m"
 search = '#define TANKER_IOS_VERSION @"{current_version}"'
