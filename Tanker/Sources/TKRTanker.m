@@ -353,7 +353,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSError* err = nil;
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
-                         handler:^(id unused) {
+                         handler:^(void* unused) {
                            dispatch_promise(^{
                              handler();
                            });
@@ -372,7 +372,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSError* err = nil;
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
-                         handler:^(id unused) {
+                         handler:^(void* unused) {
                            dispatch_promise(^{
                              handler();
                            });
@@ -391,7 +391,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSError* err = nil;
   NSNumber* ret = [self setEvent:evt
                      callbackPtr:callbackPtr
-                         handler:^(id unused) {
+                         handler:^(void* unused) {
                            dispatch_promise(^{
                              handler();
                            });

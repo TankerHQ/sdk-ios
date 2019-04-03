@@ -3,7 +3,7 @@
 
 #import "TKRTanker.h"
 
-typedef void (^TKRAbstractEventHandler)(id);
+typedef void (^TKRAbstractEventHandler)(void*);
 
 @interface TKRTanker (Private)
 
