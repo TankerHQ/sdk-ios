@@ -14,7 +14,7 @@
 #include <tanker.h>
 #include <tanker/tanker.h>
 
-#define TANKER_IOS_VERSION @"dev"
+#define TANKER_IOS_VERSION @"9999"
 
 static void logHandler(char const* category, char level, char const* message)
 {
