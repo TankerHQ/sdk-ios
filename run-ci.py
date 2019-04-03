@@ -13,8 +13,7 @@ def main():
 
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
-    update_conan_config_parser = subparsers.add_parser("update-conan-config")
-    update_conan_config_parser.add_argument("--platform", required=True)
+    subparsers.add_parser("update-conan-config")
 
     check_parser = subparsers.add_parser("check")
     check_parser.add_argument(
@@ -28,7 +27,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "update-conan-config":
-        ci.cpp.update_conan_config(args.platform)
+        ci.cpp.update_conan_config()
     elif args.command == "check":
         ci.ios.check(native_from_sources=args.native_from_sources)
     elif args.command == "deploy":

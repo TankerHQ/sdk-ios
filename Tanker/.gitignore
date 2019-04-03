@@ -36,5 +36,5 @@ Carthage/Build
 #
 Pods/
 
-# Generated during CI
-Tanker.podspec
+Libraries/
+Headers/tanker*

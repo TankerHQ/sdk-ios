@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-#import "PromiseKit.h"
+#import "PromiseKit/Promise.h"
 
 #import "TKRChunkEncryptor+Private.h"
 #import "TKRTanker+Private.h"

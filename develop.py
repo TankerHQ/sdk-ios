@@ -14,7 +14,7 @@ def main() -> None:
 
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
-    update_conan_config_parser = subparsers.add_parser("update-conan-config")
+    subparsers.add_parser("update-conan-config")
 
     deps_cpp = subparsers.add_parser("deps-cpp")
     deps_cpp.add_argument("--release", action="store_true")
@@ -30,12 +30,12 @@ def main() -> None:
         sys.exit(1)
 
     if args.command == "update-conan-config":
-        ci.cpp.update_conan_config("darwin")
+        ci.cpp.update_conan_config()
         return
 
     if args.command == "generate-test-config":
         src_path = Path(__file__).abspath().parent
-        ci.ios.generate_test_config(src_path, config_name="dev")
+        ci.ios.generate_test_config(src_path / "Tanker/Tests", config_name="dev")
         return
 
     debug = not args.release
@@ -43,7 +43,7 @@ def main() -> None:
     if all_archs:
         archs = ci.ios.ARCHS
     else:
-        archs = ['x86_64']
+        archs = ['x86_64', 'x86']
     native_from_sources = not args.deployed_native
 
     ui.info_1(
@@ -56,7 +56,7 @@ def main() -> None:
         "   archs: ", archs, "\n",
         sep="", end=""
     )
-    deps_handler = ci.ios.DepsHandler(
+    deps_handler = ci.ios.CI(
         debug=debug,
         archs=archs,
         native_from_sources=native_from_sources,
