@@ -9,6 +9,7 @@ typedef void (^TKRAbstractEventHandler)(void*);
 
 @property void* cTanker;
 @property NSMutableArray* events;
+@property NSMutableDictionary* callbacks;
 
 - (nonnull PMKPromise<NSData*>*)encryptDataFromDataImpl:(nonnull NSData*)clearData
                                                 options:(nonnull TKREncryptionOptions*)options;

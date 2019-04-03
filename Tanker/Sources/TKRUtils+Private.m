@@ -47,7 +47,7 @@ void* resolvePromise(void* future, void* arg)
   NSError* optErr = getOptionalFutureError(future);
   PMKResolver resolve = (__bridge_transfer typeof(PMKResolver))arg;
   NSNumber* ptrValue = nil;
-  
+
   if (!optErr)
   {
     void* ptr = tanker_future_get_voidptr((tanker_future_t*)future);

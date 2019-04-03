@@ -617,6 +617,29 @@ SpecBegin(TankerSpecs)
           expect(secondDevice.status).to.equal(TKRStatusOpen);
         });
 
+        it(@"should close and reopen the second device after a setup unlock", ^{
+          [PMKPromise hang:[firstDevice setupUnlockWithPassword:@"password"]];
+          __block BOOL called = NO;
+
+          [secondDevice connectUnlockRequiredHandler:^(void) {
+            if (called == NO)
+            {
+              called = YES;
+              [PMKPromise hang:[secondDevice close]];
+            }
+            else
+            {
+              // safe to hang, since this is run on a background queue.
+              [PMKPromise hang:[secondDevice unlockCurrentDeviceWithPassword:@"password"]];
+            }
+          }];
+
+          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          expect(secondDevice.status).to.equal(TKRStatusClosed);
+          [PMKPromise hang:[secondDevice openWithUserID:userID userToken:userToken]];
+          expect(secondDevice.status).to.equal(TKRStatusOpen);
+        });
+
         it(@"should open the second device after a register unlock", ^{
           TKRUnlockOptions* opts = [TKRUnlockOptions defaultOptions];
           opts.password = @"password";
