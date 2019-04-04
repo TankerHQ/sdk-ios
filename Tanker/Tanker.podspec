@@ -24,7 +24,7 @@ It's available for browsers, desktop, iOS and Android.
     'OTHER_LDFLAGS' => "'-exported_symbols_list ${PODS_TARGET_SRCROOT}/export_symbols.list'"
     }
   s.header_mappings_dir = 'Headers'
-  s.preserve_paths = 'export_symbols.list', 'Libraries'
+  s.preserve_paths = 'export_symbols.list', 'Libraries', 'Tests/Dummy.m'
   s.dependency 'PromiseKit/Promise', '~> 1.7'
 
   # Workaround Cocoapods issue with headers having the same filename
