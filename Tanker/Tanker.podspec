@@ -31,7 +31,34 @@ It's available for browsers, desktop, iOS and Android.
   s.subspec "core" do |ss|
     ss.source_files = 'Headers/tanker.h', 'Headers/tanker/*.h'
     ss.private_header_files = 'Headers/tanker.h', 'Headers/tanker/*'
-    libs = Dir['Libraries/lib*.a']
+    libs = [
+      'libboost_atomic.a',
+      'libboost_chrono.a',
+      'libboost_context.a',
+      'libboost_contract.a',
+      'libboost_date_time.a',
+      'libboost_filesystem.a',
+      'libboost_program_options.a',
+      'libboost_random.a',
+      'libboost_stacktrace_basic.a',
+      'libboost_stacktrace_noop.a',
+      'libboost_system.a',
+      'libboost_thread.a',
+      'libcrypto.a',
+      'libfmt.a',
+      'libmockaron.a',
+      'libsioclient.a',
+      'libsodium.a',
+      'libsqlcipher.a',
+      'libsqlpp11-connector-sqlite3.a',
+      'libssl.a',
+      'libtanker.a',
+      'libtankercore.a',
+      'libtankercrypto.a',
+      'libtankerusertoken.a',
+      'libtconcurrent.a',
+      'libtls.a'
+    ]
     ss.vendored_libraries = libs
     ss.libraries = ['c++', 'c++abi'] + libs.collect{|l| l[/lib(.*).a/, 1]}
   end
