@@ -30,7 +30,34 @@ It's available for browsers, desktop, iOS and Android.
   s.subspec "core" do |ss|
     ss.source_files = 'Headers/ctanker.h', 'Headers/ctanker/*.h'
     ss.private_header_files = 'Headers/ctanker.h', 'Headers/ctanker/*'
-    libs = Dir['Libraries/lib*.a']
+    libs = [
+      'Libraries/libboost_atomic.a',
+      'Libraries/libboost_chrono.a',
+      'Libraries/libboost_context.a',
+      'Libraries/libboost_contract.a',
+      'Libraries/libboost_date_time.a',
+      'Libraries/libboost_filesystem.a',
+      'Libraries/libboost_program_options.a',
+      'Libraries/libboost_random.a',
+      'Libraries/libboost_stacktrace_basic.a',
+      'Libraries/libboost_stacktrace_noop.a',
+      'Libraries/libboost_system.a',
+      'Libraries/libboost_thread.a',
+      'Libraries/libcrypto.a',
+      'Libraries/libfmt.a',
+      'Libraries/libmockaron.a',
+      'Libraries/libsioclient.a',
+      'Libraries/libsodium.a',
+      'Libraries/libsqlcipher.a',
+      'Libraries/libsqlpp11-connector-sqlite3.a',
+      'Libraries/libssl.a',
+      'Libraries/libtanker.a',
+      'Libraries/libtankercore.a',
+      'Libraries/libtankercrypto.a',
+      'Libraries/libtankerusertoken.a',
+      'Libraries/libtconcurrent.a',
+      'Libraries/libtls.a'
+    ]
     ss.vendored_libraries = libs
     ss.libraries = ['c++', 'c++abi'] + libs.collect{|l| l[/lib(.*).a/, 1]}
   end
