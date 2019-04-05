@@ -17,19 +17,21 @@ static void dispatchInBackground(id block)
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), block);
 }
 
-static void logHandler(char const* category, char level, char const* message)
+static void logHandler(tanker_log_record_t *record)
 {
-  switch (level)
+  switch (record->level)
   {
-  case 'D':
+    case TANKER_LOG_DEBUG:
     break;
-  case 'I':
+    case TANKER_LOG_INFO:
     break;
-  case 'E':
-    NSLog(@"Tanker Error: [%s] %s", category, message);
+    case TANKER_LOG_WARNING:
+    break;
+  case TANKER_LOG_ERROR:
+    NSLog(@"Tanker Error: [%s] %s", record->category, record->message);
     break;
   default:
-    NSLog(@"Unknown Tanker log level: %c: [%s] %s", level, category, message);
+    NSLog(@"Unknown Tanker log level: %c: [%s] %s", record->level, record->category, record->message);
   }
 }
 
