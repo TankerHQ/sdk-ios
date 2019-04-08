@@ -17,15 +17,15 @@ static void dispatchInBackground(id block)
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), block);
 }
 
-static void logHandler(tanker_log_record_t *record)
+static void logHandler(tanker_log_record_t const* record)
 {
   switch (record->level)
   {
-    case TANKER_LOG_DEBUG:
+  case TANKER_LOG_DEBUG:
     break;
-    case TANKER_LOG_INFO:
+  case TANKER_LOG_INFO:
     break;
-    case TANKER_LOG_WARNING:
+  case TANKER_LOG_WARNING:
     break;
   case TANKER_LOG_ERROR:
     NSLog(@"Tanker Error: [%s] %s", record->category, record->message);
