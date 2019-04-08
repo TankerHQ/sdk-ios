@@ -9,9 +9,14 @@
 #include <objc/runtime.h>
 
 // https://stackoverflow.com/a/15707096/4116453
-#define AntiARCRetain(value)                              \
-  void* retained##value = (__bridge_retained void*)value; \
-  (void)retained##value
+#define AntiARCRetain(value)                               \
+  void* retained_##value = (__bridge_retained void*)value; \
+  (void)retained_##value
+
+#define AntiARCRelease(value)                                     \
+  void* retained_##value = (__bridge void*)value;                 \
+  id unretained_##value = (__bridge_transfer id)retained_##value; \
+  unretained_##value = nil
 
 @implementation TKRTanker (Private)
 
@@ -57,10 +62,7 @@
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    // Force clearData to be retained until the tanker_future is done
-    // to avoid reading a dangling pointer
-    AntiARCRetain(clearData);
-
+    AntiARCRelease(clearData);
     if (err)
     {
       free(encrypted_buffer);
@@ -117,6 +119,9 @@
   tanker_future_destroy(resolve_future);
   freeCStringArray(recipient_public_identities, options.shareWithUsers.count);
   freeCStringArray(group_ids, options.shareWithGroups.count);
+  // Force clearData to be retained until the tanker_future is done
+  // to avoid reading a dangling pointer
+  AntiARCRetain(clearData);
 }
 
 - (void)decryptDataFromDataImpl:(NSData*)cipherData
@@ -129,10 +134,7 @@
   __block uint64_t decrypted_size = 0;
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    // Force cipherData to be retained until the tanker_future is done
-    // to avoid reading a dangling pointer
-    AntiARCRetain(cipherData);
-
+    AntiARCRelease(cipherData);
     if (err)
     {
       free(decrypted_buffer);
@@ -161,6 +163,9 @@
       tanker_future_then(decrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(decrypt_future);
   tanker_future_destroy(resolve_future);
+  // Force cipherData to be retained until the tanker_future is done
+  // to avoid reading a dangling pointer
+  AntiARCRetain(cipherData);
 }
 
 - (nullable NSNumber*)setEvent:(nonnull NSNumber*)evt
