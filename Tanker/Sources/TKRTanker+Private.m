@@ -18,6 +18,11 @@
   id unretained_##value = (__bridge_transfer id)retained_##value; \
   unretained_##value = nil
 
+static void releaseCPointer(void* ptr)
+{
+  (void)((__bridge_transfer id)ptr);
+}
+
 @implementation TKRTanker (Private)
 
 // http://nshipster.com/associated-objects/
@@ -173,25 +178,28 @@
                        handler:(nonnull TKRAbstractEventHandler)handler
                          error:(NSError* _Nullable* _Nonnull)error
 {
+  void* handler_ptr = (__bridge_retained void*)handler;
   tanker_expected_t* connect_expected = tanker_event_connect((tanker_t*)self.cTanker,
                                                              (enum tanker_event)evt.integerValue,
                                                              (tanker_event_callback_t)numberToPtr(callbackPtr),
-                                                             (__bridge_retained void*)handler);
+                                                             handler_ptr);
 
   *error = getOptionalFutureError(connect_expected);
   if (*error)
+  {
+    releaseCPointer(handler_ptr);
     return nil;
+  }
   void* ptr = unwrapAndFreeExpected(connect_expected);
-  NSNumber* ptrConnectionValue = [NSNumber numberWithUnsignedLongLong:(uintptr_t)ptr];
-  [self.events addObject:ptrConnectionValue];
-  // very important to use setObject, it keeps a strong reference on the object
-  [self.callbacks setObject:handler forKey:ptrConnectionValue];
+  NSNumber* ptrConnectionValue = ptrToNumber(ptr);
+  self.callbacks[ptrConnectionValue] = ptrToNumber(handler_ptr);
   return ptrConnectionValue;
 }
 
 - (void)disconnectEventConnection:(nonnull NSNumber*)ptrConnectionValue
 {
   [self.events removeObject:ptrConnectionValue];
+  releaseCPointer(numberToPtr(self.callbacks[ptrConnectionValue]));
   [self.callbacks removeObjectForKey:ptrConnectionValue];
   tanker_connection_t* connection = (tanker_connection_t*)numberToPtr(ptrConnectionValue);
   tanker_expected_t* disconnect_expected = tanker_event_disconnect((tanker_t*)self.cTanker, connection);
