@@ -39,6 +39,16 @@
   return objc_getAssociatedObject(self, @selector(events));
 }
 
+- (void)setCallbacks:(NSMutableArray*)callbacks
+{
+  objc_setAssociatedObject(self, @selector(callbacks), callbacks, OBJC_ASSOCIATION_RETAIN);
+}
+
+- (NSMutableArray*)callbacks
+{
+  return objc_getAssociatedObject(self, @selector(callbacks));
+}
+
 - (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
                         options:(nonnull TKREncryptionOptions*)options
               completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
@@ -169,12 +179,15 @@
   void* ptr = unwrapAndFreeExpected(connect_expected);
   NSNumber* ptrConnectionValue = [NSNumber numberWithUnsignedLongLong:(uintptr_t)ptr];
   [self.events addObject:ptrConnectionValue];
+  // very important to use setObject, it keeps a strong reference on the object
+  [self.callbacks setObject:handler forKey:ptrConnectionValue];
   return ptrConnectionValue;
 }
 
 - (void)disconnectEventConnection:(nonnull NSNumber*)ptrConnectionValue
 {
   [self.events removeObject:ptrConnectionValue];
+  [self.callbacks removeObjectForKey:ptrConnectionValue];
   tanker_connection_t* connection = (tanker_connection_t*)numberToPtr(ptrConnectionValue);
   tanker_expected_t* disconnect_expected = tanker_event_disconnect((tanker_t*)self.cTanker, connection);
   unwrapAndFreeExpected(disconnect_expected);
