@@ -17,7 +17,7 @@ static void dispatchInBackground(id block)
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), block);
 }
 
-static void logHandler(tanker_log_record_t *record)
+static void logHandler(tanker_log_record_t const* record)
 {
   switch (record->level)
   {
