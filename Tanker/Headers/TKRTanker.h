@@ -154,6 +154,11 @@
 - (void)signInWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRSignInHandler)handler;
 
 /*!
+ @brief returns true if Tanker is open
+ */
+- (BOOL)isOpen;
+
+/*!
  @brief Retrieve the current device id.
 
  @param handler the block called with the device id.
