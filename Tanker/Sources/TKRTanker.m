@@ -174,6 +174,11 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   [self signInWithIdentity:identity options:[TKRSignInOptions options] completionHandler:handler];
 }
 
+- (BOOL)isOpen
+{
+  return tanker_is_open((tanker_t*)self.cTanker);
+}
+
 - (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {

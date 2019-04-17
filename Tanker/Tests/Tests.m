@@ -791,6 +791,36 @@ SpecBegin(TankerSpecs)
           expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
         });
 
+        it(@"should signIn with password after a signUp with password", ^{
+          NSString* userID2 = createUUID();
+          NSString* identity2 = createIdentity(userID2, trustchainID, trustchainPrivateKey);
+          TKRTanker* device = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(device).toNot.beNil();
+
+          TKRAuthenticationMethods* authMethods = [TKRAuthenticationMethods methods];
+          authMethods.password = @"password";
+          expect([device isOpen]).to.equal(NO);
+          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+            [device signUpWithIdentity:identity2 authenticationMethods:authMethods completionHandler:adapter];
+          });
+          expect(result).toNot.beNil();
+          expect([device isOpen]).to.equal(YES);
+
+          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
+          signInOptions.password = @"password";
+          expect([secondDevice isOpen]).to.equal(NO);
+          result = hangWithAdapter(^(PMKAdapter adapter) {
+            [secondDevice signInWithIdentity:identity2 options:signInOptions completionHandler:adapter];
+          });
+          expect(result).toNot.beNil();
+          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+          expect([secondDevice isOpen]).to.equal(YES);
+          hangWithResolver(^(PMKResolver resolve) {
+            [device signOutWithCompletionHandler:resolve];
+          });
+
+        });
+
         it(@"should setup unlock with an email", ^{
           NSError* err = nil;
           BOOL wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
