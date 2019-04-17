@@ -55,17 +55,6 @@
  */
 - (nonnull NSNumber*)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler;
 /*!
- @brief Register a handler called when new devices have been unlocked for the current user since their last connection.
-
- @discussion The handler will be called as soon as the device is unlocked or new devices
-             have been unlocked for the current user since his last connection
-
- @param handler This block will be called without any argument, and will be run on a background queue.
-
- @return an event handler id.
- */
-- (nonnull NSNumber*)connectDeviceCreatedHandler:(nonnull TKRDeviceCreatedHandler)handler;
-/*!
  @brief Check if the current user has already registered an unlock key.
 
  @discussion If @NO is passed to the completion handler, you can call registerUnlockWithOptions or

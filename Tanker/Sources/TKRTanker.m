@@ -46,17 +46,6 @@ static void onDeviceRevoked(void* unused, void* extra_arg)
   handler();
 }
 
-static void onDeviceCreated(void* unused, void* extra_arg)
-{
-  NSLog(@"onDeviceCreated called");
-  assert(!unused);
-  assert(extra_arg);
-
-  TKRDeviceCreatedHandler handler = (__bridge typeof(TKRDeviceCreatedHandler))extra_arg;
-
-  handler();
-}
-
 static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cOptions)
 {
   cOptions->trustchain_id = [options.trustchainID cStringUsingEncoding:NSUTF8StringEncoding];
@@ -409,23 +398,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   NSNumber* evt = [NSNumber numberWithInt:TANKER_EVENT_DEVICE_REVOKED];
   NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onDeviceRevoked];
-
-  NSError* err = nil;
-  NSNumber* ret = [self setEvent:evt
-                     callbackPtr:callbackPtr
-                         handler:^(void* unused) {
-                           dispatchInBackground(handler);
-                         }
-                           error:&err];
-  // Err cannot fail as the event is a valid tanker event
-  assert(!err);
-  return ret;
-}
-
-- (nonnull NSNumber*)connectDeviceCreatedHandler:(nonnull TKRDeviceCreatedHandler)handler
-{
-  NSNumber* evt = [NSNumber numberWithInt:TANKER_EVENT_DEVICE_CREATED];
-  NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onDeviceCreated];
 
   NSError* err = nil;
   NSNumber* ret = [self setEvent:evt
