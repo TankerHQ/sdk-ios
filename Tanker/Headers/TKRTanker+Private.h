@@ -16,7 +16,7 @@ typedef void (^TKRAbstractEventHandler)(void*);
                         options:(nonnull TKREncryptionOptions*)options
               completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError* err))handler;
 
-- (void)decryptDataFromDataImpl:(nonnull NSData*)cipherData
+- (void)decryptDataFromDataImpl:(nonnull NSData*)encryptedData
               completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError* err))handler;
 
 - (nullable NSNumber*)setEvent:(nonnull NSNumber*)event

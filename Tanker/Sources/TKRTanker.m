@@ -208,7 +208,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     [self encryptDataFromData:data options:options completionHandler:handler];
 }
 
-- (void)decryptStringFromData:(nonnull NSData*)cipherText completionHandler:(nonnull TKRDecryptedStringHandler)handler
+- (void)decryptStringFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -225,7 +225,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(ret, nil);
   };
 
-  [self decryptDataFromDataImpl:cipherText completionHandler:adapter];
+  [self decryptDataFromDataImpl:encryptedData completionHandler:adapter];
 }
 
 - (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
@@ -251,7 +251,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
 }
 
-- (void)decryptDataFromData:(nonnull NSData*)cipherData completionHandler:(nonnull TKRDecryptedDataHandler)handler
+- (void)decryptDataFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -264,12 +264,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     NSData* ret = [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
     handler(ret, nil);
   };
-  [self decryptDataFromDataImpl:cipherData completionHandler:adapter];
+  [self decryptDataFromDataImpl:encryptedData completionHandler:adapter];
 }
 
-- (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)cipherData error:(NSError* _Nullable* _Nonnull)error
+- (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)encryptedData error:(NSError* _Nullable* _Nonnull)error
 {
-  tanker_expected_t* resource_id_expected = tanker_get_resource_id((uint8_t const*)cipherData.bytes, cipherData.length);
+  tanker_expected_t* resource_id_expected = tanker_get_resource_id((uint8_t const*)encryptedData.bytes, encryptedData.length);
   *error = getOptionalFutureError(resource_id_expected);
   if (*error)
     return nil;

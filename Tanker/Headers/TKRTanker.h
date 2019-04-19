@@ -227,34 +227,34 @@
 
  @discussion equivalent to calling decryptStringFromData:options: with default options.
 
- @param cipherText encrypted data to decrypt.
+ @param encryptedData encrypted data to decrypt.
  @param handler the block called with the decrypted string.
 
- @pre @a cipherText was returned by encryptDataFromString.
+ @pre @a encryptedData was returned by encryptDataFromString.
  */
-- (void)decryptStringFromData:(nonnull NSData*)cipherText completionHandler:(nonnull TKRDecryptedStringHandler)handler;
+- (void)decryptStringFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedStringHandler)handler;
 
 /*!
  @brief Decrypt encrypted data.
 
  @discussion equivalent to calling decryptDataFromData:options: with default options.
 
- @param cipherData encrypted data to decrypt.
+ @param encryptedData encrypted data to decrypt.
  @param handler the block called with the decrypted data.
 
- @pre @a cipherText was returned by encryptDataFromData.
+ @pre @a encryptedData was returned by encryptDataFromData.
  */
-- (void)decryptDataFromData:(nonnull NSData*)cipherData completionHandler:(nonnull TKRDecryptedDataHandler)handler;
+- (void)decryptDataFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler;
 
 /*!
  @brief Get the encrypted resource ID.
 
- @param cipherData encrypted data.
+ @param encryptedData encrypted data.
  @param error output error parameter.
 
  @return the resource id.
  */
-- (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)cipherData error:(NSError* _Nullable* _Nonnull)error;
+- (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)encryptedData error:(NSError* _Nullable* _Nonnull)error;
 
 /*!
  @brief Create a group with the given recipient identities.
