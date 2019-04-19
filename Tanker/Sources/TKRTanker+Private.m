@@ -129,17 +129,17 @@ static void releaseCPointer(void* ptr)
   AntiARCRetain(clearData);
 }
 
-- (void)decryptDataFromDataImpl:(NSData*)cipherData
+- (void)decryptDataFromDataImpl:(NSData*)encryptedData
               completionHandler:(nonnull void (^)(PtrAndSizePair*, NSError*))handler
 {
-  uint8_t const* encrypted_buffer = (uint8_t const*)cipherData.bytes;
-  uint64_t encrypted_size = cipherData.length;
+  uint8_t const* encrypted_buffer = (uint8_t const*)encryptedData.bytes;
+  uint64_t encrypted_size = encryptedData.length;
 
   __block uint8_t* decrypted_buffer = nil;
   __block uint64_t decrypted_size = 0;
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    AntiARCRelease(cipherData);
+    AntiARCRelease(encryptedData);
     if (err)
     {
       free(decrypted_buffer);
@@ -163,14 +163,14 @@ static void releaseCPointer(void* ptr)
   }
   tanker_future_t* decrypt_future =
       tanker_decrypt((tanker_t*)self.cTanker, decrypted_buffer, encrypted_buffer, encrypted_size);
-  // ensures cipherText lives while the promise does by telling ARC to retain it
+  // ensures encryptedData lives while the promise does by telling ARC to retain it
   tanker_future_t* resolve_future =
       tanker_future_then(decrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(decrypt_future);
   tanker_future_destroy(resolve_future);
-  // Force cipherData to be retained until the tanker_future is done
+  // Force encryptedData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
-  AntiARCRetain(cipherData);
+  AntiARCRetain(encryptedData);
 }
 
 - (nullable NSNumber*)setEvent:(nonnull NSNumber*)evt
