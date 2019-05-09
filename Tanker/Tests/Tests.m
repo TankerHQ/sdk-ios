@@ -121,37 +121,39 @@ SpecBegin(TankerSpecs)
       __block NSString* trustchainPrivateKey;
 
       __block TKRTankerOptions* tankerOptions;
-      
-      __block void (^signUpWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity){
+
+      __block void (^signUpWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity) {
         NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
           [tanker signUpWithIdentity:identity completionHandler:adapter];
         });
         expect(result).toNot.beNil();
         expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
       };
-      
-      __block void (^signInWithIdentity)(TKRTanker*, NSString*, TKRSignInResult) = ^(TKRTanker* tanker, NSString* identity, TKRSignInResult signInResult){
-        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-          [tanker signInWithIdentity:identity completionHandler:adapter];
-        });
-        expect(result).toNot.beNil();
-        expect(result.unsignedIntegerValue).to.equal(signInResult);
-      };
-      
-      __block void (^signInUnlockWithIdentity)(TKRTanker*, NSString*, TKRSignInOptions*, TKRSignInResult) = ^(TKRTanker* tanker, NSString* identity, TKRSignInOptions* options, TKRSignInResult signInResult){
-        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-          [tanker signInWithIdentity:identity options:options completionHandler:adapter];
-        });
-        expect(result).toNot.beNil();
-        expect(result.unsignedIntegerValue).to.equal(signInResult);
-      };
-      
-      __block void (^signOut)(TKRTanker*) = ^(TKRTanker* tanker){
+
+      __block void (^signInWithIdentity)(TKRTanker*, NSString*, TKRSignInResult) =
+          ^(TKRTanker* tanker, NSString* identity, TKRSignInResult signInResult) {
+            NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker signInWithIdentity:identity completionHandler:adapter];
+            });
+            expect(result).toNot.beNil();
+            expect(result.unsignedIntegerValue).to.equal(signInResult);
+          };
+
+      __block void (^signInUnlockWithIdentity)(TKRTanker*, NSString*, TKRSignInOptions*, TKRSignInResult) =
+          ^(TKRTanker* tanker, NSString* identity, TKRSignInOptions* options, TKRSignInResult signInResult) {
+            NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker signInWithIdentity:identity options:options completionHandler:adapter];
+            });
+            expect(result).toNot.beNil();
+            expect(result.unsignedIntegerValue).to.equal(signInResult);
+          };
+
+      __block void (^signOut)(TKRTanker*) = ^(TKRTanker* tanker) {
         hangWithResolver(^(PMKResolver resolve) {
           [tanker signOutWithCompletionHandler:resolve];
         });
       };
-      
+
       beforeAll(^{
         NSString* configName = TANKER_CONFIG_NAME;
         NSString* configPath = TANKER_CONFIG_FILEPATH;
@@ -776,7 +778,6 @@ SpecBegin(TankerSpecs)
           hangWithResolver(^(PMKResolver resolve) {
             [device signOutWithCompletionHandler:resolve];
           });
-
         });
 
         it(@"should setup unlock with an email", ^{

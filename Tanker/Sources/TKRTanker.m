@@ -208,7 +208,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     [self encryptDataFromData:data options:options completionHandler:handler];
 }
 
-- (void)decryptStringFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedStringHandler)handler
+- (void)decryptStringFromData:(nonnull NSData*)encryptedData
+            completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -269,7 +270,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)encryptedData error:(NSError* _Nullable* _Nonnull)error
 {
-  tanker_expected_t* resource_id_expected = tanker_get_resource_id((uint8_t const*)encryptedData.bytes, encryptedData.length);
+  tanker_expected_t* resource_id_expected =
+      tanker_get_resource_id((uint8_t const*)encryptedData.bytes, encryptedData.length);
   *error = getOptionalFutureError(resource_id_expected);
   if (*error)
     return nil;
