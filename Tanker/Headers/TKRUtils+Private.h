@@ -14,16 +14,17 @@
 @end
 
 // Internal block used to wrap C futures
-typedef void (^TKRAdapter)(NSNumber* ptrValue, NSError* err);
+typedef void (^TKRAdapter)(NSNumber* _Nullable ptrValue, NSError* _Nullable err);
 
-void runOnMainQueue(void (^block)(void));
-void freeCStringArray(char** toFree, NSUInteger nbElems);
-NSError* createNSError(char const* message, TKRError code);
-NSNumber* ptrToNumber(void* ptr);
-void* numberToPtr(NSNumber* nb);
-NSError* getOptionalFutureError(void* future);
-void* resolvePromise(void* future, void* arg);
-void* unwrapAndFreeExpected(void* expected);
-char* copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err);
-NSData* convertStringToData(NSString* clearText, NSError* _Nullable* _Nonnull err);
-char** convertStringstoCStrings(NSArray<NSString*>* strings, NSError* _Nullable* _Nonnull err);
+void runOnMainQueue(void (^_Nonnull block)(void));
+void freeCStringArray(char* _Nonnull* _Nonnull toFree, NSUInteger nbElems);
+NSError* _Nonnull createNSError(char const* _Nonnull message, TKRError code);
+NSNumber* _Nonnull ptrToNumber(void* _Nonnull ptr);
+void* _Nonnull numberToPtr(NSNumber* _Nonnull nb);
+NSError* _Nullable getOptionalFutureError(void* _Nonnull future);
+void* _Nullable resolvePromise(void* _Nonnull future, void* _Nullable arg);
+void* _Nonnull unwrapAndFreeExpected(void* _Nonnull expected);
+char* _Nullable copyUTF8CString(NSString* _Nonnull str, NSError* _Nullable* _Nonnull err);
+NSData* _Nullable convertStringToData(NSString* _Nonnull clearText, NSError* _Nullable* _Nonnull err);
+char* _Nonnull* _Nullable convertStringstoCStrings(NSArray<NSString*>* _Nonnull strings,
+                                                   NSError* _Nullable* _Nonnull err);

@@ -102,7 +102,7 @@
 
  @param handler the block called with a NSError*, or nil.
  */
-- (void)registerUnlockWithOptions:(nonnull TKRUnlockOptions*)options completionHandler:(TKRErrorHandler)handler;
+- (void)registerUnlockWithOptions:(nonnull TKRUnlockOptions*)options completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Sign up to Tanker
