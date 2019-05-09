@@ -35,7 +35,7 @@ nightly:
   only:
     - schedules
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
+    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch --notifier=mail
   tags:
     - macos
 
