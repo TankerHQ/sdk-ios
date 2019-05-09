@@ -57,6 +57,19 @@ NSString* createIdentity(NSString* userID, NSString* trustchainID, NSString* tru
                                   freeWhenDone:YES];
 }
 
+NSString* getPublicIdentity(NSString* identity)
+{
+  tanker_expected_t* identity_expected =
+      tanker_get_public_identity([identity cStringUsingEncoding:NSUTF8StringEncoding]);
+
+  char* public_identity = unwrapAndFreeExpected(identity_expected);
+  assert(public_identity);
+  return [[NSString alloc] initWithBytesNoCopy:public_identity
+                                        length:strlen(public_identity)
+                                      encoding:NSUTF8StringEncoding
+                                  freeWhenDone:YES];
+}
+
 NSString* createUUID()
 {
   return [[NSUUID UUID] UUIDString];
@@ -108,37 +121,39 @@ SpecBegin(TankerSpecs)
       __block NSString* trustchainPrivateKey;
 
       __block TKRTankerOptions* tankerOptions;
-      
-      __block void (^signUpWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity){
+
+      __block void (^signUpWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity) {
         NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
           [tanker signUpWithIdentity:identity completionHandler:adapter];
         });
         expect(result).toNot.beNil();
         expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
       };
-      
-      __block void (^signInWithIdentity)(TKRTanker*, NSString*, TKRSignInResult) = ^(TKRTanker* tanker, NSString* identity, TKRSignInResult signInResult){
-        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-          [tanker signInWithIdentity:identity completionHandler:adapter];
-        });
-        expect(result).toNot.beNil();
-        expect(result.unsignedIntegerValue).to.equal(signInResult);
-      };
-      
-      __block void (^signInUnlockWithIdentity)(TKRTanker*, NSString*, TKRSignInOptions*, TKRSignInResult) = ^(TKRTanker* tanker, NSString* identity, TKRSignInOptions* options, TKRSignInResult signInResult){
-        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-          [tanker signInWithIdentity:identity options:options completionHandler:adapter];
-        });
-        expect(result).toNot.beNil();
-        expect(result.unsignedIntegerValue).to.equal(signInResult);
-      };
-      
-      __block void (^signOut)(TKRTanker*) = ^(TKRTanker* tanker){
+
+      __block void (^signInWithIdentity)(TKRTanker*, NSString*, TKRSignInResult) =
+          ^(TKRTanker* tanker, NSString* identity, TKRSignInResult signInResult) {
+            NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker signInWithIdentity:identity completionHandler:adapter];
+            });
+            expect(result).toNot.beNil();
+            expect(result.unsignedIntegerValue).to.equal(signInResult);
+          };
+
+      __block void (^signInUnlockWithIdentity)(TKRTanker*, NSString*, TKRSignInOptions*, TKRSignInResult) =
+          ^(TKRTanker* tanker, NSString* identity, TKRSignInOptions* options, TKRSignInResult signInResult) {
+            NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker signInWithIdentity:identity options:options completionHandler:adapter];
+            });
+            expect(result).toNot.beNil();
+            expect(result.unsignedIntegerValue).to.equal(signInResult);
+          };
+
+      __block void (^signOut)(TKRTanker*) = ^(TKRTanker* tanker) {
         hangWithResolver(^(PMKResolver resolve) {
           [tanker signOutWithCompletionHandler:resolve];
         });
       };
-      
+
       beforeAll(^{
         NSString* configName = TANKER_CONFIG_NAME;
         NSString* configPath = TANKER_CONFIG_FILEPATH;
@@ -240,7 +255,7 @@ SpecBegin(TankerSpecs)
           expect(err.domain).to.equal(TKRErrorDomain);
 
           signInWithIdentity(tanker, identity, TKRSignInResultOk);
-          
+
           NSString* deviceIDBis = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker deviceIDWithCompletionHandler:adapter];
           });
@@ -304,7 +319,9 @@ SpecBegin(TankerSpecs)
         __block TKRTanker* aliceTanker;
         __block TKRTanker* bobTanker;
         __block NSString* aliceIdentity;
+        __block NSString* alicePublicIdentity;
         __block NSString* bobIdentity;
+        __block NSString* bobPublicIdentity;
 
         beforeEach(^{
           aliceTanker = [TKRTanker tankerWithOptions:tankerOptions];
@@ -314,6 +331,8 @@ SpecBegin(TankerSpecs)
 
           aliceIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
           bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          alicePublicIdentity = getPublicIdentity(aliceIdentity);
+          bobPublicIdentity = getPublicIdentity(bobIdentity);
 
           signUpWithIdentity(aliceTanker, aliceIdentity);
           signUpWithIdentity(bobTanker, bobIdentity);
@@ -326,7 +345,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should create a group with alice and encrypt to her", ^{
           NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker createGroupWithIdentities:@[ aliceIdentity ] completionHandler:adapter];
+            [aliceTanker createGroupWithIdentities:@[ alicePublicIdentity ] completionHandler:adapter];
           });
           NSString* clearText = @"Rosebud";
 
@@ -343,7 +362,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should create a group with alice and share to her", ^{
           NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker createGroupWithIdentities:@[ aliceIdentity ] completionHandler:adapter];
+            [aliceTanker createGroupWithIdentities:@[ alicePublicIdentity ] completionHandler:adapter];
           });
           NSString* clearText = @"Rosebud";
 
@@ -369,7 +388,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should allow bob to decrypt once he's added to the group", ^{
           NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker createGroupWithIdentities:@[ aliceIdentity ] completionHandler:adapter];
+            [aliceTanker createGroupWithIdentities:@[ alicePublicIdentity ] completionHandler:adapter];
           });
           NSString* clearText = @"Rosebud";
 
@@ -400,7 +419,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should error when adding 0 members to a group", ^{
           NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker createGroupWithIdentities:@[ aliceIdentity ] completionHandler:adapter];
+            [aliceTanker createGroupWithIdentities:@[ alicePublicIdentity ] completionHandler:adapter];
           });
 
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
@@ -414,7 +433,7 @@ SpecBegin(TankerSpecs)
         it(@"should error when adding members to a non-existent group", ^{
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker updateMembersOfGroup:@"o/Fufh9HZuv5XoZJk5X3ny+4ZeEZegoIEzRjYPP7TX0="
-                              identitiesToAdd:@[ bobIdentity ]
+                              identitiesToAdd:@[ bobPublicIdentity ]
                             completionHandler:resolve];
           });
 
@@ -439,6 +458,9 @@ SpecBegin(TankerSpecs)
         __block NSString* aliceIdentity;
         __block NSString* bobIdentity;
         __block NSString* charlieIdentity;
+        __block NSString* alicePublicIdentity;
+        __block NSString* bobPublicIdentity;
+        __block NSString* charliePublicIdentity;
         __block TKREncryptionOptions* encryptionOptions;
 
         beforeEach(^{
@@ -453,6 +475,9 @@ SpecBegin(TankerSpecs)
           aliceIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
           bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
           charlieIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          alicePublicIdentity = getPublicIdentity(aliceIdentity);
+          bobPublicIdentity = getPublicIdentity(bobIdentity);
+          charliePublicIdentity = getPublicIdentity(charlieIdentity);
 
           signUpWithIdentity(aliceTanker, aliceIdentity);
           signUpWithIdentity(bobTanker, bobIdentity);
@@ -500,7 +525,7 @@ SpecBegin(TankerSpecs)
           expect(err).to.beNil();
 
           TKRShareOptions* opts = [TKRShareOptions options];
-          opts.shareWithUsers = @[ bobIdentity ];
+          opts.shareWithUsers = @[ bobPublicIdentity ];
           hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
           });
@@ -533,7 +558,7 @@ SpecBegin(TankerSpecs)
           NSArray* resourceIDs = @[ resourceID1, resourceID2 ];
 
           TKRShareOptions* opts = [TKRShareOptions options];
-          opts.shareWithUsers = @[ bobIdentity, charlieIdentity ];
+          opts.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
           hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:resourceIDs options:opts completionHandler:resolve];
           });
@@ -577,7 +602,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should have no effect to share nothing", ^{
           TKRShareOptions* opts = [TKRShareOptions options];
-          opts.shareWithUsers = @[ bobIdentity, charlieIdentity ];
+          opts.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:@[] options:opts completionHandler:resolve];
           });
@@ -586,7 +611,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should share directly when encrypting a string", ^{
           NSString* clearText = @"Rosebud";
-          encryptionOptions.shareWithUsers = @[ bobIdentity, charlieIdentity ];
+          encryptionOptions.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
 
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker encryptDataFromString:clearText options:encryptionOptions completionHandler:adapter];
@@ -604,7 +629,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should share directly when encrypting data", ^{
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
-          encryptionOptions.shareWithUsers = @[ bobIdentity, charlieIdentity ];
+          encryptionOptions.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker encryptDataFromData:clearData options:encryptionOptions completionHandler:adapter];
           });
@@ -753,7 +778,6 @@ SpecBegin(TankerSpecs)
           hangWithResolver(^(PMKResolver resolve) {
             [device signOutWithCompletionHandler:resolve];
           });
-
         });
 
         it(@"should setup unlock with an email", ^{

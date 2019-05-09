@@ -5,4 +5,3 @@
  @brief Block which will be called when the current device is revoked.
  */
 typedef void (^TKRDeviceRevokedHandler)(void);
-

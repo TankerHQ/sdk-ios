@@ -102,7 +102,7 @@
 
  @param handler the block called with a NSError*, or nil.
  */
-- (void)registerUnlockWithOptions:(nonnull TKRUnlockOptions*)options completionHandler:(TKRErrorHandler)handler;
+- (void)registerUnlockWithOptions:(nonnull TKRUnlockOptions*)options completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Sign up to Tanker
@@ -232,7 +232,8 @@
 
  @pre @a encryptedData was returned by encryptDataFromString.
  */
-- (void)decryptStringFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedStringHandler)handler;
+- (void)decryptStringFromData:(nonnull NSData*)encryptedData
+            completionHandler:(nonnull TKRDecryptedStringHandler)handler;
 
 /*!
  @brief Decrypt encrypted data.
@@ -254,7 +255,8 @@
 
  @return the resource id.
  */
-- (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)encryptedData error:(NSError* _Nullable* _Nonnull)error;
+- (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)encryptedData
+                                          error:(NSError* _Nullable* _Nonnull)error;
 
 /*!
  @brief Create a group with the given recipient identities.

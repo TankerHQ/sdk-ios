@@ -13,7 +13,7 @@
 /*!
  @description value of the unlock Key
  */
-@property(readonly) NSString* value;
+@property(readonly, nonnull) NSString* value;
 
 /*!
  @description create a new unlock key from a value
