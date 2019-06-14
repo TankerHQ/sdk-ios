@@ -9,7 +9,6 @@ typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
 @interface TKRTanker (Private)
 
 @property(nonnull) void* cTanker;
-@property(nonnull) NSMutableArray* events;
 @property(nonnull) NSMutableDictionary* callbacks;
 
 - (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
@@ -19,11 +18,12 @@ typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
 - (void)decryptDataFromDataImpl:(nonnull NSData*)encryptedData
               completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
 
-- (nullable NSNumber*)setEvent:(nonnull NSNumber*)event
-                   callbackPtr:(nonnull NSNumber*)callbackPtr
-                       handler:(nonnull TKRAbstractEventHandler)handler
-                         error:(NSError* _Nullable* _Nonnull)error;
+- (void)setEvent:(NSUInteger)event
+     callbackPtr:(nonnull NSNumber*)callbackPtr
+         handler:(nonnull TKRAbstractEventHandler)handler
+           error:(NSError* _Nullable* _Nonnull)error;
 
-- (void)disconnectEventConnection:(nonnull NSNumber*)connection;
+- (void)disconnectEvent:(NSUInteger)event;
+- (void)disconnectEvents;
 
 @end

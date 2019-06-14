@@ -3,7 +3,8 @@
 #import "TKRError.h"
 #import "TKRTanker.h"
 #import "TKRTankerOptions+Private.h"
-#import "TKRUnlockKey.h"
+#import "TKRVerification.h"
+#import "TKRVerificationKey.h"
 
 #import "TKRTestConfig.h"
 
@@ -12,6 +13,7 @@
 @import PromiseKit;
 
 #include "ctanker.h"
+#include "ctanker/admin.h"
 #include "ctanker/identity.h"
 
 NSError* getOptionalFutureError(tanker_future_t* fut)
@@ -122,36 +124,75 @@ SpecBegin(TankerSpecs)
 
       __block TKRTankerOptions* tankerOptions;
 
-      __block void (^signUpWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity) {
-        NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-          [tanker signUpWithIdentity:identity completionHandler:adapter];
+      __block void (^startWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity) {
+        NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
+          [tanker startWithIdentity:identity completionHandler:adapter];
         });
-        expect(result).toNot.beNil();
-        expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
+        expect(status).toNot.beNil();
+        expect(status.unsignedIntegerValue).to.equal(TKRStatusReady);
       };
 
-      __block void (^signInWithIdentity)(TKRTanker*, NSString*, TKRSignInResult) =
-          ^(TKRTanker* tanker, NSString* identity, TKRSignInResult signInResult) {
-            NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker signInWithIdentity:identity completionHandler:adapter];
+      __block void (^startWithIdentityAndRegister)(TKRTanker*, NSString*, TKRVerification*) =
+          ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
+            NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker startWithIdentity:identity completionHandler:adapter];
             });
-            expect(result).toNot.beNil();
-            expect(result.unsignedIntegerValue).to.equal(signInResult);
+            expect(status).toNot.beNil();
+            expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityRegistrationNeeded);
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [tanker registerIdentityWithVerification:verification completionHandler:resolver];
+            });
+            expect(err).to.beNil();
           };
 
-      __block void (^signInUnlockWithIdentity)(TKRTanker*, NSString*, TKRSignInOptions*, TKRSignInResult) =
-          ^(TKRTanker* tanker, NSString* identity, TKRSignInOptions* options, TKRSignInResult signInResult) {
-            NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker signInWithIdentity:identity options:options completionHandler:adapter];
+      __block TKRVerificationKey* (^startWithIdentityAndRegisterVerificationKey)(TKRTanker*, NSString*) =
+          ^(TKRTanker* tanker, NSString* identity) {
+            NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker startWithIdentity:identity completionHandler:adapter];
             });
-            expect(result).toNot.beNil();
-            expect(result.unsignedIntegerValue).to.equal(signInResult);
+            expect(status).toNot.beNil();
+            expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityRegistrationNeeded);
+            TKRVerificationKey* verificationKey = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker generateVerificationKeyWithCompletionHandler:adapter];
+            });
+            expect(verificationKey).toNot.beNil();
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [tanker registerIdentityWithVerification:[TKRVerification verificationFromVerificationKey:verificationKey]
+                                     completionHandler:resolver];
+            });
+            expect(err).to.beNil();
+            return verificationKey;
           };
 
-      __block void (^signOut)(TKRTanker*) = ^(TKRTanker* tanker) {
+      __block void (^startWithIdentityAndVerify)(TKRTanker*, NSString*, TKRVerification*) =
+          ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
+            NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker startWithIdentity:identity completionHandler:adapter];
+            });
+            expect(status).toNot.beNil();
+            expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityVerificationNeeded);
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [tanker verifyIdentityWithVerification:verification completionHandler:resolver];
+            });
+            expect(err).to.beNil();
+          };
+
+      __block void (^stop)(TKRTanker*) = ^(TKRTanker* tanker) {
         hangWithResolver(^(PMKResolver resolve) {
-          [tanker signOutWithCompletionHandler:resolve];
+          [tanker stopWithCompletionHandler:resolve];
         });
+      };
+
+      __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
+        tanker_future_t* f =
+            tanker_admin_get_verification_code(admin,
+                                               [trustchainID cStringUsingEncoding:NSUTF8StringEncoding],
+                                               [email cStringUsingEncoding:NSUTF8StringEncoding]);
+        tanker_future_wait(f);
+        char* code = (char*)tanker_future_get_voidptr(f);
+        NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
+        free(code);
+        return ret;
       };
 
       beforeAll(^{
@@ -227,40 +268,28 @@ SpecBegin(TankerSpecs)
           identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
         });
 
-        it(@"should return TKRSignInResultOk when signUp is called", ^{
-          signUpWithIdentity(tanker, identity);
-          signOut(tanker);
+        it(@"should return TKRStatusIdentityRegistrationNeeded when start is called for the first time", ^{
+          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          stop(tanker);
         });
 
-        it(@"should return TKRSignInResultIdentityNotRegistered when no sign-up was performed", ^{
-          signInWithIdentity(tanker, identity, TKRSignInResultIdentityNotRegistered);
-          signUpWithIdentity(tanker, identity);
+        it(@"should return TKRStatusReady when start is called after identity has been registered", ^{
+          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          stop(tanker);
+          startWithIdentity(tanker, identity);
+          stop(tanker);
         });
 
         it(@"should return a valid base64 string when retrieving the current device id", ^{
-          signUpWithIdentity(tanker, identity);
-
+          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
           NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker deviceIDWithCompletionHandler:adapter];
           });
+
           NSData* b64Data = [[NSData alloc] initWithBase64EncodedString:deviceID options:0];
           expect(b64Data).toNot.beNil();
 
-          signOut(tanker);
-
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker deviceIDWithCompletionHandler:adapter];
-          });
-          NSLog(@"%@", [err localizedDescription]);
-          expect(err.domain).to.equal(TKRErrorDomain);
-
-          signInWithIdentity(tanker, identity, TKRSignInResultOk);
-
-          NSString* deviceIDBis = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker deviceIDWithCompletionHandler:adapter];
-          });
-
-          expect(deviceIDBis).to.equal(deviceID);
+          stop(tanker);
         });
       });
 
@@ -271,11 +300,11 @@ SpecBegin(TankerSpecs)
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(tanker).toNot.beNil();
           NSString* identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
-          signUpWithIdentity(tanker, identity);
+          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
-          signOut(tanker);
+          stop(tanker);
         });
 
         it(@"should decrypt an encrypted string", ^{
@@ -334,13 +363,15 @@ SpecBegin(TankerSpecs)
           alicePublicIdentity = getPublicIdentity(aliceIdentity);
           bobPublicIdentity = getPublicIdentity(bobIdentity);
 
-          signUpWithIdentity(aliceTanker, aliceIdentity);
-          signUpWithIdentity(bobTanker, bobIdentity);
+          startWithIdentityAndRegister(
+              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndRegister(
+              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
-          signOut(aliceTanker);
-          signOut(bobTanker);
+          stop(aliceTanker);
+          stop(bobTanker);
         });
 
         it(@"should create a group with alice and encrypt to her", ^{
@@ -414,7 +445,7 @@ SpecBegin(TankerSpecs)
           });
 
           expect(err).toNot.beNil();
-          expect(err.code).to.equal(TKRErrorInvalidGroupSize);
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
         });
 
         it(@"should error when adding 0 members to a group", ^{
@@ -427,7 +458,7 @@ SpecBegin(TankerSpecs)
           });
 
           expect(err).toNot.beNil();
-          expect(err.code).to.equal(TKRErrorInvalidGroupSize);
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
         });
 
         it(@"should error when adding members to a non-existent group", ^{
@@ -438,7 +469,7 @@ SpecBegin(TankerSpecs)
           });
 
           expect(err).toNot.beNil();
-          expect(err.code).to.equal(TKRErrorGroupNotFound);
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
         });
 
         it(@"should error when creating a group with non-existing members", ^{
@@ -479,15 +510,18 @@ SpecBegin(TankerSpecs)
           bobPublicIdentity = getPublicIdentity(bobIdentity);
           charliePublicIdentity = getPublicIdentity(charlieIdentity);
 
-          signUpWithIdentity(aliceTanker, aliceIdentity);
-          signUpWithIdentity(bobTanker, bobIdentity);
-          signUpWithIdentity(charlieTanker, charlieIdentity);
+          startWithIdentityAndRegister(
+              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndRegister(
+              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndRegister(
+              charlieTanker, charlieIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
-          signOut(aliceTanker);
-          signOut(bobTanker);
-          signOut(charlieTanker);
+          stop(aliceTanker);
+          stop(bobTanker);
+          stop(charlieTanker);
         });
 
         it(@"should return a valid base64 resourceID", ^{
@@ -658,164 +692,40 @@ SpecBegin(TankerSpecs)
           expect(secondDevice).toNot.beNil();
 
           identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
-          signUpWithIdentity(firstDevice, identity);
         });
 
         afterEach(^{
-          signOut(firstDevice);
-          signOut(secondDevice);
+          stop(firstDevice);
+          stop(secondDevice);
         });
 
-        it(@"should indicate when an unlock mechanism was set up", ^{
-          NSError* err = nil;
-          BOOL wasSetUp = [hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice isUnlockAlreadySetUpWithCompletionHandler:adapter];
-          }) boolValue];
-          expect(wasSetUp).to.equal(NO);
+        it(@"should return TKRStatusIdentityVerificationNeeded when starting on a new device", ^{
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndVerify(
+              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+        });
 
-          wasSetUp = [firstDevice hasRegisteredUnlockMethodsWithError:&err];
-          expect(err).to.beNil();
-          expect(wasSetUp).to.equal(NO);
+        it(@"should setup verification with an email", ^{
+          NSString* email = @"bob@alice.dk";
+          startWithIdentityAndRegister(
+              firstDevice,
+              identity,
+              [TKRVerification verificationFromEmail:email verificationCode:getVerificationCode(email)]);
 
-          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword error:&err];
-          expect(err).to.beNil();
-          expect(wasSetUp).to.equal(NO);
-
-          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
-          expect(err).to.beNil();
-          expect(wasSetUp).to.equal(NO);
-
-          NSArray* methods = [firstDevice registeredUnlockMethodsWithError:&err];
-          expect(err).to.beNil();
-          expect(methods.count).to.equal(0);
-
-          TKRUnlockOptions* opts = [TKRUnlockOptions options];
-          opts.password = @"password";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:opts completionHandler:resolve];
+          NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice verificationMethodsWithCompletionHandler:adapter];
           });
-          // ... racy
-          sleep(2);
-
-          wasSetUp = [hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice isUnlockAlreadySetUpWithCompletionHandler:adapter];
-          }) boolValue];
-          expect(wasSetUp).to.equal(YES);
-
-          wasSetUp = [firstDevice hasRegisteredUnlockMethodsWithError:&err];
-          expect(err).to.beNil();
-          expect(wasSetUp).to.equal(YES);
-
-          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodPassword error:&err];
-          expect(err).to.beNil();
-          expect(wasSetUp).to.equal(YES);
-
-          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
-          expect(err).to.beNil();
-          expect(wasSetUp).to.equal(NO);
-
-          methods = [firstDevice registeredUnlockMethodsWithError:&err];
-          expect(err).to.beNil();
           expect(methods.count).to.equal(1);
-          expect([methods objectAtIndex:0]).to.equal(TKRUnlockMethodPassword);
-        });
-
-        it(@"should return TKRSignInResultVerificationNeeded when no options are provided and an unlock method was "
-           @"registered",
-           ^{
-             TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
-             unlockOptions.password = @"password";
-             hangWithResolver(^(PMKResolver resolve) {
-               [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
-             });
-             sleep(1);
-
-             signInWithIdentity(secondDevice, identity, TKRSignInResultIdentityVerificationNeeded);
-
-             TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-             signInOptions.password = @"password";
-             signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
-           });
-
-        it(@"should open the second device after a registerUnlockWithOptions with password", ^{
-          TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
-          unlockOptions.password = @"password";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
-          });
-
-          sleep(1);
-
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.password = @"password";
-          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
-        });
-
-        it(@"should signIn with password after a signUp with password", ^{
-          NSString* userID2 = createUUID();
-          NSString* identity2 = createIdentity(userID2, trustchainID, trustchainPrivateKey);
-          TKRTanker* device = [TKRTanker tankerWithOptions:tankerOptions];
-          expect(device).toNot.beNil();
-
-          TKRAuthenticationMethods* authMethods = [TKRAuthenticationMethods methods];
-          authMethods.password = @"password";
-          expect([device isOpen]).to.equal(NO);
-          NSNumber* result = hangWithAdapter(^(PMKAdapter adapter) {
-            [device signUpWithIdentity:identity2 authenticationMethods:authMethods completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect([device isOpen]).to.equal(YES);
-
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.password = @"password";
-          expect([secondDevice isOpen]).to.equal(NO);
-          result = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity2 options:signInOptions completionHandler:adapter];
-          });
-          expect(result).toNot.beNil();
-          expect(result.unsignedIntegerValue).to.equal(TKRSignInResultOk);
-          expect([secondDevice isOpen]).to.equal(YES);
-          hangWithResolver(^(PMKResolver resolve) {
-            [device signOutWithCompletionHandler:resolve];
-          });
-        });
-
-        it(@"should setup unlock with an email", ^{
-          NSError* err = nil;
-          BOOL wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
-          expect(err).to.beNil();
-          expect(wasSetUp).to.equal(NO);
-
-          NSArray* methods = [firstDevice registeredUnlockMethodsWithError:&err];
-          expect(err).to.beNil();
-          expect(methods.count).to.equal(0);
-
-          TKRUnlockOptions* opts = [TKRUnlockOptions options];
-          opts.email = @"bob@alice.dk";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:opts completionHandler:resolve];
-          });
-
-          wasSetUp = [firstDevice hasRegisteredUnlockMethod:TKRUnlockMethodEmail error:&err];
-          expect(err).to.beNil();
-
-          expect(wasSetUp).to.equal(YES);
-          methods = [firstDevice registeredUnlockMethodsWithError:&err];
-          expect(err).to.beNil();
-          expect(methods.count).to.equal(1);
-          expect([methods objectAtIndex:0]).to.equal(TKRUnlockMethodEmail);
+          expect(methods[0].type).to.equal(TKRVerificationMethodTypeEmail);
+          expect(methods[0].email).to.equal(email);
         });
 
         it(@"should share encrypted data with every accepted device", ^{
-          TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
-          unlockOptions.password = @"password";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
-          });
-          sleep(1);
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.password = @"password";
-          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndVerify(
+              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
           NSString* clearText = @"Rosebud";
 
@@ -829,89 +739,94 @@ SpecBegin(TankerSpecs)
           expect(decryptedText).to.equal(clearText);
         });
 
-        it(@"should accept a device with a previously generated unlock key", ^{
-          TKRUnlockKey* unlockKey = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice generateAndRegisterUnlockKeyWithCompletionHandler:adapter];
+        it(@"should fail to generate a verification key when a previous verification method was set", ^{
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice generateVerificationKeyWithCompletionHandler:adapter];
           });
-          expect(unlockKey).toNot.beNil();
-
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.unlockKey = unlockKey;
-          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorPreconditionFailed);
         });
 
-        it(@"should error when adding a device with an invalid password", ^{
-          TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
-          unlockOptions.password = @"password";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
-          });
-          sleep(1);
+        it(@"should accept a device with a previously generated verification key", ^{
+          TKRVerificationKey* verificationKey = startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
 
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.password = @"wrong";
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
+          startWithIdentityAndVerify(
+              secondDevice, identity, [TKRVerification verificationFromVerificationKey:verificationKey]);
+        });
+
+        it(@"should fail to set a verification method if a verification key was generated", ^{
+          startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
+
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"fail"]
+                             completionHandler:resolver];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorPreconditionFailed);
+        });
+
+        it(@"should error when adding a device with an invalid passphrase", ^{
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+
+          NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
+            [secondDevice startWithIdentity:identity completionHandler:adapter];
+          });
+          expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityVerificationNeeded);
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:@"fail"]
+                                       completionHandler:resolver];
           });
 
           expect(err).toNot.beNil();
-          expect(err.code).to.equal(TKRErrorInvalidUnlockPassword);
+          expect(err.code).to.equal(TKRErrorInvalidVerification);
         });
 
-        it(@"should return TKRSignInResultVerificationNeeded when trying to unlock a device and setup has not been "
-           @"done",
-           ^{
-             signInWithIdentity(secondDevice, identity, TKRSignInResultIdentityVerificationNeeded);
-           });
+        it(@"should update a verification passphrase", ^{
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
-        it(@"should update an unlock password", ^{
-          TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
-          unlockOptions.password = @"password";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"new passphrase"]
+                             completionHandler:resolver];
           });
-          unlockOptions.password = @"new password";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
-          });
+          expect(err).to.beNil();
 
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.password = unlockOptions.password;
-
-          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
+          startWithIdentityAndVerify(
+              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"new passphrase"]);
         });
 
-        it(@"should throw when accepting a device with an invalid unlock key", ^{
-          hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice generateAndRegisterUnlockKeyWithCompletionHandler:adapter];
+        fit(@"should throw when verifying an identity with an invalid verification key", ^{
+          startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
+          NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
+            [secondDevice startWithIdentity:identity completionHandler:adapter];
           });
+          expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityVerificationNeeded);
 
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.unlockKey = [TKRUnlockKey unlockKeyFromValue:@"invalid"];
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice signInWithIdentity:identity options:signInOptions completionHandler:adapter];
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:
+                              [TKRVerification
+                                  verificationFromVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
+                                       completionHandler:resolver];
           });
 
           expect(err).toNot.beNil();
-          expect(err.code).to.equal(TKRErrorInvalidUnlockKey);
+          expect(err.code).to.equal(TKRErrorInvalidVerification);
         });
 
         it(@"should decrypt old resources on second device", ^{
-          TKRUnlockOptions* unlockOptions = [TKRUnlockOptions options];
-          unlockOptions.password = @"password";
-          hangWithResolver(^(PMKResolver resolve) {
-            [firstDevice registerUnlockWithOptions:unlockOptions completionHandler:resolve];
-          });
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
           NSString* clearText = @"Rosebud";
           NSData* encryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice encryptDataFromString:clearText completionHandler:adapter];
           });
-          signOut(firstDevice);
-
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.password = @"password";
-          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
+          stop(firstDevice);
+          startWithIdentityAndVerify(
+              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
           NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice decryptStringFromData:encryptedText completionHandler:adapter];
@@ -934,21 +849,14 @@ SpecBegin(TankerSpecs)
           secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(trustchainURL, trustchainID)];
           expect(secondDevice).toNot.beNil();
 
-          signUpWithIdentity(tanker, identity);
-
-          TKRUnlockKey* unlockKey = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker generateAndRegisterUnlockKeyWithCompletionHandler:adapter];
-          });
-          expect(unlockKey).toNot.beNil();
-
-          TKRSignInOptions* signInOptions = [TKRSignInOptions options];
-          signInOptions.unlockKey = unlockKey;
-          signInUnlockWithIdentity(secondDevice, identity, signInOptions, TKRSignInResultOk);
+          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndVerify(
+              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
-          signOut(tanker);
-          signOut(secondDevice);
+          stop(tanker);
+          stop(secondDevice);
         });
 
         it(@"can self revoke", ^{
@@ -987,7 +895,8 @@ SpecBegin(TankerSpecs)
           expect(bobTanker).toNot.beNil();
 
           NSString* bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
-          signUpWithIdentity(bobTanker, bobIdentity);
+          startWithIdentityAndRegister(
+              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
           __block bool revoked = false;
           NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
@@ -1002,10 +911,10 @@ SpecBegin(TankerSpecs)
           sleep(1);
 
           expect(err.domain).to.equal(TKRErrorDomain);
-          expect(err.code).to.equal(TKRErrorDeviceNotFound);
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
           expect(revoked).to.equal(false);
 
-          signOut(bobTanker);
+          stop(bobTanker);
         });
       });
     });

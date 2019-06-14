@@ -2,16 +2,15 @@
 #import <AvailabilityMacros.h>
 #import <Foundation/Foundation.h>
 
-#import "TKRAuthenticationMethods.h"
 #import "TKRCompletionHandlers.h"
 #import "TKREncryptionOptions.h"
 #import "TKREvents.h"
 #import "TKRShareOptions.h"
-#import "TKRSignInOptions.h"
+#import "TKRStatus.h"
 #import "TKRTankerOptions.h"
-#import "TKRUnlockKey.h"
-#import "TKRUnlockMethods.h"
-#import "TKRUnlockOptions.h"
+#import "TKRVerification.h"
+#import "TKRVerificationKey.h"
+#import "TKRVerificationMethod.h"
 
 #define TKRErrorDomain @"TKRErrorDomain"
 
@@ -49,132 +48,111 @@
 
  @discussion The handler will be called as soon as the device is revoked.
 
- @param handler This block will be called without any argument, and will be run on a background queue.
-
- @return an event handler id.
+ @param handler the block called without any argument. Runs on a background queue.
  */
-- (nonnull NSNumber*)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler;
-/*!
- @brief Check if the current user has already registered an unlock key.
-
- @discussion If @NO is passed to the completion handler, you can call registerUnlockWithOptions or
- generateAndRegisterUnlockKey.
-
- @param handler the block called with either @YES or @NO.
-*/
-- (void)isUnlockAlreadySetUpWithCompletionHandler:(nonnull TKRBooleanHandler)handler;
+- (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler;
 
 /*!
- @brief Check if the current user has already registered an unlock method out of password and email.
+ @brief Get the list of the registered verification methods.
 
- @discussion If NO is returned, you can call registerUnlock.
+ @pre status must be TKRStatusReady
 
- @param err output error parameter.
-
- @return YES if any method has been registered, NO otherwise.
+ @param handler the block called with a list of registered verification methods, or an NSError*.
  */
-- (BOOL)hasRegisteredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err;
+- (void)verificationMethodsWithCompletionHandler:(nonnull TKRVerificationMethodsHandler)handler;
 
 /*!
- @brief Check if the current user has registered the given unlock method.
+ @brief Register or update a verification method.
 
- @discussion If NO is returned, you can call registerUnlockWithOptions to register the corresponding
- method.
+ @pre status must be TKRStatusReady
 
- @param method unlock method to check.
- @param err output error parameter.
-
- @return YES if the method has been registered, NO otherwise.
+ @param verification the verification.
+ @param handler the block called with an NSError*, or nil.
  */
-- (BOOL)hasRegisteredUnlockMethod:(TKRUnlockMethods)method error:(NSError* _Nullable* _Nonnull)err;
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
- @brief Get the list of the registered unlock methods.
+ @brief Start Tanker
 
- @param err output error parameter.
-
- @return a list of registered unlock methods, represented as NSNumber*, or nil if an error occurs.
- */
-- (nullable NSArray<NSNumber*>*)registeredUnlockMethodsWithError:(NSError* _Nullable* _Nonnull)err;
-
-/*!
- @brief Register one or more unlock methods
-
- @param handler the block called with a NSError*, or nil.
- */
-- (void)registerUnlockWithOptions:(nonnull TKRUnlockOptions*)options completionHandler:(nonnull TKRErrorHandler)handler;
-
-/*!
- @brief Sign up to Tanker
+ @pre status must be TKRStatusStopped
 
  @param identity a previously registered Tanker identity.
- @param handler the block called with the sign-up result.
+ @param handler the block called with Tanker's status.
  */
-- (void)signUpWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRSignUpHandler)handler;
+- (void)startWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRStartHandler)handler;
 
 /*!
- @brief Sign up to Tanker and set authentication methods
+ @brief Register an identity and associate a verification method.
 
- @param identity a previously registered Tanker identity.
- @param methods authentication methods to set up.
- @param handler the block called with the sign-up result.
+ @pre status must be TKRStatusIdentityRegistrationNeeded
+
+ @param verification the verification.
+ @param handler the block called with an NSError*, or nil.
  */
-- (void)signUpWithIdentity:(nonnull NSString*)identity
-     authenticationMethods:(nonnull TKRAuthenticationMethods*)methods
-         completionHandler:(nonnull TKRSignUpHandler)handler;
+- (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
+                       completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
- @brief Sign in to Tanker
+ @brief Verify an identity
 
- @param identity a previously registered Tanker identity.
- @param options sign-in options.
- @param handler the block called with the sign-in result.
+ @pre status must be TKRStatusIdentityVerificationNeeded
+
+ @param verification the verification.
+ @param handler the block called with an NSError*, or nil.
  */
-- (void)signInWithIdentity:(nonnull NSString*)identity
-                   options:(nonnull TKRSignInOptions*)options
-         completionHandler:(nonnull TKRSignInHandler)handler;
+- (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
+                     completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
- @brief Sign in to Tanker
+ @brief Attach a provisional identity to the current user
 
- @param identity a previously registered Tanker identity.
- @param handler the block called with the sign-in result.
+ @pre status must be TKRStatusReady
+
+ @param provisionalIdentity the provisional identity to attach.
+ @param handler the block called with the result, or an NSError*.
  */
-- (void)signInWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRSignInHandler)handler;
+- (void)attachProvisionalIdentity:(nonnull NSString*)provisionalIdentity
+                completionHandler:(nonnull TKRAttachResultHandler)handler;
 
 /*!
- @brief returns true if Tanker is open
+ @brief Verify a provisional identity
+
+ @pre status must be TKRStatusReady
+
+ @param verification the verification.
+ @param handler the block called with an NSError*, or nil.
  */
-- (BOOL)isOpen;
+- (void)verifyProvisionalIdentityWithVerification:(nonnull TKRVerification*)verification
+                                completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Retrieve the current device id.
 
  @param handler the block called with the device id.
 
- @pre Status is TKRStatusOpen.
+ @pre Status is TKRStatusReady.
  */
 - (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler;
 
 /*!
- @brief Sign out of Tanker.
+ @brief Stop Tanker.
 
  @discussion Perform Tanker cleanup actions.
 
- @param handler the block called with a NSError*, or nil.
+ @param handler the block called with an NSError*, or nil.
 
- @post Status is TKRStatusClosed
+ @post Status is TKRStatusStopped
 */
-- (void)signOutWithCompletionHandler:(nonnull TKRErrorHandler)handler;
+- (void)stopWithCompletionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
- @brief Create a unlock key that can be used to validate devices.
+ @brief Create a verification key that can be used to accept devices.
 
- @discussion A new unlock key is created each time.
+ @discussion A new verification key is created each time.
 
  @param handler the block called with the unlock key, or nil.
  */
-- (void)generateAndRegisterUnlockKeyWithCompletionHandler:(nonnull TKRUnlockKeyHandler)handler;
+- (void)generateVerificationKeyWithCompletionHandler:(nonnull TKRVerificationKeyHandler)handler;
 
 /*!
  @brief Encrypt a string and share it with the user's registered devices.
@@ -188,7 +166,7 @@
 - (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
- @brief Encrypt a string, using customized options.
+ @brief Encrypt a string, using custom options.
 
  @discussion The string will be converted to UTF-8 before encryption.
  There are no requirements on Unicode Normalization Form (NFC/NFD/NFKC/NFKD).
@@ -253,7 +231,7 @@
  @param encryptedData encrypted data.
  @param error output error parameter.
 
- @return the resource id.
+ @return the resource id, or nil if an error occurred.
  */
 - (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)encryptedData
                                           error:(NSError* _Nullable* _Nonnull)error;
@@ -272,7 +250,7 @@
 
  @param groupId the id of the group to update.
  @param identities the users to add to the group.
- @param handler the block called with a NSError, or nil.
+ @param handler the block called with an NSError, or nil.
  */
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
              identitiesToAdd:(nonnull NSArray<NSString*>*)identities
@@ -283,7 +261,7 @@
 
  @param resourceIDs resource IDs to share.
  @param options recipient identities and group IDs to share with.
- @param handler the block called with a NSError, or nil.
+ @param handler the block called with an NSError, or nil.
 
  @pre @a resourceIDs must contain resource IDs retrieved with the resourceIDOfEncryptedData method.
  @a userIDs must contain valid user IDs.
@@ -295,13 +273,13 @@
        completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
- @brief Revoke a device from its deviceId
+ @brief Revoke a device.
 
- @discussion The handler being called with nil does not mean that the device has been revoked yet. You have to use the
- TKRDeviceRevokedHandler.
+ @discussion The handler being called with nil does not mean that the device has been revoked yet.
+ The TKRDeviceRevokedHandler will be called once the device is revoked.
 
  @param deviceId device ID to revoke.
- @param handler the block called with a NSError, or nil.
+ @param handler the block called with an NSError, or nil.
 
  @pre @a deviceId must be the ID of one of the current user's devices.
  */
@@ -311,7 +289,7 @@
 
 // MARK: Properties
 
-/// Options with which the TKR object was initialized.
+/// Options with which the TKRTanker object was initialized.
 @property(nonnull, readonly) TKRTankerOptions* options;
 
 @end

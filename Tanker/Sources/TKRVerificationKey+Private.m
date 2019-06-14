@@ -2,9 +2,9 @@
 #import <objc/runtime.h>
 
 #import "TKRTanker+Private.h"
-#import "TKRUnlockKey+Private.h"
 #import "TKRUtils+Private.h"
-@implementation TKRUnlockKey (Private)
+#import "TKRVerificationKey+Private.h"
+@implementation TKRVerificationKey (Private)
 
 @dynamic valuePrivate;
 

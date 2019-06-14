@@ -1,30 +1,19 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRSignInResult.h"
-
-@class TKRUnlockKey;
+@class TKRVerificationKey;
+@class TKRVerificationMethod;
+@class TKRAttachResult;
 
 /*!
- @typedef TKRSignUpHandler
- @brief Block which will be called when signing up.
+ @typedef TKRStartHandler
+ @brief Block which will be called when starting.
 
- @param result the sign-up result (as an NSNumber*), or nil if an error
+ @param status the TKRStatus (as an NSNumber*), or nil if an error
  occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRSignUpHandler)(NSNumber* _Nullable result,
-                                 NSError* _Nullable err);
-
-/*!
- @typedef TKRSignInHandler
- @brief Block which will be called when signing in.
-
- @param result the sign-in result (as an NSNumber*), or nil if an error
- occurred.
- @param err the error which occurred, or nil.
- */
-typedef void (^TKRSignInHandler)(NSNumber* _Nullable result,
-                                 NSError* _Nullable err);
+typedef void (^TKRStartHandler)(NSNumber* _Nullable status,
+                                NSError* _Nullable err);
 
 /*!
  @typedef TKREncryptedDataHandler
@@ -57,16 +46,6 @@ typedef void (^TKRDecryptedStringHandler)(NSString* _Nullable decryptedString,
                                           NSError* _Nullable err);
 
 /*!
- @typedef TKRBooleanHandler
- @brief Block which will be called with either @YES or @NO.
-
- @param boolean either @YES or @NO.
- @param err the error which occurred, or nil.
- */
-typedef void (^TKRBooleanHandler)(NSNumber* _Nullable boolean,
-                                  NSError* _Nullable err);
-
-/*!
  @typedef TKRErrorHandler
  @brief Block which will be called with a NSError*, or nil.
 
@@ -95,11 +74,31 @@ typedef void (^TKRGroupIDHandler)(NSString* _Nullable groupID,
                                   NSError* _Nullable err);
 
 /*!
- @typedef TKRUnlockKeyHandler
+ @typedef TKRVerificationKeyHandler
  @brief Block which will be called with a string.
 
  @param key the unlock key, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRUnlockKeyHandler)(TKRUnlockKey* _Nullable key,
-                                    NSError* _Nullable err);
+typedef void (^TKRVerificationKeyHandler)(TKRVerificationKey* _Nullable key,
+                                          NSError* _Nullable err);
+
+/*!
+ @typedef TKRVerificationMethodsHandler
+ @brief Block which will be called with a list of verification methods.
+
+ @param methods a list of verification methods, or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRVerificationMethodsHandler)(
+    NSArray<TKRVerificationMethod*>* _Nullable methods, NSError* _Nullable err);
+
+/*!
+ @typedef TKRAttachResultHandler
+ @brief Block which will be called with a TKRAttachResult*.
+
+ @param result the result of attachProvisionalIdentity, or nil.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRAttachResultHandler)(TKRAttachResult* _Nullable result,
+                                       NSError* _Nullable err);
