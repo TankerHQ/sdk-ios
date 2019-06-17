@@ -54,11 +54,12 @@ mirror:
     - macos
   stage: deploy
   only:
-    # mirror public tags, releases branches
-    # and master
+    # mirror public tags, releases branches,
+    # feature branches, and master
     - /\Av[0-9.]+\z/
     - master
     - /\Arelease/.*\z/
+    - /\Afeat\/.+\z/
   except:
     - schedules
   script:
