@@ -249,11 +249,11 @@
  @brief Update a group to add the given user IDs.
 
  @param groupId the id of the group to update.
- @param identities the users to add to the group.
+ @param userIdentities the users to add to the group.
  @param handler the block called with an NSError, or nil.
  */
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
-             identitiesToAdd:(nonnull NSArray<NSString*>*)identities
+                  usersToAdd:(nonnull NSArray<NSString*>*)userIdentities
            completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!

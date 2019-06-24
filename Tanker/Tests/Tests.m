@@ -430,7 +430,7 @@ SpecBegin(TankerSpecs)
           });
 
           hangWithResolver(^(PMKResolver resolve) {
-            [aliceTanker updateMembersOfGroup:groupId identitiesToAdd:@[ bobIdentity ] completionHandler:resolve];
+            [aliceTanker updateMembersOfGroup:groupId usersToAdd:@[ bobIdentity ] completionHandler:resolve];
           });
 
           NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
@@ -454,7 +454,7 @@ SpecBegin(TankerSpecs)
           });
 
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
-            [aliceTanker updateMembersOfGroup:groupId identitiesToAdd:@[] completionHandler:resolve];
+            [aliceTanker updateMembersOfGroup:groupId usersToAdd:@[] completionHandler:resolve];
           });
 
           expect(err).toNot.beNil();
@@ -464,7 +464,7 @@ SpecBegin(TankerSpecs)
         it(@"should error when adding members to a non-existent group", ^{
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker updateMembersOfGroup:@"o/Fufh9HZuv5XoZJk5X3ny+4ZeEZegoIEzRjYPP7TX0="
-                              identitiesToAdd:@[ bobPublicIdentity ]
+                              usersToAdd:@[ bobPublicIdentity ]
                             completionHandler:resolve];
           });
 

@@ -422,7 +422,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
-             identitiesToAdd:(nonnull NSArray<NSString*>*)identities
+                  usersToAdd:(nonnull NSArray<NSString*>*)userIdentities
            completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
@@ -431,7 +431,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
   NSError* err = nil;
-  char** identities_to_add = convertStringstoCStrings(identities, &err);
+  char** identities_to_add = convertStringstoCStrings(userIdentities, &err);
   if (err)
   {
     runOnMainQueue(^{
@@ -440,12 +440,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     return;
   }
   tanker_future_t* future = tanker_update_group_members(
-      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)identities_to_add, identities.count);
+      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)identities_to_add, userIdentities.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(identities_to_add, identities.count);
+  freeCStringArray(identities_to_add, userIdentities.count);
 }
 
 - (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
