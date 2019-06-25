@@ -1,8 +1,8 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRUnlockKey.h"
+#import "TKRVerificationKey.h"
 
-@interface TKRUnlockKey (Private)
+@interface TKRVerificationKey (Private)
 
 @property(readwrite) NSString* valuePrivate;
 

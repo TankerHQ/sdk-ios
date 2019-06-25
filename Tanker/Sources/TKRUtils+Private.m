@@ -105,7 +105,7 @@ char* copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err)
   char* utf8_cstr = (char*)malloc(length + 1);
   if (!utf8_cstr)
   {
-    *err = createNSError("could not allocate UTF-8 C string buffer", TKRErrorOther);
+    *err = createNSError("could not allocate UTF-8 C string buffer", TKRErrorInternalError);
     return nil;
   }
   memcpy(utf8_cstr, str.UTF8String, length);
@@ -130,7 +130,7 @@ char** convertStringstoCStrings(NSArray<NSString*>* strings, NSError* _Nullable*
   __block char** c_strs = (char**)malloc(size_to_allocate);
   if (!c_strs)
   {
-    *err = createNSError("could not allocate array of UTF-8 C strings", TKRErrorOther);
+    *err = createNSError("could not allocate array of UTF-8 C strings", TKRErrorInternalError);
     return nil;
   }
 

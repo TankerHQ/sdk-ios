@@ -27,7 +27,6 @@ static void releaseCPointer(void* ptr)
 
 // http://nshipster.com/associated-objects/
 @dynamic cTanker;
-@dynamic events;
 
 - (void)setCTanker:(void*)value
 {
@@ -37,16 +36,6 @@ static void releaseCPointer(void* ptr)
 - (void*)cTanker
 {
   return numberToPtr(objc_getAssociatedObject(self, @selector(cTanker)));
-}
-
-- (void)setEvents:(NSMutableArray*)events
-{
-  objc_setAssociatedObject(self, @selector(events), events, OBJC_ASSOCIATION_RETAIN);
-}
-
-- (NSMutableArray*)events
-{
-  return objc_getAssociatedObject(self, @selector(events));
 }
 
 - (void)setCallbacks:(NSMutableArray*)callbacks
@@ -90,7 +79,7 @@ static void releaseCPointer(void* ptr)
 
   if (!encrypted_buffer)
   {
-    handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorOther));
+    handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorInternalError));
     return;
   }
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
@@ -158,7 +147,7 @@ static void releaseCPointer(void* ptr)
   decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)
   {
-    handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorOther));
+    handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorInternalError));
     return;
   }
   tanker_future_t* decrypt_future =
@@ -173,14 +162,14 @@ static void releaseCPointer(void* ptr)
   AntiARCRetain(encryptedData);
 }
 
-- (nullable NSNumber*)setEvent:(nonnull NSNumber*)evt
-                   callbackPtr:(nonnull NSNumber*)callbackPtr
-                       handler:(nonnull TKRAbstractEventHandler)handler
-                         error:(NSError* _Nullable* _Nonnull)error
+- (void)setEvent:(NSUInteger)event
+     callbackPtr:(nonnull NSNumber*)callbackPtr
+         handler:(nonnull TKRAbstractEventHandler)handler
+           error:(NSError* _Nullable* _Nonnull)error
 {
   void* handler_ptr = (__bridge_retained void*)handler;
   tanker_expected_t* connect_expected = tanker_event_connect((tanker_t*)self.cTanker,
-                                                             (enum tanker_event)evt.integerValue,
+                                                             (enum tanker_event)event,
                                                              (tanker_event_callback_t)numberToPtr(callbackPtr),
                                                              handler_ptr);
 
@@ -188,22 +177,25 @@ static void releaseCPointer(void* ptr)
   if (*error)
   {
     releaseCPointer(handler_ptr);
-    return nil;
+    return;
   }
-  void* ptr = unwrapAndFreeExpected(connect_expected);
-  NSNumber* ptrConnectionValue = ptrToNumber(ptr);
-  self.callbacks[ptrConnectionValue] = ptrToNumber(handler_ptr);
-  return ptrConnectionValue;
+
+  self.callbacks[[NSNumber numberWithUnsignedInteger:event]] = ptrToNumber(handler_ptr);
 }
 
-- (void)disconnectEventConnection:(nonnull NSNumber*)ptrConnectionValue
+- (void)disconnectEvent:(NSUInteger)event
 {
-  [self.events removeObject:ptrConnectionValue];
-  releaseCPointer(numberToPtr(self.callbacks[ptrConnectionValue]));
-  [self.callbacks removeObjectForKey:ptrConnectionValue];
-  tanker_connection_t* connection = (tanker_connection_t*)numberToPtr(ptrConnectionValue);
-  tanker_expected_t* disconnect_expected = tanker_event_disconnect((tanker_t*)self.cTanker, connection);
-  unwrapAndFreeExpected(disconnect_expected);
+  NSNumber* key = [NSNumber numberWithUnsignedInteger:event];
+  releaseCPointer(numberToPtr(self.callbacks[key]));
+  [self.callbacks removeObjectForKey:key];
+  tanker_event_disconnect((tanker_t*)self.cTanker, (enum tanker_event)event);
+}
+
+- (void)disconnectEvents
+{
+  for (NSNumber* key in self.callbacks)
+    releaseCPointer(numberToPtr(self.callbacks[key]));
+  [self.callbacks removeAllObjects];
 }
 
 @end
