@@ -798,7 +798,7 @@ SpecBegin(TankerSpecs)
               secondDevice, identity, [TKRVerification verificationFromPassphrase:@"new passphrase"]);
         });
 
-        fit(@"should throw when verifying an identity with an invalid verification key", ^{
+        it(@"should throw when verifying an identity with an invalid verification key", ^{
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
           NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice startWithIdentity:identity completionHandler:adapter];
@@ -813,8 +813,7 @@ SpecBegin(TankerSpecs)
           });
 
           expect(err).toNot.beNil();
-          // FIXME for release, put back InvalidVerification
-          expect(err.code).to.equal(TKRErrorInvalidArgument);
+          expect(err.code).to.equal(TKRErrorInvalidVerification);
         });
 
         it(@"should decrypt old resources on second device", ^{
