@@ -326,7 +326,7 @@ SpecBegin(TankerSpecs)
         it(@"should decrypt an encrypted string", ^{
           NSString* clearText = @"Rosebud";
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker encryptDataFromString:clearText completionHandler:adapter];
+            [tanker encryptString:clearText completionHandler:adapter];
           });
           NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker decryptStringFromData:encryptedData completionHandler:adapter];
@@ -337,7 +337,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should encrypt an empty string", ^{
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker encryptDataFromString:@"" completionHandler:adapter];
+            [tanker encryptString:@"" completionHandler:adapter];
           });
           NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker decryptStringFromData:encryptedData completionHandler:adapter];
@@ -350,10 +350,10 @@ SpecBegin(TankerSpecs)
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
 
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker encryptDataFromData:clearData completionHandler:adapter];
+            [tanker encryptData:clearData completionHandler:adapter];
           });
           NSData* decryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker decryptDataFromData:encryptedData completionHandler:adapter];
+            [tanker decryptData:encryptedData completionHandler:adapter];
           });
 
           expect(decryptedData).to.equal(clearData);
@@ -399,7 +399,7 @@ SpecBegin(TankerSpecs)
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
           encryptionOptions.shareWithGroups = @[ groupId ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker encryptDataFromString:clearText options:encryptionOptions completionHandler:adapter];
+            [bobTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
           });
           NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
             [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
@@ -414,7 +414,7 @@ SpecBegin(TankerSpecs)
           NSString* clearText = @"Rosebud";
 
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker encryptDataFromString:clearText completionHandler:adapter];
+            [bobTanker encryptString:clearText completionHandler:adapter];
           });
 
           NSError* err = nil;
@@ -442,7 +442,7 @@ SpecBegin(TankerSpecs)
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
           encryptionOptions.shareWithGroups = @[ groupId ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker encryptDataFromString:clearText completionHandler:adapter];
+            [bobTanker encryptString:clearText completionHandler:adapter];
           });
 
           hangWithResolver(^(PMKResolver resolve) {
@@ -542,7 +542,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should return a valid base64 resourceID", ^{
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker encryptDataFromString:@"Rosebud" completionHandler:adapter];
+            [aliceTanker encryptString:@"Rosebud" completionHandler:adapter];
           });
           NSError* err = nil;
           NSString* resourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
@@ -567,7 +567,7 @@ SpecBegin(TankerSpecs)
           NSString* clearText = @"Rosebud";
 
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+            [aliceTanker encryptString:clearText completionHandler:adapter];
           });
           NSError* err = nil;
           NSString* resourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
@@ -590,10 +590,10 @@ SpecBegin(TankerSpecs)
           __block NSString* clearText = @"Rosebud";
           NSArray* encryptPromises = @[
             [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-              [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+              [aliceTanker encryptString:clearText completionHandler:adapter];
             }],
             [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
-              [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+              [aliceTanker encryptString:clearText completionHandler:adapter];
             }]
           ];
           NSArray* encryptedTexts = [PMKPromise hang:[PMKPromise all:encryptPromises]];
@@ -637,7 +637,7 @@ SpecBegin(TankerSpecs)
         it(@"should have no effect to share to nobody", ^{
           NSString* clearText = @"Rosebud";
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker encryptDataFromString:clearText completionHandler:adapter];
+            [aliceTanker encryptString:clearText completionHandler:adapter];
           });
           NSError* err = nil;
           NSString* resourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
@@ -664,7 +664,7 @@ SpecBegin(TankerSpecs)
           encryptionOptions.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
 
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker encryptDataFromString:clearText options:encryptionOptions completionHandler:adapter];
+            [aliceTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
           });
 
           NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
@@ -681,15 +681,15 @@ SpecBegin(TankerSpecs)
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
           encryptionOptions.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker encryptDataFromData:clearData options:encryptionOptions completionHandler:adapter];
+            [aliceTanker encryptData:clearData options:encryptionOptions completionHandler:adapter];
           });
 
           NSData* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker decryptDataFromData:encryptedData completionHandler:adapter];
+            [bobTanker decryptData:encryptedData completionHandler:adapter];
           });
           expect(decryptedText).to.equal(clearData);
           decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
-            [charlieTanker decryptDataFromData:encryptedData completionHandler:adapter];
+            [charlieTanker decryptData:encryptedData completionHandler:adapter];
           });
           expect(decryptedText).to.equal(clearData);
         });
@@ -746,7 +746,7 @@ SpecBegin(TankerSpecs)
           NSString* clearText = @"Rosebud";
 
           NSData* encryptedText = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice encryptDataFromString:clearText completionHandler:adapter];
+            [secondDevice encryptString:clearText completionHandler:adapter];
           });
           NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice decryptStringFromData:encryptedText completionHandler:adapter];
@@ -849,7 +849,7 @@ SpecBegin(TankerSpecs)
 
           NSString* clearText = @"Rosebud";
           NSData* encryptedText = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice encryptDataFromString:clearText completionHandler:adapter];
+            [firstDevice encryptString:clearText completionHandler:adapter];
           });
           stop(firstDevice);
           startWithIdentityAndVerify(

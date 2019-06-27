@@ -163,7 +163,7 @@
  @param clearText The string to encrypt.
  @param handler the block called with the encrypted data.
  */
-- (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler;
+- (void)encryptString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt a string, using custom options.
@@ -175,19 +175,19 @@
  @param options Custom encryption options.
  @param handler the block called with the encrypted data.
  */
-- (void)encryptDataFromString:(nonnull NSString*)clearText
-                      options:(nonnull TKREncryptionOptions*)options
-            completionHandler:(nonnull TKREncryptedDataHandler)handler;
+- (void)encryptString:(nonnull NSString*)clearText
+              options:(nonnull TKREncryptionOptions*)options
+    completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt data and share it with the user's registered devices.
 
- @discussion equivalent to calling encryptDataFromString:options: with default options.
+ @discussion equivalent to calling encryptString:options: with default options.
 
  @param clearData data to encrypt.
  @param handler the block called with the encrypted data.
  */
-- (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler;
+- (void)encryptData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Encrypt data, using customized options.
@@ -196,9 +196,9 @@
  @param options custom encryption options.
  @param handler the block called with the encrypted data.
  */
-- (void)encryptDataFromData:(nonnull NSData*)clearData
-                    options:(nonnull TKREncryptionOptions*)options
-          completionHandler:(nonnull TKREncryptedDataHandler)handler;
+- (void)encryptData:(nonnull NSData*)clearData
+              options:(nonnull TKREncryptionOptions*)options
+    completionHandler:(nonnull TKREncryptedDataHandler)handler;
 
 /*!
  @brief Decrypt encrypted data as a string.
@@ -208,7 +208,7 @@
  @param encryptedData encrypted data to decrypt.
  @param handler the block called with the decrypted string.
 
- @pre @a encryptedData was returned by encryptDataFromString.
+ @pre @a encryptedData was returned by encryptString.
  */
 - (void)decryptStringFromData:(nonnull NSData*)encryptedData
             completionHandler:(nonnull TKRDecryptedStringHandler)handler;
@@ -216,14 +216,14 @@
 /*!
  @brief Decrypt encrypted data.
 
- @discussion equivalent to calling decryptDataFromData:options: with default options.
+ @discussion equivalent to calling decryptData:options: with default options.
 
  @param encryptedData encrypted data to decrypt.
  @param handler the block called with the decrypted data.
 
- @pre @a encryptedData was returned by encryptDataFromData.
+ @pre @a encryptedData was returned by encryptData.
  */
-- (void)decryptDataFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler;
+- (void)decryptData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler;
 
 /*!
  @brief Get the encrypted resource ID.

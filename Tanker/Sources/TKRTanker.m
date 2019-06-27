@@ -302,14 +302,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)encryptDataFromString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
+- (void)encryptString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptDataFromString:clearText options:[TKREncryptionOptions options] completionHandler:handler];
+  [self encryptString:clearText options:[TKREncryptionOptions options] completionHandler:handler];
 }
 
-- (void)encryptDataFromString:(nonnull NSString*)clearText
-                      options:(nonnull TKREncryptionOptions*)options
-            completionHandler:(nonnull TKREncryptedDataHandler)handler
+- (void)encryptString:(nonnull NSString*)clearText
+              options:(nonnull TKREncryptionOptions*)options
+    completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
   NSError* err = nil;
   NSData* data = convertStringToData(clearText, &err);
@@ -319,7 +319,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
     });
   else
-    [self encryptDataFromData:data options:options completionHandler:handler];
+    [self encryptData:data options:options completionHandler:handler];
 }
 
 - (void)decryptStringFromData:(nonnull NSData*)encryptedData
@@ -340,17 +340,17 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(ret, nil);
   };
 
-  [self decryptDataFromDataImpl:encryptedData completionHandler:adapter];
+  [self decryptDataImpl:encryptedData completionHandler:adapter];
 }
 
-- (void)encryptDataFromData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
+- (void)encryptData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptDataFromData:clearData options:[TKREncryptionOptions options] completionHandler:handler];
+  [self encryptData:clearData options:[TKREncryptionOptions options] completionHandler:handler];
 }
 
-- (void)encryptDataFromData:(nonnull NSData*)clearData
-                    options:(nonnull TKREncryptionOptions*)options
-          completionHandler:(nonnull TKREncryptedDataHandler)handler
+- (void)encryptData:(nonnull NSData*)clearData
+              options:(nonnull TKREncryptionOptions*)options
+    completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -363,10 +363,10 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     NSData* ret = [NSData dataWithBytesNoCopy:encrypted_buffer length:hack.ptrSize freeWhenDone:YES];
     handler(ret, nil);
   };
-  [self encryptDataFromDataImpl:clearData options:options completionHandler:adapter];
+  [self encryptDataImpl:clearData options:options completionHandler:adapter];
 }
 
-- (void)decryptDataFromData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler
+- (void)decryptData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
   id adapter = ^(PtrAndSizePair* hack, NSError* err) {
     if (err)
@@ -379,7 +379,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     NSData* ret = [NSData dataWithBytesNoCopy:decrypted_buffer length:hack.ptrSize freeWhenDone:YES];
     handler(ret, nil);
   };
-  [self decryptDataFromDataImpl:encryptedData completionHandler:adapter];
+  [self decryptDataImpl:encryptedData completionHandler:adapter];
 }
 
 - (nullable NSString*)resourceIDOfEncryptedData:(nonnull NSData*)encryptedData error:(NSError* _Nullable* _Nonnull)error

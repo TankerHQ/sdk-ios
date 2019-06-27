@@ -48,9 +48,9 @@ static void releaseCPointer(void* ptr)
   return objc_getAssociatedObject(self, @selector(callbacks));
 }
 
-- (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
-                        options:(nonnull TKREncryptionOptions*)options
-              completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
+- (void)encryptDataImpl:(nonnull NSData*)clearData
+                options:(nonnull TKREncryptionOptions*)options
+      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
   uint64_t encrypted_size = tanker_encrypted_size(clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
@@ -118,8 +118,8 @@ static void releaseCPointer(void* ptr)
   AntiARCRetain(clearData);
 }
 
-- (void)decryptDataFromDataImpl:(NSData*)encryptedData
-              completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
+- (void)decryptDataImpl:(NSData*)encryptedData
+      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
   uint8_t const* encrypted_buffer = (uint8_t const*)encryptedData.bytes;
   uint64_t encrypted_size = encryptedData.length;
