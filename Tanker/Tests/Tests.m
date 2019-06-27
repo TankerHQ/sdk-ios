@@ -125,35 +125,47 @@ SpecBegin(TankerSpecs)
       __block TKRTankerOptions* tankerOptions;
 
       __block void (^startWithIdentity)(TKRTanker*, NSString*) = ^(TKRTanker* tanker, NSString* identity) {
-        NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
-          [tanker startWithIdentity:identity completionHandler:adapter];
+        NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          [tanker startWithIdentity:identity
+                  completionHandler:^(TKRStatus status, NSError* err) {
+                    if (!err)
+                      expect(status).to.equal(TKRStatusReady);
+                    resolver(err);
+                  }];
         });
-        expect(status).toNot.beNil();
-        expect(status.unsignedIntegerValue).to.equal(TKRStatusReady);
+        expect(err).to.beNil();
       };
 
       __block void (^startWithIdentityAndRegister)(TKRTanker*, NSString*, TKRVerification*) =
           ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
-            NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker startWithIdentity:identity completionHandler:adapter];
-            });
-            expect(status).toNot.beNil();
-            expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityRegistrationNeeded);
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [tanker registerIdentityWithVerification:verification completionHandler:resolver];
+              [tanker startWithIdentity:identity
+                      completionHandler:^(TKRStatus status, NSError* err) {
+                        if (err)
+                          resolver(err);
+                        else
+                        {
+                          expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
+                          [tanker registerIdentityWithVerification:verification completionHandler:resolver];
+                        }
+                      }];
             });
             expect(err).to.beNil();
           };
 
       __block TKRVerificationKey* (^startWithIdentityAndRegisterVerificationKey)(TKRTanker*, NSString*) =
           ^(TKRTanker* tanker, NSString* identity) {
-            NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker startWithIdentity:identity completionHandler:adapter];
-            });
-            expect(status).toNot.beNil();
-            expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityRegistrationNeeded);
             TKRVerificationKey* verificationKey = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker generateVerificationKeyWithCompletionHandler:adapter];
+              [tanker startWithIdentity:identity
+                      completionHandler:^(TKRStatus status, NSError* err) {
+                        if (err)
+                          adapter(nil, err);
+                        else
+                        {
+                          expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
+                          [tanker generateVerificationKeyWithCompletionHandler:adapter];
+                        }
+                      }];
             });
             expect(verificationKey).toNot.beNil();
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
@@ -166,13 +178,17 @@ SpecBegin(TankerSpecs)
 
       __block void (^startWithIdentityAndVerify)(TKRTanker*, NSString*, TKRVerification*) =
           ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
-            NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker startWithIdentity:identity completionHandler:adapter];
-            });
-            expect(status).toNot.beNil();
-            expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityVerificationNeeded);
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [tanker verifyIdentityWithVerification:verification completionHandler:resolver];
+              [tanker startWithIdentity:identity
+                      completionHandler:^(TKRStatus status, NSError* err) {
+                        if (err)
+                          resolver(err);
+                        else
+                        {
+                          expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                          [tanker verifyIdentityWithVerification:verification completionHandler:resolver];
+                        }
+                      }];
             });
             expect(err).to.beNil();
           };
@@ -464,7 +480,7 @@ SpecBegin(TankerSpecs)
         it(@"should error when adding members to a non-existent group", ^{
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker updateMembersOfGroup:@"o/Fufh9HZuv5XoZJk5X3ny+4ZeEZegoIEzRjYPP7TX0="
-                              usersToAdd:@[ bobPublicIdentity ]
+                                   usersToAdd:@[ bobPublicIdentity ]
                             completionHandler:resolve];
           });
 
@@ -771,15 +787,20 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
-          NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice startWithIdentity:identity completionHandler:adapter];
-          });
-          expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityVerificationNeeded);
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:@"fail"]
-                                       completionHandler:resolver];
+            [secondDevice startWithIdentity:identity
+                          completionHandler:^(TKRStatus status, NSError* err) {
+                            if (err)
+                              resolver(err);
+                            else
+                            {
+                              expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                              [secondDevice
+                                  verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:@"fail"]
+                                               completionHandler:resolver];
+                            }
+                          }];
           });
-
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidVerification);
         });
@@ -800,16 +821,22 @@ SpecBegin(TankerSpecs)
 
         it(@"should throw when verifying an identity with an invalid verification key", ^{
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
-          NSNumber* status = hangWithAdapter(^(PMKAdapter adapter) {
-            [secondDevice startWithIdentity:identity completionHandler:adapter];
-          });
-          expect(status.unsignedIntegerValue).to.equal(TKRStatusIdentityVerificationNeeded);
-
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:
-                              [TKRVerification
-                                  verificationFromVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
-                                       completionHandler:resolver];
+            [secondDevice
+                startWithIdentity:identity
+                completionHandler:^(TKRStatus status, NSError* err) {
+                  if (err)
+                    resolver(err);
+                  else
+                  {
+                    expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                    [secondDevice
+                        verifyIdentityWithVerification:
+                            [TKRVerification
+                                verificationFromVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
+                                     completionHandler:resolver];
+                  }
+                }];
           });
 
           expect(err).toNot.beNil();

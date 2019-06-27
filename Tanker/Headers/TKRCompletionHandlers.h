@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 
+#import "TKRStatus.h"
+
 @class TKRVerificationKey;
 @class TKRVerificationMethod;
 @class TKRAttachResult;
@@ -8,12 +10,10 @@
  @typedef TKRStartHandler
  @brief Block which will be called when starting.
 
- @param status the TKRStatus (as an NSNumber*), or nil if an error
- occurred.
+ @param status the TKRStatus
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRStartHandler)(NSNumber* _Nullable status,
-                                NSError* _Nullable err);
+typedef void (^TKRStartHandler)(TKRStatus status, NSError* _Nullable err);
 
 /*!
  @typedef TKREncryptedDataHandler
