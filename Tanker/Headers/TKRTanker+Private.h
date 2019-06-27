@@ -11,12 +11,12 @@ typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
 @property(nonnull) void* cTanker;
 @property(nonnull) NSMutableDictionary* callbacks;
 
-- (void)encryptDataFromDataImpl:(nonnull NSData*)clearData
-                        options:(nonnull TKREncryptionOptions*)options
-              completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
+- (void)encryptDataImpl:(nonnull NSData*)clearData
+                options:(nonnull TKREncryptionOptions*)options
+      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
 
-- (void)decryptDataFromDataImpl:(nonnull NSData*)encryptedData
-              completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
+- (void)decryptDataImpl:(nonnull NSData*)encryptedData
+      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
 
 - (void)setEvent:(NSUInteger)event
      callbackPtr:(nonnull NSNumber*)callbackPtr
