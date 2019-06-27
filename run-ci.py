@@ -33,9 +33,6 @@ def build_and_test(args):
         workspace = ci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
         ci.conan.export(src_path=workspace / "sdk-native", ref_or_channel="tanker/dev")
-    else:
-        parser.print_help()
-        sys.exit()
 
     if args.only_arch:
         archs = ["x86_64", "x86"]
