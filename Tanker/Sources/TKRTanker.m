@@ -153,10 +153,16 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)startWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRStartHandler)handler
 {
+  TKRAdapter adapter = ^(NSNumber* status, NSError* err) {
+    if (err)
+      handler(0, err);
+    else
+      handler(status.unsignedIntegerValue, nil);
+  };
   char const* c_identity = [identity cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_future_t* start_future = tanker_start((tanker_t*)self.cTanker, c_identity);
   tanker_future_t* resolve_future =
-      tanker_future_then(start_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)handler);
+      tanker_future_then(start_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(start_future);
   tanker_future_destroy(resolve_future);
 }
