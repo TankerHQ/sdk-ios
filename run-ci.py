@@ -11,7 +11,7 @@ import ci.ios
 import ci.git
 import ci.mail
 
-DEPLOYED_TANKER = "tanker/2.0.0-beta2@tanker/stable"
+DEPLOYED_TANKER = "tanker/2.0.0-beta3@tanker/stable"
 LOCAL_TANKER = "tanker/dev@tanker/dev"
 
 def get_notifier(name: str):
@@ -33,9 +33,6 @@ def build_and_test(args):
         workspace = ci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
         ci.conan.export(src_path=workspace / "sdk-native", ref_or_channel="tanker/dev")
-    else:
-        parser.print_help()
-        sys.exit()
 
     if args.only_arch:
         archs = ["x86_64", "x86"]
