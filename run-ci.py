@@ -9,16 +9,9 @@ import ci.conan
 import ci.cpp
 import ci.ios
 import ci.git
-import ci.mail
 
 DEPLOYED_TANKER = "tanker/2.0.0@tanker/stable"
 LOCAL_TANKER = "tanker/dev@tanker/dev"
-
-def get_notifier(name: str):
-    if name == 'mail':
-        return ci.mail.notify_failure('sdk-ios')
-    else:
-        return contextlib.suppress()
 
 
 def build_and_test(args):
@@ -33,6 +26,9 @@ def build_and_test(args):
         workspace = ci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
         ci.conan.export(src_path=workspace / "sdk-native", ref_or_channel="tanker/dev")
+    else:
+        parser.print_help()
+        sys.exit()
 
     if args.only_arch:
         archs = ["x86_64", "x86"]
@@ -55,7 +51,6 @@ def main():
     check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument("--use-tanker", choices=['deployed', 'local', 'same-as-branch'], default='local')
     check_parser.add_argument("--only-arch", action="store_true", dest="only_arch", default=False)
-    check_parser.add_argument("--notifier", choices=['mail', 'none'], default='none')
 
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument("--git-tag", required=True)
@@ -68,8 +63,7 @@ def main():
     if args.command == "update-conan-config":
         ci.cpp.update_conan_config()
     elif args.command == "build-and-test":
-        with get_notifier(args.notifier):
-            build_and_test(args)
+        build_and_test(args)
     elif args.command == "generate-test-config":
         src_path = Path(__file__).abspath().parent
         ci.ios.generate_test_config(src_path / "Tanker" / "Tests", config_name="dev")
