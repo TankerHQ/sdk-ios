@@ -10,7 +10,7 @@ import ci.cpp
 import ci.ios
 import ci.git
 
-DEPLOYED_TANKER = "tanker/2.0.0@tanker/stable"
+DEPLOYED_TANKER = "tanker/2.0.1@tanker/stable"
 LOCAL_TANKER = "tanker/dev@tanker/dev"
 
 
