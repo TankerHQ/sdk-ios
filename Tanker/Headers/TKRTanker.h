@@ -285,6 +285,9 @@
  */
 - (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler;
 
+- (void)encryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler;
+- (void)decryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler;
+
 - (void)dealloc;
 
 // MARK: Properties

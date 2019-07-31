@@ -12,4 +12,5 @@ typedef NS_ENUM(NSUInteger, TKRError) {
   TKRErrorInvalidVerification,
   TKRErrorTooManyAttempts,
   TKRErrorExpiredVerification,
+  TKRErrorIOError,
 };

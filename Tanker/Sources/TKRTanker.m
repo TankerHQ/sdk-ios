@@ -1,6 +1,10 @@
 #import <Foundation/Foundation.h>
 
+#import <POSInputStreamLibrary/POSBlobInputStream.h>
+
+#import "TKRAsyncStreamReader+Private.h"
 #import "TKRAttachResult+Private.h"
+#import "TKRInputStreamDataSource+Private.h"
 #import "TKRTanker+Private.h"
 #import "TKRTankerOptions+Private.h"
 #import "TKRUtils+Private.h"
@@ -12,8 +16,36 @@
 #include <string.h>
 
 #include "ctanker.h"
+#include "ctanker/stream.h"
 
 #define TANKER_IOS_VERSION @"9999"
+
+static void readInput(uint8_t* out, int64_t n, tanker_stream_read_operation_t* op, void* additional_data)
+{
+  // do not __bridge_transfer now, this method will be called numerous times
+  TKRAsyncStreamReader* reader = (__bridge typeof(TKRAsyncStreamReader*))additional_data;
+
+  // dispatch on main queue since streams are scheduled on it
+  runOnMainQueue(^{
+    if (reader.stream.hasBytesAvailable)
+      [reader performRead:out maxLength:n readOperation:op];
+    else
+    {
+      if (reader.stream.streamStatus == NSStreamStatusClosed)
+      {
+        if (reader.stream.streamError)
+          tanker_stream_read_operation_finish(op, -1);
+        else
+          tanker_stream_read_operation_finish(op, 0);
+        // now we can release the reader created in encryptStream/decryptStream
+        (void)(__bridge_transfer TKRAsyncStreamReader*) additional_data;
+      }
+      reader.cOut = out;
+      reader.cSize = n;
+      reader.cOp = op;
+    }
+  });
+}
 
 static void verificationToCVerification(TKRVerification* _Nonnull verification, tanker_verification_t* c_verification)
 {
@@ -572,6 +604,78 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       tanker_future_then(stop_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(stop_future);
   tanker_future_destroy(resolve_future);
+}
+
+- (void)encryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler
+{
+  if (input.streamStatus != NSStreamStatusNotOpen)
+  {
+    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    return;
+  }
+
+  TKRAsyncStreamReader* reader = [TKRAsyncStreamReader readerWithStream:input];
+  input.delegate = reader;
+  // The main run loop is the only run loop that runs automatically
+  NSRunLoop* runLoop = [NSRunLoop mainRunLoop];
+  [input scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
+  [input open];
+
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      handler(nil, err);
+      return;
+    }
+    tanker_stream_t* stream = numberToPtr(ptrValue);
+    TKRInputStreamDataSource* dataSource =
+        [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream asyncReader:reader];
+    POSBlobInputStream* encryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+    handler(encryptionStream, nil);
+  };
+
+  tanker_encrypt_options_t opts = TANKER_ENCRYPT_OPTIONS_INIT;
+  tanker_future_t* create_fut = tanker_stream_encrypt(
+      (tanker_t*)self.cTanker, (tanker_stream_input_source_t)&readInput, (__bridge_retained void*)reader, &opts);
+  tanker_future_t* resolve_fut =
+      tanker_future_then(create_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(resolve_fut);
+  tanker_future_destroy(create_fut);
+}
+
+- (void)decryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler
+{
+  if (input.streamStatus != NSStreamStatusNotOpen)
+  {
+    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    return;
+  }
+
+  TKRAsyncStreamReader* reader = [TKRAsyncStreamReader readerWithStream:input];
+  input.delegate = reader;
+  NSRunLoop* runLoop = [NSRunLoop mainRunLoop];
+  [input scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
+  [input open];
+
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      handler(nil, err);
+      return;
+    }
+    tanker_stream_t* stream = numberToPtr(ptrValue);
+    TKRInputStreamDataSource* dataSource =
+        [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream asyncReader:reader];
+    POSBlobInputStream* decryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+    handler(decryptionStream, nil);
+  };
+
+  tanker_future_t* create_fut = tanker_stream_decrypt(
+      (tanker_t*)self.cTanker, (tanker_stream_input_source_t)&readInput, (__bridge_retained void*)reader);
+  tanker_future_t* resolve_fut =
+      tanker_future_then(create_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(resolve_fut);
+  tanker_future_destroy(create_fut);
 }
 
 - (void)dealloc

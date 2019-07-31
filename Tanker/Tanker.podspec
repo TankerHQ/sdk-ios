@@ -25,6 +25,7 @@ It's available for browsers, desktop, iOS and Android.
     }
   s.header_mappings_dir = 'Headers'
   s.preserve_paths = 'export_symbols.list', 'Libraries', 'Tests/Dummy.m'
+  s.dependency 'POSInputStreamLibrary'
 
   # Workaround Cocoapods issue with headers having the same filename
   s.subspec "core" do |ss|
