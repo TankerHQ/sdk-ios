@@ -244,7 +244,9 @@ def generate_test_config(src_path: Path, *, config_name: str) -> None:
     ui.info("Config written to", config_header)
 
 
-def build_and_test(*, use_tanker: str, only_arch, debug: bool = False) -> None:
+def build_and_test(
+    *, use_tanker: str, only_macos_archs: bool = False, debug: bool = False
+) -> None:
     src_path = Path.getcwd()
     tanker_conan_ref = LOCAL_TANKER
 
@@ -259,8 +261,7 @@ def build_and_test(*, use_tanker: str, only_arch, debug: bool = False) -> None:
         src_path = workspace / "sdk-ios"
         ci.conan.export(src_path=workspace / "sdk-native", ref_or_channel="tanker/dev")
 
-    # TODO: rename to default_archs (requires for pod check)
-    if only_arch:
+    if only_macos_archs:
         archs = ["x86_64", "x86"]
     else:
         archs = ARCHS
@@ -273,7 +274,7 @@ def build_and_test(*, use_tanker: str, only_arch, debug: bool = False) -> None:
 def deploy(*, git_tag: str) -> None:
     version = ci.version_from_git_tag(git_tag)
     ci.bump_files(version)
-    build_and_test(use_tanker="deployed", debug=False, only_arch=False)
+    build_and_test(use_tanker="deployed", debug=False, only_macos_archs=False)
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -299,7 +300,11 @@ def main():
         "--use-tanker", choices=["deployed", "local", "same-as-branch"], default="local"
     )
     check_parser.add_argument(
-        "--only-arch", action="store_true", dest="only_arch", default=False
+        "--only-macos-archs",
+        action="store_true",
+        dest="only_macos_archs",
+        default=False,
+        help="skip ios architectures - useful if you only want to run the tests or use `pod check`.",
     )
 
     deploy_parser = subparsers.add_parser("deploy")
@@ -314,7 +319,9 @@ def main():
         ci.cpp.update_conan_config()
     elif args.command == "build-and-test":
         build_and_test(
-            use_tanker=args.use_tanker, debug=args.debug, only_arch=args.only_arch
+            use_tanker=args.use_tanker,
+            debug=args.debug,
+            only_macos_archs=args.only_macos_archs,
         )
     elif args.command == "generate-test-config":
         src_path = Path(__file__).abspath().parent
