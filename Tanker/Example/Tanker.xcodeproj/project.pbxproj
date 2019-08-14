@@ -327,10 +327,12 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Tanker_Example/Pods-Tanker_Example-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/POSInputStreamLibrary/POSInputStreamLibrary.framework",
 				"${BUILT_PRODUCTS_DIR}/Tanker/Tanker.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/POSInputStreamLibrary.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Tanker.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;

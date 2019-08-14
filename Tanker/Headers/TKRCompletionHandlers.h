@@ -102,3 +102,13 @@ typedef void (^TKRVerificationMethodsHandler)(
  */
 typedef void (^TKRAttachResultHandler)(TKRAttachResult* _Nullable result,
                                        NSError* _Nullable err);
+
+/*!
+ @typedef TKRInputStreamHandler
+ @brief Block called with an NSInputStream*
+
+ @param stream the stream, or nil
+ @param err the error which occurred, or nil
+ */
+typedef void (^TKRInputStreamHandler)(NSInputStream* _Nullable stream,
+                                      NSError* _Nullable err);
