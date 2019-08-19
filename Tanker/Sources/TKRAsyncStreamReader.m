@@ -33,8 +33,13 @@
 {
   switch (eventCode)
   {
-  // since this method and readInput (in TKRTanker.m) are run on different threads
-  // we have to wait for the latter to set the c* properties before performing anything
+  // Two possible cases:
+  // - If Tanker asks for data when there is no bytes available, it sets cOp/cOut and we'll read it in this function
+  // later on.
+  // - If there is data available but Tanker did not ask for input yet, we do nothing here and when Tanker reads,
+  // the readInput function (TKRTanker.m) will call performRead
+  //
+  // Precondition: There is always at most one read operation at the same time.
   case NSStreamEventHasBytesAvailable:
   {
     if (self.cOp && self.cOut)

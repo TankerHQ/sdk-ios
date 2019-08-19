@@ -20,6 +20,7 @@
 
 #define TANKER_IOS_VERSION @"9999"
 
+// For a good explanation, look at TKRAsyncStreamReader.m comment
 static void readInput(uint8_t* out, int64_t n, tanker_stream_read_operation_t* op, void* additional_data)
 {
   // do not __bridge_transfer now, this method will be called numerous times
