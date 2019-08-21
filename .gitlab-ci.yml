@@ -45,7 +45,7 @@ deploy:
   only:
     - tags
   script:
-    - dmenv run -- python run-ci.py deploy --git-tag ${CI_COMMIT_TAG}
+    - dmenv run -- python run-ci.py --isolate-conan-user-home deploy --git-tag ${CI_COMMIT_TAG}
   tags:
     - macos
 
