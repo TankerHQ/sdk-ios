@@ -285,8 +285,35 @@
  */
 - (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler;
 
-- (void)encryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler;
-- (void)decryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler;
+/*!
+ @brief Create an encryption stream from an input stream with customized options.
+
+ @param clearStream the stream to encrypt.
+ @param opts custom encryption options.
+ @param handler the block called with the encryption stream.
+ */
+- (void)encryptStream:(nonnull NSInputStream*)clearStream
+              options:(nonnull TKREncryptionOptions*)opts
+    completionHandler:(nonnull TKRInputStreamHandler)handler;
+
+/*!
+ @brief Create an encryption stream from an input stream and share the resource it produces with the user's registered
+ devices.
+
+ @discussion equivalent to calling encryptStream:options: with default options.
+
+ @param clearStream the stream to encrypt.
+ @param handler the block called with the encryption stream.
+ */
+- (void)encryptStream:(nonnull NSInputStream*)clearStream completionHandler:(nonnull TKRInputStreamHandler)handler;
+
+/*!
+ @brief Create a decryption stream from an encrypted input stream
+
+ @param encryptedStream the stream to decrypt.
+ @param handler the block called with the encryption stream.
+ */
+- (void)decryptStream:(nonnull NSInputStream*)encryptedStream completionHandler:(nonnull TKRInputStreamHandler)handler;
 
 - (void)dealloc;
 
