@@ -571,7 +571,7 @@ SpecBegin(TankerSpecs)
           expect(decryptedString).to.equal(clearText);
         });
 
-        it(@"should create a group with alice and share to her", ^{
+        it(@"should create a group with alice and share with her", ^{
           NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createGroupWithIdentities:@[ alicePublicIdentity ] completionHandler:adapter];
           });
@@ -750,6 +750,28 @@ SpecBegin(TankerSpecs)
           expect(decryptedString).to.equal(clearText);
         });
 
+        it(@"should share a stream with Bob who can decrypt it", ^{
+          NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
+          TKRCustomDataSource* dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
+          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          encryptionOptions.shareWithUsers = @[ bobPublicIdentity ];
+
+          NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+          NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptStream:clearStream options:encryptionOptions completionHandler:adapter];
+          });
+
+          NSInputStream* decryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStream:encryptedStream completionHandler:adapter];
+          });
+
+          TKRTestAsyncStreamReader* reader = [[TKRTestAsyncStreamReader alloc] init];
+          NSData* decryptedData = [PMKPromise hang:[reader readAll:decryptedStream]];
+          NSString* decryptedString = [[NSString alloc] initWithData:decryptedData encoding:NSUTF8StringEncoding];
+
+          expect(decryptedString).to.equal(@"Rosebud");
+        });
+
         it(@"should share data to multiple users who can decrypt it", ^{
           __block NSString* clearText = @"Rosebud";
           NSArray* encryptPromises = @[
@@ -798,7 +820,7 @@ SpecBegin(TankerSpecs)
           }];
         });
 
-        it(@"should have no effect to share to nobody", ^{
+        it(@"should have no effect to share with nobody", ^{
           NSString* clearText = @"Rosebud";
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker encryptString:clearText completionHandler:adapter];

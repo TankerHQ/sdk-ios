@@ -4,6 +4,8 @@
 #import <stdint.h>
 
 #import "TKRError.h"
+#import "TKRTanker.h"
+#include "ctanker/ctanker.h"
 
 // contains a NSUInteger constructed from a uintptr_t, and the size of the buffer
 @interface PtrAndSizePair : NSObject
@@ -16,6 +18,7 @@
 // Internal block used to wrap C futures
 typedef void (^TKRAdapter)(NSNumber* _Nullable ptrValue, NSError* _Nullable err);
 
+NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts, tanker_encrypt_options_t* _Nonnull);
 void runOnMainQueue(void (^_Nonnull block)(void));
 void freeCStringArray(char* _Nonnull* _Nonnull toFree, NSUInteger nbElems);
 NSError* _Nonnull createNSError(char const* _Nonnull message, TKRError code);

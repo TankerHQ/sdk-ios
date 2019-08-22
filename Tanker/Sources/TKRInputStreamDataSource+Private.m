@@ -30,7 +30,7 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
 @implementation TKRInputStreamDataSource
 
 + (nullable instancetype)inputStreamDataSourceWithCStream:(nonnull tanker_stream_t*)stream
-                                              asyncReader:(nonnull TKRInputStreamDataSource*)reader
+                                              asyncReader:(nonnull TKRAsyncStreamReader*)reader
 {
   return [[TKRInputStreamDataSource alloc] initWithCStream:stream asyncReader:reader];
 }

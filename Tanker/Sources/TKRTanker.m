@@ -607,20 +607,27 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)encryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler
+- (void)encryptStream:(nonnull NSInputStream*)clearStream completionHandler:(nonnull TKRInputStreamHandler)handler
 {
-  if (input.streamStatus != NSStreamStatusNotOpen)
+  [self encryptStream:clearStream options:[TKREncryptionOptions options] completionHandler:handler];
+}
+
+- (void)encryptStream:(nonnull NSInputStream*)clearStream
+              options:(nonnull TKREncryptionOptions*)opts
+    completionHandler:(nonnull TKRInputStreamHandler)handler
+{
+  if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
     handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
-  TKRAsyncStreamReader* reader = [TKRAsyncStreamReader readerWithStream:input];
-  input.delegate = reader;
+  TKRAsyncStreamReader* reader = [TKRAsyncStreamReader readerWithStream:clearStream];
+  clearStream.delegate = reader;
   // The main run loop is the only run loop that runs automatically
   NSRunLoop* runLoop = [NSRunLoop mainRunLoop];
-  [input scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
-  [input open];
+  [clearStream scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
+  [clearStream open];
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
@@ -635,28 +642,39 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(encryptionStream, nil);
   };
 
-  tanker_encrypt_options_t opts = TANKER_ENCRYPT_OPTIONS_INIT;
-  tanker_future_t* create_fut = tanker_stream_encrypt(
-      (tanker_t*)self.cTanker, (tanker_stream_input_source_t)&readInput, (__bridge_retained void*)reader, &opts);
+  tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
+  NSError* err = convertEncryptionOptions(opts, &encryption_options);
+  if (err)
+  {
+    handler(nil, err);
+    return;
+  }
+  tanker_future_t* create_fut = tanker_stream_encrypt((tanker_t*)self.cTanker,
+                                                      (tanker_stream_input_source_t)&readInput,
+                                                      (__bridge_retained void*)reader,
+                                                      &encryption_options);
   tanker_future_t* resolve_fut =
       tanker_future_then(create_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(resolve_fut);
   tanker_future_destroy(create_fut);
+  freeCStringArray((char**)encryption_options.recipient_public_identities,
+                   encryption_options.nb_recipient_public_identities);
+  freeCStringArray((char**)encryption_options.recipient_gids, encryption_options.nb_recipient_gids);
 }
 
-- (void)decryptStream:(nonnull NSInputStream*)input completionHandler:(nonnull TKRInputStreamHandler)handler
+- (void)decryptStream:(nonnull NSInputStream*)encryptedStream completionHandler:(nonnull TKRInputStreamHandler)handler
 {
-  if (input.streamStatus != NSStreamStatusNotOpen)
+  if (encryptedStream.streamStatus != NSStreamStatusNotOpen)
   {
     handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
-  TKRAsyncStreamReader* reader = [TKRAsyncStreamReader readerWithStream:input];
-  input.delegate = reader;
+  TKRAsyncStreamReader* reader = [TKRAsyncStreamReader readerWithStream:encryptedStream];
+  encryptedStream.delegate = reader;
   NSRunLoop* runLoop = [NSRunLoop mainRunLoop];
-  [input scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
-  [input open];
+  [encryptedStream scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
+  [encryptedStream open];
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)

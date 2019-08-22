@@ -84,24 +84,12 @@ static void releaseCPointer(void* ptr)
   }
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
 
-  NSError* err = nil;
-  char** recipient_public_identities = convertStringstoCStrings(options.shareWithUsers, &err);
+  NSError* err = convertEncryptionOptions(options, &encryption_options);
   if (err)
   {
     handler(nil, err);
     return;
   }
-  char** group_ids = convertStringstoCStrings(options.shareWithGroups, &err);
-  if (err)
-  {
-    freeCStringArray(recipient_public_identities, options.shareWithUsers.count);
-    handler(nil, err);
-    return;
-  }
-  encryption_options.recipient_public_identities = (char const* const*)recipient_public_identities;
-  encryption_options.nb_recipient_public_identities = (uint32_t)options.shareWithUsers.count;
-  encryption_options.recipient_gids = (char const* const*)group_ids;
-  encryption_options.nb_recipient_gids = (uint32_t)options.shareWithGroups.count;
   tanker_future_t* encrypt_future = tanker_encrypt((tanker_t*)self.cTanker,
                                                    encrypted_buffer,
                                                    (uint8_t const*)clearData.bytes,
@@ -111,8 +99,9 @@ static void releaseCPointer(void* ptr)
       tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(recipient_public_identities, options.shareWithUsers.count);
-  freeCStringArray(group_ids, options.shareWithGroups.count);
+  freeCStringArray((char**)encryption_options.recipient_public_identities,
+                   encryption_options.nb_recipient_public_identities);
+  freeCStringArray((char**)encryption_options.recipient_gids, encryption_options.nb_recipient_gids);
   // Force clearData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
   AntiARCRetain(clearData);
