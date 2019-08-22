@@ -571,7 +571,7 @@ SpecBegin(TankerSpecs)
           expect(decryptedString).to.equal(clearText);
         });
 
-        it(@"should create a group with alice and share to her", ^{
+        it(@"should create a group with alice and share with her", ^{
           NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createGroupWithIdentities:@[ alicePublicIdentity ] completionHandler:adapter];
           });
@@ -750,7 +750,7 @@ SpecBegin(TankerSpecs)
           expect(decryptedString).to.equal(clearText);
         });
 
-        it(@"should share a stream to Bob who can decrypt it", ^{
+        it(@"should share a stream with Bob who can decrypt it", ^{
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
           TKRCustomDataSource* dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
@@ -820,7 +820,7 @@ SpecBegin(TankerSpecs)
           }];
         });
 
-        it(@"should have no effect to share to nobody", ^{
+        it(@"should have no effect to share with nobody", ^{
           NSString* clearText = @"Rosebud";
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker encryptString:clearText completionHandler:adapter];
