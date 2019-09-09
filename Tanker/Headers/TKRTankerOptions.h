@@ -7,14 +7,19 @@
 @interface TKRTankerOptions : NSObject
 
 /*!
- @brief ID of your Trustchain
+ @deprecated use appID
  */
-@property NSString* trustchainID;
+@property NSString* trustchainID DEPRECATED_MSG_ATTRIBUTE("use appID instead");
+
+/*!
+ @brief ID of your app
+ */
+@property NSString* appID;
 
 /*!
  @brief Only for testing purposes. Do not use.
  */
-@property NSString* trustchainURL;
+@property NSString* url;
 
 /*!
  @brief Path to which Tanker will write its internal files.

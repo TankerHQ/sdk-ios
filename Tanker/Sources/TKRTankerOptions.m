@@ -9,4 +9,14 @@
   return opts;
 }
 
+- (nullable NSString*)trustchainID
+{
+  return _appID;
+}
+
+- (void)setTrustchainID:(nonnull NSString*)trustchainID
+{
+  _appID = trustchainID;
+}
+
 @end

@@ -127,9 +127,9 @@ static void onDeviceRevoked(void* unused, void* extra_arg)
 
 static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cOptions)
 {
-  cOptions->trustchain_id = [options.trustchainID cStringUsingEncoding:NSUTF8StringEncoding];
+  cOptions->app_id = [options.appID cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->writable_path = [options.writablePath cStringUsingEncoding:NSUTF8StringEncoding];
-  cOptions->trustchain_url = [options.trustchainURL cStringUsingEncoding:NSUTF8StringEncoding];
+  cOptions->url = [options.url cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->sdk_type = [options.sdkType cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->sdk_version = [TANKER_IOS_VERSION cStringUsingEncoding:NSUTF8StringEncoding];
 }

@@ -49,12 +49,12 @@ void* unwrapAndFreeExpected(tanker_expected_t* expected)
   return ptr;
 }
 
-NSString* createIdentity(NSString* userID, NSString* trustchainID, NSString* trustchainPrivateKey)
+NSString* createIdentity(NSString* userID, NSString* appID, NSString* appSecret)
 {
   char const* user_id = [userID cStringUsingEncoding:NSUTF8StringEncoding];
-  char const* trustchain_id = [trustchainID cStringUsingEncoding:NSUTF8StringEncoding];
-  char const* trustchain_priv_key = [trustchainPrivateKey cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_expected_t* identity_expected = tanker_create_identity(trustchain_id, trustchain_priv_key, user_id);
+  char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* app_secret = [appSecret cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_expected_t* identity_expected = tanker_create_identity(app_id, app_secret, user_id);
   char* identity = unwrapAndFreeExpected(identity_expected);
   assert(identity);
   return [[NSString alloc] initWithBytesNoCopy:identity
@@ -94,11 +94,11 @@ NSString* createStorageFullpath()
   return path;
 }
 
-TKRTankerOptions* createTankerOptions(NSString* url, NSString* trustchainID)
+TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
 {
   TKRTankerOptions* opts = [TKRTankerOptions options];
-  opts.trustchainURL = url;
-  opts.trustchainID = trustchainID;
+  opts.url = url;
+  opts.appID = appID;
   opts.writablePath = createStorageFullpath();
   opts.sdkType = @"test";
   return opts;
@@ -122,9 +122,9 @@ SpecBegin(TankerSpecs)
 
     describe(@"Tanker Bindings", ^{
       __block tanker_admin_t* admin;
-      __block NSString* trustchainURL;
-      __block NSString* trustchainID;
-      __block NSString* trustchainPrivateKey;
+      __block NSString* url;
+      __block NSString* appID;
+      __block NSString* appSecret;
 
       __block TKRTankerOptions* tankerOptions;
 
@@ -206,7 +206,7 @@ SpecBegin(TankerSpecs)
       __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
         tanker_future_t* f =
             tanker_admin_get_verification_code(admin,
-                                               [trustchainID cStringUsingEncoding:NSUTF8StringEncoding],
+                                               [appID cStringUsingEncoding:NSUTF8StringEncoding],
                                                [email cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(f);
         char* code = (char*)tanker_future_get_voidptr(f);
@@ -227,33 +227,33 @@ SpecBegin(TankerSpecs)
         expect(dict).toNot.beNil();
         NSDictionary* config = [dict valueForKey:configName];
         expect(config).toNot.beNil();
-        trustchainURL = [config valueForKey:@"url"];
-        expect(trustchainURL).toNot.beNil();
+        url = [config valueForKey:@"url"];
+        expect(url).toNot.beNil();
         NSString* idToken = [config valueForKey:@"idToken"];
         expect(idToken).toNot.beNil();
-        char const* trustchain_url = [trustchainURL cStringUsingEncoding:NSUTF8StringEncoding];
+        char const* curl = [url cStringUsingEncoding:NSUTF8StringEncoding];
         char const* id_token = [idToken cStringUsingEncoding:NSUTF8StringEncoding];
-        tanker_future_t* connect_fut = tanker_admin_connect(trustchain_url, id_token);
+        tanker_future_t* connect_fut = tanker_admin_connect(curl, id_token);
         tanker_future_wait(connect_fut);
         NSError* connectError = getOptionalFutureError(connect_fut);
         expect(connectError).to.beNil();
         admin = (tanker_admin_t*)tanker_future_get_voidptr(connect_fut);
         tanker_future_destroy(connect_fut);
-        tanker_future_t* trustchain_fut = tanker_admin_create_trustchain(admin, "ios-test");
-        tanker_future_wait(trustchain_fut);
-        NSError* createError = getOptionalFutureError(trustchain_fut);
+        tanker_future_t* app_fut = tanker_admin_create_app(admin, "ios-test");
+        tanker_future_wait(app_fut);
+        NSError* createError = getOptionalFutureError(app_fut);
         expect(createError).to.beNil();
-        tanker_trustchain_descriptor_t* trustchain =
-            (tanker_trustchain_descriptor_t*)tanker_future_get_voidptr(trustchain_fut);
-        trustchainID = [NSString stringWithCString:trustchain->id encoding:NSUTF8StringEncoding];
-        trustchainPrivateKey = [NSString stringWithCString:trustchain->private_key encoding:NSUTF8StringEncoding];
-        tanker_future_destroy(trustchain_fut);
-        tanker_admin_trustchain_descriptor_free(trustchain);
+        tanker_app_descriptor_t* app =
+            (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
+        appID = [NSString stringWithCString:app->id encoding:NSUTF8StringEncoding];
+        appSecret = [NSString stringWithCString:app->private_key encoding:NSUTF8StringEncoding];
+        tanker_future_destroy(app_fut);
+        tanker_admin_app_descriptor_free(app);
       });
 
       afterAll(^{
         tanker_future_t* delete_fut =
-            tanker_admin_delete_trustchain(admin, [trustchainID cStringUsingEncoding:NSUTF8StringEncoding]);
+            tanker_admin_delete_app(admin, [appID cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(delete_fut);
         NSError* error = getOptionalFutureError(delete_fut);
         expect(error).to.beNil();
@@ -265,12 +265,12 @@ SpecBegin(TankerSpecs)
       });
 
       beforeEach(^{
-        tankerOptions = createTankerOptions(trustchainURL, trustchainID);
+        tankerOptions = createTankerOptions(url, appID);
       });
 
       describe(@"init", ^{
-        it(@"should throw when TrustchainID is not base64", ^{
-          tankerOptions.trustchainID = @",,";
+        it(@"should throw when AppID is not base64", ^{
+          tankerOptions.appID = @",,";
           expect(^{
             [TKRTanker tankerWithOptions:tankerOptions];
           })
@@ -285,7 +285,7 @@ SpecBegin(TankerSpecs)
         beforeEach(^{
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(tanker).toNot.beNil();
-          identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          identity = createIdentity(createUUID(), appID, appSecret);
         });
 
         it(@"should return TKRStatusIdentityRegistrationNeeded when start is called for the first time", ^{
@@ -319,7 +319,7 @@ SpecBegin(TankerSpecs)
         beforeEach(^{
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(tanker).toNot.beNil();
-          NSString* identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          NSString* identity = createIdentity(createUUID(), appID, appSecret);
           startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
         });
 
@@ -538,8 +538,8 @@ SpecBegin(TankerSpecs)
           expect(aliceTanker).toNot.beNil();
           expect(bobTanker).toNot.beNil();
 
-          aliceIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
-          bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          aliceIdentity = createIdentity(createUUID(), appID, appSecret);
+          bobIdentity = createIdentity(createUUID(), appID, appSecret);
           alicePublicIdentity = getPublicIdentity(aliceIdentity);
           bobPublicIdentity = getPublicIdentity(bobIdentity);
 
@@ -683,9 +683,9 @@ SpecBegin(TankerSpecs)
           expect(charlieTanker).toNot.beNil();
           encryptionOptions = [TKREncryptionOptions options];
 
-          aliceIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
-          bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
-          charlieIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          aliceIdentity = createIdentity(createUUID(), appID, appSecret);
+          bobIdentity = createIdentity(createUUID(), appID, appSecret);
+          charlieIdentity = createIdentity(createUUID(), appID, appSecret);
           alicePublicIdentity = getPublicIdentity(aliceIdentity);
           bobPublicIdentity = getPublicIdentity(bobIdentity);
           charliePublicIdentity = getPublicIdentity(charlieIdentity);
@@ -890,10 +890,10 @@ SpecBegin(TankerSpecs)
           firstDevice = [TKRTanker tankerWithOptions:tankerOptions];
           expect(firstDevice).toNot.beNil();
 
-          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(trustchainURL, trustchainID)];
+          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           expect(secondDevice).toNot.beNil();
 
-          identity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          identity = createIdentity(createUUID(), appID, appSecret);
         });
 
         afterEach(^{
@@ -1057,9 +1057,9 @@ SpecBegin(TankerSpecs)
         beforeEach(^{
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           userID = createUUID();
-          identity = createIdentity(userID, trustchainID, trustchainPrivateKey);
+          identity = createIdentity(userID, appID, appSecret);
 
-          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(trustchainURL, trustchainID)];
+          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           expect(secondDevice).toNot.beNil();
 
           startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
@@ -1107,7 +1107,7 @@ SpecBegin(TankerSpecs)
           TKRTanker* bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(bobTanker).toNot.beNil();
 
-          NSString* bobIdentity = createIdentity(createUUID(), trustchainID, trustchainPrivateKey);
+          NSString* bobIdentity = createIdentity(createUUID(), appID, appSecret);
           startWithIdentityAndRegister(
               bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
