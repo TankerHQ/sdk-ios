@@ -323,7 +323,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    b64char* device_id = (b64char*)numberToPtr(ptrValue);
+    char* device_id = (char*)numberToPtr(ptrValue);
     NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
     tanker_free_buffer(device_id);
     handler(ret, nil);
@@ -437,7 +437,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    b64char* group_id = (b64char*)numberToPtr(ptrValue);
+    char* group_id = (char*)numberToPtr(ptrValue);
     NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
     tanker_free_buffer(group_id);
     handler(groupId, nil);
@@ -566,7 +566,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    b64char* verification_key = (b64char*)numberToPtr(ptrValue);
+    char* verification_key = (char*)numberToPtr(ptrValue);
     NSString* verificationKey = [NSString stringWithCString:verification_key encoding:NSUTF8StringEncoding];
 
     TKRVerificationKey* ret = [TKRVerificationKey verificationKeyFromValue:verificationKey];
