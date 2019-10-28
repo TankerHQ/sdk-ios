@@ -64,6 +64,10 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
   case TKRVerificationMethodTypeVerificationKey:
     c_verification->verification_key = [verification.verificationKey.value cStringUsingEncoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypeOIDCIDToken:
+    c_verification->oidc_id_token = [verification.oidcIDToken cStringUsingEncoding:NSUTF8StringEncoding];
+    ;
+    break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -83,6 +87,7 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
     break;
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
+  case TKRVerificationMethodTypeOIDCIDToken:
     break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);

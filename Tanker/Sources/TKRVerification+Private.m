@@ -37,6 +37,16 @@
   self.valuePrivate = key;
 }
 
+- (nonnull NSString*)oidcIDToken
+{
+  return self.valuePrivate;
+}
+
+- (void)setOidcIDToken:(nonnull NSString*)token
+{
+  self.valuePrivate = token;
+}
+
 - (void)setValuePrivate:(id)value
 {
   objc_setAssociatedObject(self, @selector(valuePrivate), value, OBJC_ASSOCIATION_RETAIN);

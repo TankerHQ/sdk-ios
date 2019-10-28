@@ -26,7 +26,7 @@ DEPENDENCIES:
   - Tanker/Tests (from `../Tanker.podspec`)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  trunk:
     - Expecta
     - POSInputStreamLibrary
     - PromiseKit
@@ -41,8 +41,8 @@ SPEC CHECKSUMS:
   POSInputStreamLibrary: fb9a671bb639c42f3f446f6ab0133164a4c273b8
   PromiseKit: 9007df2f9e2ef725467084ab3880cf932ab935a4
   Specta: 3e1bd89c3517421982dc4d1c992503e48bd5fe66
-  Tanker: bcee6cba395141898e3d6eb7ed2dd452ba6fc939
+  Tanker: 74573ba7ef8fc12a28115e4d5690697b827fe4be
 
 PODFILE CHECKSUM: 4e72f688b0da4326e182a470efed8f01e795ba25
 
-COCOAPODS: 1.6.1
+COCOAPODS: 1.8.4
