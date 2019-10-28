@@ -28,4 +28,12 @@
   return ret;
 }
 
++ (nonnull TKRVerification*)verificationFromOIDCIDToken:(NSString*)oidcIDToken
+{
+  TKRVerification* ret = [[TKRVerification alloc] init];
+  ret.type = TKRVerificationMethodTypeOIDCIDToken;
+  ret.oidcIDToken = oidcIDToken;
+  return ret;
+}
+
 @end

@@ -104,6 +104,51 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   return opts;
 }
 
+void updateAdminApp(tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider)
+{
+  char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* oidc_client_provider = [oidcClientProvider cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_expected_t* update_fut = tanker_admin_app_update(admin, app_id, oidc_client_id, oidc_client_provider);
+  tanker_future_wait(update_fut);
+  tanker_future_destroy(update_fut);
+}
+
+NSDictionary* sendOidcRequest(NSString* oidcClientId, NSString* oidcClientSecret, NSString* refreshToken)
+{
+  NSMutableURLRequest* req =
+      [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://www.googleapis.com/oauth2/v4/token"]];
+  [req setHTTPMethod:@"POST"];
+  [req setValue:@"application/json" forHTTPHeaderField:@"content-type"];
+  NSDictionary* obj = @{
+    @"client_id" : oidcClientId,
+    @"client_secret" : oidcClientSecret,
+    @"grant_type" : @"refresh_token",
+    @"refresh_token" : refreshToken
+  };
+  req.HTTPBody = [NSJSONSerialization dataWithJSONObject:obj options:0 error:nil];
+  NSURLSession* session = [NSURLSession sharedSession];
+  PMKPromise* prom = [PMKPromise promiseWithResolver:^(PMKResolver resolve) {
+    NSURLSessionDataTask* dataTask =
+        [session dataTaskWithRequest:req
+                   completionHandler:^(NSData* data, NSURLResponse* response, NSError* error) {
+                     NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
+                     if (httpResponse.statusCode == 200)
+                     {
+                       NSError* parseError = nil;
+                       NSDictionary* responseDictionary =
+                           [NSJSONSerialization JSONObjectWithData:data options:0 error:&parseError];
+                       if (parseError)
+                         resolve(parseError);
+                       else
+                         resolve(responseDictionary);
+                     }
+                   }];
+    [dataTask resume];
+  }];
+  return [PMKPromise hang:prom];
+}
+
 id hangWithAdapter(void (^handler)(PMKAdapter))
 {
   return [PMKPromise hang:[PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
@@ -125,6 +170,7 @@ SpecBegin(TankerSpecs)
       __block NSString* url;
       __block NSString* appID;
       __block NSString* appSecret;
+      __block NSDictionary* jsonConfig;
 
       __block TKRTankerOptions* tankerOptions;
 
@@ -204,10 +250,9 @@ SpecBegin(TankerSpecs)
       };
 
       __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
-        tanker_future_t* f =
-            tanker_admin_get_verification_code(admin,
-                                               [appID cStringUsingEncoding:NSUTF8StringEncoding],
-                                               [email cStringUsingEncoding:NSUTF8StringEncoding]);
+        tanker_future_t* f = tanker_admin_get_verification_code(admin,
+                                                                [appID cStringUsingEncoding:NSUTF8StringEncoding],
+                                                                [email cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(f);
         char* code = (char*)tanker_future_get_voidptr(f);
         NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
@@ -224,6 +269,7 @@ SpecBegin(TankerSpecs)
         NSError* error = nil;
         expect(error).to.beNil();
         NSDictionary* dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        jsonConfig = dict;
         expect(dict).toNot.beNil();
         NSDictionary* config = [dict valueForKey:configName];
         expect(config).toNot.beNil();
@@ -243,8 +289,7 @@ SpecBegin(TankerSpecs)
         tanker_future_wait(app_fut);
         NSError* createError = getOptionalFutureError(app_fut);
         expect(createError).to.beNil();
-        tanker_app_descriptor_t* app =
-            (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
+        tanker_app_descriptor_t* app = (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
         appID = [NSString stringWithCString:app->id encoding:NSUTF8StringEncoding];
         appSecret = [NSString stringWithCString:app->private_key encoding:NSUTF8StringEncoding];
         tanker_future_destroy(app_fut);
@@ -252,8 +297,7 @@ SpecBegin(TankerSpecs)
       });
 
       afterAll(^{
-        tanker_future_t* delete_fut =
-            tanker_admin_delete_app(admin, [appID cStringUsingEncoding:NSUTF8StringEncoding]);
+        tanker_future_t* delete_fut = tanker_admin_delete_app(admin, [appID cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(delete_fut);
         NSError* error = getOptionalFutureError(delete_fut);
         expect(error).to.beNil();
@@ -921,6 +965,38 @@ SpecBegin(TankerSpecs)
           expect(methods.count).to.equal(1);
           expect(methods[0].type).to.equal(TKRVerificationMethodTypeEmail);
           expect(methods[0].email).to.equal(email);
+        });
+
+        it(@"should setup verification with an OIDC ID Token", ^{
+          NSDictionary* oidcTestConfig = jsonConfig[@"oidc"][@"googleAuth"];
+          NSString* oidcClientID = oidcTestConfig[@"clientId"];
+          NSString* oidcClientSecret = oidcTestConfig[@"clientSecret"];
+          NSString* oidcClientProvider = oidcTestConfig[@"provider"];
+
+          NSString* userName = @"martine";
+          NSString* email = oidcTestConfig[@"users"][userName][@"email"];
+          NSString* refreshToken = oidcTestConfig[@"users"][userName][@"refreshToken"];
+
+          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider);
+          TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          NSString* userIdentity = createIdentity(email, appID, appSecret);
+
+          NSDictionary* jsonResponse = sendOidcRequest(oidcClientID, oidcClientSecret, refreshToken);
+          NSString* oidcToken = jsonResponse[@"id_token"];
+          TKRVerification* oidcVerif = [TKRVerification verificationFromOIDCIDToken:oidcToken];
+
+          startWithIdentityAndRegister(userPhone, userIdentity, oidcVerif);
+          stop(userPhone);
+
+          TKRTanker* userLaptop = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          startWithIdentityAndVerify(userLaptop, userIdentity, oidcVerif);
+
+          NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+            [userLaptop verificationMethodsWithCompletionHandler:adapter];
+          });
+          expect(methods.count).to.equal(1);
+          expect(methods[0].type).to.equal(TKRVerificationMethodTypeOIDCIDToken);
+          stop(userLaptop);
         });
 
         it(@"should share encrypted data with every accepted device", ^{

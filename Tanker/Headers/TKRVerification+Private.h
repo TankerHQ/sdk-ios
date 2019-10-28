@@ -9,6 +9,7 @@
 @property NSString* passphrase;
 @property TKRVerificationKey* verificationKey;
 @property TKREmailVerification* email;
+@property NSString* oidcIDToken;
 
 @property id valuePrivate;
 
