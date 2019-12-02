@@ -21,7 +21,7 @@ It's available for browsers, desktop, iOS and Android.
   s.pod_target_xcconfig = {
     'USE_HEADERMAP' => "NO",
     'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PODS_TARGET_SRCROOT)/Headers"',
-    'OTHER_LDFLAGS' => "'-exported_symbols_list ${PODS_TARGET_SRCROOT}/export_symbols.list'"
+    'OTHER_LDFLAGS' => "'-exported_symbols_list ${PODS_TARGET_SRCROOT}/export_symbols.list -nostdlib++'"
     }
   s.header_mappings_dir = 'Headers'
   s.preserve_paths = 'export_symbols.list', 'Libraries', 'Tests/Dummy.m'
@@ -32,7 +32,6 @@ It's available for browsers, desktop, iOS and Android.
     ss.source_files = 'Headers/ctanker.h', 'Headers/ctanker/**/*.h'
     ss.private_header_files = 'Headers/ctanker.h', 'Headers/ctanker/**/*.h'
     ss.vendored_libraries = 'Libraries/*.a'
-    ss.libraries = ['c++', 'c++abi']
   end
 
 
