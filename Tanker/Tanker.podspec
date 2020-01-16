@@ -12,7 +12,7 @@ It's available for browsers, desktop, iOS and Android.
   s.homepage         = 'https://tanker.io'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = 'Tanker developers'
-  s.source           = { :http => "https://cocoapods.tanker.io/ios/tanker-ios-sdk-#{s.version}.tar.gz" }
+  s.source           = { :http => "https://storage.googleapis.com/cocoapods.tanker.io/ios/tanker-ios-sdk-#{s.version}.tar.gz" }
 
   s.ios.deployment_target = '9.0'
 
