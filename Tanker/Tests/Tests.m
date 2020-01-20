@@ -1159,8 +1159,11 @@ SpecBegin(TankerSpecs)
           hangWithResolver(^(PMKResolver resolve) {
             [tanker revokeDevice:deviceID completionHandler:resolve];
           });
-          sleep(1);
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker encryptString:@"text" completionHandler:adapter];
+          });
           expect(revoked).to.equal(true);
+          expect(err.code).to.equal(TKRErrorDeviceRevoked);
         });
 
         it(@"can revoke another device", ^{
@@ -1175,8 +1178,11 @@ SpecBegin(TankerSpecs)
           hangWithResolver(^(PMKResolver resolve) {
             [secondDevice revokeDevice:deviceID completionHandler:resolve];
           });
-          sleep(1);
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker encryptString:@"text" completionHandler:adapter];
+          });
           expect(revoked).to.equal(true);
+          expect(err.code).to.equal(TKRErrorDeviceRevoked);
         });
 
         it(@"rejects a revocation of another user's device", ^{
