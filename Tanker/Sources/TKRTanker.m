@@ -187,6 +187,18 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   return [NSString stringWithCString:tanker_version_string() encoding:NSUTF8StringEncoding];
 }
+
++ (nullable NSString*)hashPassphrase:(nonnull NSString*)passphrase
+{
+  if (!passphrase.length)
+    [NSException raise:NSInvalidArgumentException format:@"cannot hash empty passphrase"];
+
+  char const* c_passphrase = [passphrase cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_expected_t* expected_chashed = tanker_hash_passphrase(c_passphrase);
+  char* c_hashed = (char*)unwrapAndFreeExpected(expected_chashed);
+  NSString* hashed = [NSString stringWithCString:c_hashed encoding:NSUTF8StringEncoding];
+  return hashed;
+}
 // MARK: Instance methods
 
 - (void)startWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRStartHandler)handler
