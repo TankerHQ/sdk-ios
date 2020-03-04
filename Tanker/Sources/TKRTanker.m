@@ -187,6 +187,18 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   return [NSString stringWithCString:tanker_version_string() encoding:NSUTF8StringEncoding];
 }
+
++ (nonnull NSString*)hashPassphrase:(nonnull NSString*)passphrase
+{
+  if (!passphrase.length)
+    [NSException raise:NSInvalidArgumentException format:@"cannot hash empty passphrase"];
+
+  char const* c_passphrase = [passphrase cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_expected_t* expected_chashed = tanker_hash_passphrase(c_passphrase);
+  char* c_hashed = (char*)unwrapAndFreeExpected(expected_chashed);
+  NSString* hashed = [NSString stringWithCString:c_hashed encoding:NSUTF8StringEncoding];
+  return hashed;
+}
 // MARK: Instance methods
 
 - (void)startWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRStartHandler)handler
@@ -425,8 +437,10 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_expected_t* resource_id_expected =
       tanker_get_resource_id((uint8_t const*)encryptedData.bytes, encryptedData.length);
   *error = getOptionalFutureError(resource_id_expected);
-  if (*error)
+  if (*error) {
+    tanker_future_destroy(resource_id_expected);
     return nil;
+  }
   char* resource_id = unwrapAndFreeExpected(resource_id_expected);
   NSString* ret = [NSString stringWithCString:resource_id encoding:NSUTF8StringEncoding];
   tanker_free_buffer(resource_id);

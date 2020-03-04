@@ -41,6 +41,8 @@
 
 + (nonnull NSString*)nativeVersionString;
 
++ (nonnull NSString*)hashPassphrase:(nonnull NSString*)passphrase;
+
 // MARK: Instance methods
 
 /*!
