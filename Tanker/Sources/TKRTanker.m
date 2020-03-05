@@ -188,13 +188,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return [NSString stringWithCString:tanker_version_string() encoding:NSUTF8StringEncoding];
 }
 
-+ (nonnull NSString*)hashPassphrase:(nonnull NSString*)passphrase
++ (nonnull NSString*)prehashPassword:(nonnull NSString*)password
 {
-  if (!passphrase.length)
-    [NSException raise:NSInvalidArgumentException format:@"cannot hash empty passphrase"];
+  if (!password.length)
+    [NSException raise:NSInvalidArgumentException format:@"cannot hash empty password"];
 
-  char const* c_passphrase = [passphrase cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_expected_t* expected_chashed = tanker_hash_passphrase(c_passphrase);
+  char const* c_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_expected_t* expected_chashed = tanker_prehash_password(c_password);
   char* c_hashed = (char*)unwrapAndFreeExpected(expected_chashed);
   NSString* hashed = [NSString stringWithCString:c_hashed encoding:NSUTF8StringEncoding];
   return hashed;
