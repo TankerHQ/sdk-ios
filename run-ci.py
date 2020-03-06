@@ -48,6 +48,22 @@ class Builder:
         self.debug = debug
         self.archs = archs
 
+    def generate_podspec(self) -> None:
+        static_libs = self.get_static_libs()
+        in_path = self.src_path / "Tanker/Tanker.in.podspec"
+        contents = in_path.text()
+        link_flags = [
+            f"-l{x.name[3:-2]}" for x in static_libs
+        ]  # strip 'lib' prefix and '.a' suffix
+        contents = contents.replace("@static_libs_link_flags@", " ".join(link_flags))
+        out_path = self.src_path / "Tanker/Tanker.podspec"
+        out_path.write_text(contents)
+        ui.info_2("Generated", out_path)
+
+    def get_static_libs(self) -> List[Path]:
+        libs_path = self.src_path / "Tanker/Libraries"
+        return libs_path.glob("*.a")  # type: ignore
+
     def get_build_path(self, arch: str) -> Path:
         res = self.conan_out_path / arch
         res.makedirs_p()
@@ -266,10 +282,11 @@ def build_and_test(
         archs = ["x86_64", "x86"]
     else:
         archs = ARCHS
-    deps_handler = Builder(src_path=src_path, debug=debug, archs=archs)
-    deps_handler.handle_sdk_deps(tanker_conan_ref=tanker_conan_ref)
-    deps_handler.handle_ios_deps()
-    deps_handler.build_and_test_pod()
+    builder = Builder(src_path=src_path, debug=debug, archs=archs)
+    builder.handle_sdk_deps(tanker_conan_ref=tanker_conan_ref)
+    builder.generate_podspec()
+    builder.handle_ios_deps()
+    builder.build_and_test_pod()
 
 
 def deploy(*, git_tag: str) -> None:

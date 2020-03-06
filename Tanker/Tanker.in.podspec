@@ -21,8 +21,11 @@ It's available for browsers, desktop, iOS and Android.
   s.pod_target_xcconfig = {
     'USE_HEADERMAP' => "NO",
     'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PODS_TARGET_SRCROOT)/Headers"',
-    'OTHER_LDFLAGS' => "'-exported_symbols_list ${PODS_TARGET_SRCROOT}/export_symbols.list -nostdlib++'"
+    'LIBRARY_SEARCH_PATHS' => '$(PODS_TARGET_SRCROOT)/Libraries',
+    'OTHER_LDFLAGS' => "'-exported_symbols_list ${PODS_TARGET_SRCROOT}/export_symbols.list -nostdlib++ @static_libs_link_flags@'"
     }
+
+
   s.header_mappings_dir = 'Headers'
   s.preserve_paths = 'export_symbols.list', 'Libraries', 'Tests/Dummy.m'
   s.dependency 'POSInputStreamLibrary'
@@ -31,7 +34,6 @@ It's available for browsers, desktop, iOS and Android.
   s.subspec "core" do |ss|
     ss.source_files = 'Headers/ctanker.h', 'Headers/ctanker/**/*.h'
     ss.private_header_files = 'Headers/ctanker.h', 'Headers/ctanker/**/*.h'
-    ss.vendored_libraries = 'Libraries/*.a'
   end
 
 
