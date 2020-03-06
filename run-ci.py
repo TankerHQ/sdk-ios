@@ -135,7 +135,7 @@ class Builder:
     def build_and_test_pod(self) -> None:
         ui.info_2("building pod and launching tests")
         generate_test_config(self.pod_path / "Tests", config_name="dev")
-        ci.run("pod", "lib", "lint", "--verbose", "--allow-warnings", cwd=self.pod_path / "Tanker.podspec")
+        ci.run("pod", "lib", "lint", "--verbose", "--allow-warnings", self.pod_path / "Tanker.podspec")
 
 
 class PodPublisher:
