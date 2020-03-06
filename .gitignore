@@ -1,6 +1,5 @@
 .DS_Store
 ._*
-*.egg-info/
 build
 
 # Xcode
