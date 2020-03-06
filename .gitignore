@@ -31,3 +31,4 @@ DerivedData/
 artifacts/
 
 .venv/
+.mypy_cache/
