@@ -208,7 +208,7 @@ class PodPublisher:
         return res
 
     def upload_archive(self, archive_path: Path) -> None:
-        ci.gcp.GcpProject("tanker-prod").enable()
+        ci.gcp.GcpProject("tanker-public").auth()
         ci.run("gsutil", "cp", archive_path, "gs://cocoapods.tanker.io/ios/")
 
     def build_pod(self) -> None:
