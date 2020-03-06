@@ -8,7 +8,6 @@ stages:
 before_script:
     - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
     - poetry install
-    - poetry run python run-ci.py --isolate-conan-user-home update-conan-config
 
 check/deployed-native:
   stage: check

@@ -247,6 +247,7 @@ def generate_test_config(src_path: Path, *, config_name: str) -> None:
 def build_and_test(
     *, use_tanker: str, only_macos_archs: bool = False, debug: bool = False
 ) -> None:
+    ci.conan.update_config()
     src_path = Path.getcwd()
     tanker_conan_ref = LOCAL_TANKER
 
@@ -292,8 +293,6 @@ def main():
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
     subparsers.add_parser("generate-test-config")
 
-    subparsers.add_parser("update-conan-config")
-
     check_parser = subparsers.add_parser("build-and-test")
     check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument(
@@ -315,9 +314,7 @@ def main():
     if args.home_isolation:
         ci.conan.set_home_isolation()
 
-    if args.command == "update-conan-config":
-        ci.cpp.update_conan_config()
-    elif args.command == "build-and-test":
+    if args.command == "build-and-test":
         build_and_test(
             use_tanker=args.use_tanker,
             debug=args.debug,
