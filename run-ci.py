@@ -247,6 +247,7 @@ def generate_test_config(src_path: Path, *, config_name: str) -> None:
 def build_and_test(
     *, use_tanker: str, only_macos_archs: bool = False, debug: bool = False
 ) -> None:
+    ci.conan.update_config()
     src_path = Path.getcwd()
     tanker_conan_ref = LOCAL_TANKER
 
