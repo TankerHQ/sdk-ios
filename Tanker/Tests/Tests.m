@@ -312,10 +312,10 @@ SpecBegin(TankerSpecs)
         tankerOptions = createTankerOptions(url, appID);
       });
         
-      describe(@"hashPassword", ^{
-        it(@"should fail to hash an empty passphrase", ^{
+      describe(@"prehashPassword", ^{
+        it(@"should fail to hash an empty password", ^{
           expect(^{
-            [TKRTanker hashPassphrase:@""];
+            [TKRTanker prehashPassword:@""];
           })
               .to.raise(NSInvalidArgumentException);
         });
@@ -323,14 +323,14 @@ SpecBegin(TankerSpecs)
         it(@"should hash a test vector 1", ^{
           NSString* input = @"super secretive password";
           NSString* expected = @"UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=";
-          NSString* hashed = [TKRTanker hashPassphrase:input];
+          NSString* hashed = [TKRTanker prehashPassword:input];
           expect(hashed).to.equal(expected);
         });
           
         it(@"should hash a test vector 2", ^{
           NSString* input = @"test éå 한국어 😃";
           NSString* expected = @"Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=";
-          NSString* hashed = [TKRTanker hashPassphrase:input];
+          NSString* hashed = [TKRTanker prehashPassword:input];
           expect(hashed).to.equal(expected);
         });
       });
