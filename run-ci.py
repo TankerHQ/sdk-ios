@@ -135,7 +135,14 @@ class Builder:
     def build_and_test_pod(self) -> None:
         ui.info_2("building pod and launching tests")
         generate_test_config(self.pod_path / "Tests", config_name="dev")
-        ci.run("pod", "lib", "lint", "--verbose", "--allow-warnings", self.pod_path / "Tanker.podspec")
+        ci.run(
+            "pod",
+            "lib",
+            "lint",
+            "--verbose",
+            "--allow-warnings",
+            self.pod_path / "Tanker.podspec",
+        )
 
 
 class PodPublisher:
@@ -208,7 +215,7 @@ class PodPublisher:
         return res
 
     def upload_archive(self, archive_path: Path) -> None:
-        ci.gcp.GcpProject("tanker-public").auth()
+        ci.gcp.GcpProject("tanker-prod").auth()
         ci.run("gsutil", "cp", archive_path, "gs://cocoapods.tanker.io/ios/")
 
     def build_pod(self) -> None:
