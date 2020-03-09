@@ -48,6 +48,22 @@ class Builder:
         self.debug = debug
         self.archs = archs
 
+    def generate_podspec(self) -> None:
+        static_libs = self.get_static_libs()
+        in_path = self.src_path / "Tanker/Tanker.in.podspec"
+        contents = in_path.text()
+        link_flags = [
+            f"-l{x.name[3:-2]}" for x in static_libs
+        ]  # strip 'lib' prefix and '.a' suffix
+        contents = contents.replace("@static_libs_link_flags@", " ".join(link_flags))
+        out_path = self.src_path / "Tanker/Tanker.podspec"
+        out_path.write_text(contents)
+        ui.info_2("Generated", out_path)
+
+    def get_static_libs(self) -> List[Path]:
+        libs_path = self.src_path / "Tanker/Libraries"
+        return libs_path.glob("*.a")  # type: ignore
+
     def get_build_path(self, arch: str) -> Path:
         res = self.conan_out_path / arch
         res.makedirs_p()
@@ -119,7 +135,14 @@ class Builder:
     def build_and_test_pod(self) -> None:
         ui.info_2("building pod and launching tests")
         generate_test_config(self.pod_path / "Tests", config_name="dev")
-        ci.run("pod", "lib", "lint", "--verbose", "--allow-warnings", cwd=self.pod_path)
+        ci.run(
+            "pod",
+            "lib",
+            "lint",
+            "--verbose",
+            "--allow-warnings",
+            self.pod_path / "Tanker.podspec",
+        )
 
 
 class PodPublisher:
@@ -192,7 +215,7 @@ class PodPublisher:
         return res
 
     def upload_archive(self, archive_path: Path) -> None:
-        ci.gcp.GcpProject("tanker-prod").enable()
+        ci.gcp.GcpProject("tanker-prod").auth()
         ci.run("gsutil", "cp", archive_path, "gs://cocoapods.tanker.io/ios/")
 
     def build_pod(self) -> None:
@@ -247,6 +270,7 @@ def generate_test_config(src_path: Path, *, config_name: str) -> None:
 def build_and_test(
     *, use_tanker: str, only_macos_archs: bool = False, debug: bool = False
 ) -> None:
+    ci.conan.update_config()
     src_path = Path.getcwd()
     tanker_conan_ref = LOCAL_TANKER
 
@@ -265,10 +289,11 @@ def build_and_test(
         archs = ["x86_64", "x86"]
     else:
         archs = ARCHS
-    deps_handler = Builder(src_path=src_path, debug=debug, archs=archs)
-    deps_handler.handle_sdk_deps(tanker_conan_ref=tanker_conan_ref)
-    deps_handler.handle_ios_deps()
-    deps_handler.build_and_test_pod()
+    builder = Builder(src_path=src_path, debug=debug, archs=archs)
+    builder.handle_sdk_deps(tanker_conan_ref=tanker_conan_ref)
+    builder.generate_podspec()
+    builder.handle_ios_deps()
+    builder.build_and_test_pod()
 
 
 def deploy(*, git_tag: str) -> None:
@@ -292,8 +317,6 @@ def main():
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
     subparsers.add_parser("generate-test-config")
 
-    subparsers.add_parser("update-conan-config")
-
     check_parser = subparsers.add_parser("build-and-test")
     check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument(
@@ -315,9 +338,7 @@ def main():
     if args.home_isolation:
         ci.conan.set_home_isolation()
 
-    if args.command == "update-conan-config":
-        ci.cpp.update_conan_config()
-    elif args.command == "build-and-test":
+    if args.command == "build-and-test":
         build_and_test(
             use_tanker=args.use_tanker,
             debug=args.debug,
