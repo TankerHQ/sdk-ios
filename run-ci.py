@@ -75,7 +75,7 @@ class Builder:
             deps = ci.conan.get_dependencies_libs(
                 self.get_build_path(arch) / "conanbuildinfo.json"
             )
-            for dep, libs in deps.items():
+            for _, libs in deps.items():
                 if not libs:
                     continue
                 for lib in libs:
