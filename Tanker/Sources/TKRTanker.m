@@ -507,7 +507,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
-                 options:(nonnull TKRShareOptions*)options
+                 options:(nonnull TKRSharingOptions*)options
        completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {

@@ -5,7 +5,7 @@
 
  @discussion Each field is optional.
  */
-@interface TKRShareOptions : NSObject
+@interface TKRSharingOptions : NSObject
 
 /*!
  @brief Recipient public identities to share with
@@ -22,7 +22,7 @@
 @property NSArray<NSString*>* shareWithGroups;
 
 /*!
- @brief Create a TKRShareOptions with empty values.
+ @brief Create a TKRSharingOptions with empty values.
  */
 + (instancetype)options;
 
