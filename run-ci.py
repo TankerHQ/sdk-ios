@@ -16,7 +16,7 @@ import ci.tanker_configs
 import cli_ui as ui
 from path import Path
 
-DEPLOYED_TANKER = "tanker/2.2.2@tanker/stable"
+DEPLOYED_TANKER = "tanker/2.3.2@tanker/stable"
 LOCAL_TANKER = "tanker/dev@tanker/dev"
 
 ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
@@ -75,7 +75,7 @@ class Builder:
             deps = ci.conan.get_dependencies_libs(
                 self.get_build_path(arch) / "conanbuildinfo.json"
             )
-            for dep, libs in deps.items():
+            for _, libs in deps.items():
                 if not libs:
                     continue
                 for lib in libs:
