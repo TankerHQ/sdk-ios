@@ -1,29 +1,6 @@
-#import <Foundation/Foundation.h>
+#warning "This header is deprecated, include TKRSharingOptions.h and use TKRSharingOptions"
 
-/*!
- @brief Options used when sharing resources.
+#import "TKRSharingOptions.h"
 
- @discussion Each field is optional.
- */
-@interface TKRShareOptions : NSObject
-
-/*!
- @brief Recipient public identities to share with
-
- @discussion If set, must contain registered user IDs (or be empty).
- */
-@property NSArray<NSString*>* shareWithUsers;
-
-/*!
- @brief Group IDs to share with
-
- @discussion If set, must contain registered group IDs (or be empty).
- */
-@property NSArray<NSString*>* shareWithGroups;
-
-/*!
- @brief Create a TKRShareOptions with empty values.
- */
-+ (instancetype)options;
-
-@end
+// TKRShareOptions is deprecated and has been renamed to TKRSharingOptions
+__attribute__((deprecated)) typedef TKRSharingOptions TKRShareOptions;

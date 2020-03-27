@@ -5,7 +5,7 @@
 #import "TKRCompletionHandlers.h"
 #import "TKREncryptionOptions.h"
 #import "TKREvents.h"
-#import "TKRShareOptions.h"
+#import "TKRSharingOptions.h"
 #import "TKRStatus.h"
 #import "TKRTankerOptions.h"
 #import "TKRVerification.h"
@@ -271,7 +271,7 @@
  If one of those parameters are empty, the method has no effect.
  */
 - (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
-                 options:(nonnull TKRShareOptions*)options
+                 options:(nonnull TKRSharingOptions*)options
        completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
