@@ -7,6 +7,16 @@
 #import "TKRTanker.h"
 #include "ctanker/ctanker.h"
 
+// https://stackoverflow.com/a/15707096/4116453
+#define AntiARCRetain(value)                               \
+  void* retained_##value = (__bridge_retained void*)value; \
+  (void)retained_##value
+
+#define AntiARCRelease(value)                                     \
+  void* retained_##value = (__bridge void*)value;                 \
+  id unretained_##value = (__bridge_transfer id)retained_##value; \
+  unretained_##value = nil
+
 // contains a NSUInteger constructed from a uintptr_t, and the size of the buffer
 @interface PtrAndSizePair : NSObject
 

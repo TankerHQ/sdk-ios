@@ -3,6 +3,8 @@
 
 #include "ctanker/stream.h"
 
+void readInput(uint8_t* out, int64_t n, tanker_stream_read_operation_t* op, void* additional_data);
+
 @interface TKRAsyncStreamReader : NSObject <NSStreamDelegate>
 
 + (nullable instancetype)readerWithStream:(nonnull NSInputStream*)stream;
