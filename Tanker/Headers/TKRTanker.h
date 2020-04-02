@@ -288,6 +288,19 @@
 - (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
+@brief Create an encryption session without sharing it with other users or group.
+*/
+- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler;
+
+/*!
+ @brief Create an encryption session shared with the given users and groups.
+
+ @param options recipient identities and group IDs to share with.
+ */
+- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
+                                      sharingOptions:(nonnull TKRSharingOptions*)sharingOptions;
+
+/*!
  @brief Create an encryption stream from an input stream with customized options.
 
  @param clearStream the stream to encrypt.

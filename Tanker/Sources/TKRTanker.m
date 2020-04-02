@@ -4,6 +4,7 @@
 
 #import "TKRAsyncStreamReader+Private.h"
 #import "TKRAttachResult+Private.h"
+#import "TKREncryptionSession+Private.h"
 #import "TKRInputStreamDataSource+Private.h"
 #import "TKRTanker+Private.h"
 #import "TKRTankerOptions+Private.h"
@@ -19,34 +20,6 @@
 #include "ctanker/stream.h"
 
 #define TANKER_IOS_VERSION @"9999"
-
-// For a good explanation, look at TKRAsyncStreamReader.m comment
-static void readInput(uint8_t* out, int64_t n, tanker_stream_read_operation_t* op, void* additional_data)
-{
-  // do not __bridge_transfer now, this method will be called numerous times
-  TKRAsyncStreamReader* reader = (__bridge typeof(TKRAsyncStreamReader*))additional_data;
-
-  // dispatch on main queue since streams are scheduled on it
-  runOnMainQueue(^{
-    if (reader.stream.hasBytesAvailable)
-      [reader performRead:out maxLength:n readOperation:op];
-    else
-    {
-      if (reader.stream.streamStatus == NSStreamStatusClosed)
-      {
-        if (reader.stream.streamError)
-          tanker_stream_read_operation_finish(op, -1);
-        else
-          tanker_stream_read_operation_finish(op, 0);
-        // now we can release the reader created in encryptStream/decryptStream
-        (void)(__bridge_transfer TKRAsyncStreamReader*) additional_data;
-      }
-      reader.cOut = out;
-      reader.cSize = n;
-      reader.cOp = op;
-    }
-  });
-}
 
 static void verificationToCVerification(TKRVerification* _Nonnull verification, tanker_verification_t* c_verification)
 {
@@ -437,7 +410,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_expected_t* resource_id_expected =
       tanker_get_resource_id((uint8_t const*)encryptedData.bytes, encryptedData.length);
   *error = getOptionalFutureError(resource_id_expected);
-  if (*error) {
+  if (*error)
+  {
     tanker_future_destroy(resource_id_expected);
     return nil;
   }
@@ -562,6 +536,60 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   freeCStringArray(group_ids, options.shareWithGroups.count);
 }
 
+- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
+{
+  [self createEncryptionSessionWithCompletionHandler:handler sharingOptions:[TKRSharingOptions options]];
+}
+
+- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
+                                      sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
+{
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      handler(nil, err);
+      return;
+    }
+    TKREncryptionSession* encSess = [[TKREncryptionSession alloc] init];
+    encSess.cSession = numberToPtr(ptrValue);
+    handler(encSess, nil);
+  };
+
+  NSError* err = nil;
+  char** user_ids = convertStringstoCStrings(sharingOptions.shareWithUsers, &err);
+  if (err)
+  {
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
+    return;
+  }
+  char** group_ids = convertStringstoCStrings(sharingOptions.shareWithGroups, &err);
+  if (err)
+  {
+    freeCStringArray(user_ids, sharingOptions.shareWithUsers.count);
+    runOnMainQueue(^{
+      handler(nil, err);
+    });
+    return;
+  }
+
+  tanker_future_t* sess_future = tanker_encryption_session_open((tanker_t*)self.cTanker,
+                                                                (char const* const*)user_ids,
+                                                                sharingOptions.shareWithUsers.count,
+                                                                (char const* const*)group_ids,
+                                                                sharingOptions.shareWithGroups.count);
+
+  tanker_future_t* resolve_future =
+      tanker_future_then(sess_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+
+  tanker_future_destroy(sess_future);
+  tanker_future_destroy(resolve_future);
+
+  freeCStringArray(user_ids, sharingOptions.shareWithUsers.count);
+  freeCStringArray(group_ids, sharingOptions.shareWithGroups.count);
+}
+
 - (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
 {
   NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onDeviceRevoked];
@@ -648,19 +676,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   [clearStream scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
   [clearStream open];
 
-  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    if (err)
-    {
-      handler(nil, err);
-      return;
-    }
-    tanker_stream_t* stream = numberToPtr(ptrValue);
-    TKRInputStreamDataSource* dataSource =
-        [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream asyncReader:reader];
-    POSBlobInputStream* encryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
-    handler(encryptionStream, nil);
-  };
-
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
   NSError* err = convertEncryptionOptions(opts, &encryption_options);
   if (err)
@@ -668,14 +683,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(nil, err);
     return;
   }
-  tanker_future_t* create_fut = tanker_stream_encrypt((tanker_t*)self.cTanker,
+  tanker_future_t* stream_fut = tanker_stream_encrypt((tanker_t*)self.cTanker,
                                                       (tanker_stream_input_source_t)&readInput,
                                                       (__bridge_retained void*)reader,
                                                       &encryption_options);
-  tanker_future_t* resolve_fut =
-      tanker_future_then(create_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(resolve_fut);
-  tanker_future_destroy(create_fut);
+  completeStreamEncrypt(reader, stream_fut, handler);
+  tanker_future_destroy(stream_fut);
   freeCStringArray((char**)encryption_options.recipient_public_identities,
                    encryption_options.nb_recipient_public_identities);
   freeCStringArray((char**)encryption_options.recipient_gids, encryption_options.nb_recipient_gids);

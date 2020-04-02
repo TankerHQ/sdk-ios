@@ -1,6 +1,9 @@
 
 #import <Foundation/Foundation.h>
 
+#import <POSInputStreamLibrary/POSBlobInputStream.h>
+
+#import "TKRInputStreamDataSource+Private.h"
 #import "TKRTanker+Private.h"
 #import "TKRUtils+Private.h"
 
@@ -8,19 +11,31 @@
 
 #include <objc/runtime.h>
 
-// https://stackoverflow.com/a/15707096/4116453
-#define AntiARCRetain(value)                               \
-  void* retained_##value = (__bridge_retained void*)value; \
-  (void)retained_##value
-
-#define AntiARCRelease(value)                                     \
-  void* retained_##value = (__bridge void*)value;                 \
-  id unretained_##value = (__bridge_transfer id)retained_##value; \
-  unretained_##value = nil
-
 static void releaseCPointer(void* ptr)
 {
   (void)((__bridge_transfer id)ptr);
+}
+
+void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
+                           tanker_future_t* _Nonnull streamFut,
+                           TKRInputStreamHandler _Nonnull handler)
+{
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      handler(nil, err);
+      return;
+    }
+    tanker_stream_t* stream = numberToPtr(ptrValue);
+    TKRInputStreamDataSource* dataSource =
+        [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream asyncReader:reader];
+    POSBlobInputStream* encryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+    handler(encryptionStream, nil);
+  };
+
+  tanker_future_t* resolve_fut =
+      tanker_future_then(streamFut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(resolve_fut);
 }
 
 @implementation TKRTanker (Private)

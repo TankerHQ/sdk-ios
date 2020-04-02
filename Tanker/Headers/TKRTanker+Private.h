@@ -1,10 +1,15 @@
 
 #import <Foundation/Foundation.h>
 
+#import "TKRAsyncStreamReader+Private.h"
 #import "TKRTanker.h"
 #import "TKRUtils+Private.h"
 
 typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
+
+void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
+                           tanker_future_t* _Nonnull streamFut,
+                           TKRInputStreamHandler _Nonnull handler);
 
 @interface TKRTanker (Private)
 

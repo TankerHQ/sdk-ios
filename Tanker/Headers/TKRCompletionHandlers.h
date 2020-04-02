@@ -5,6 +5,7 @@
 @class TKRVerificationKey;
 @class TKRVerificationMethod;
 @class TKRAttachResult;
+@class TKREncryptionSession;
 
 /*!
  @typedef TKRStartHandler
@@ -112,3 +113,13 @@ typedef void (^TKRAttachResultHandler)(TKRAttachResult* _Nullable result,
  */
 typedef void (^TKRInputStreamHandler)(NSInputStream* _Nullable stream,
                                       NSError* _Nullable err);
+
+/*!
+ @typedef TKREncryptionSessionHandler
+ @brief Block which will be called with a TKREncryptionSession*.
+
+ @param session the encryption session, or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKREncryptionSessionHandler)(
+    TKREncryptionSession* _Nullable session, NSError* _Nullable err);

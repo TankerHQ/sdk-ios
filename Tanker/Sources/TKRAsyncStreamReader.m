@@ -1,5 +1,33 @@
 
 #import "TKRAsyncStreamReader+Private.h"
+#import "TKRUtils+Private.h"
+
+void readInput(uint8_t* out, int64_t n, tanker_stream_read_operation_t* op, void* additional_data)
+{
+  // do not __bridge_transfer now, this method will be called numerous times
+  TKRAsyncStreamReader* reader = (__bridge typeof(TKRAsyncStreamReader*))additional_data;
+
+  // dispatch on main queue since streams are scheduled on it
+  runOnMainQueue(^{
+    if (reader.stream.hasBytesAvailable)
+      [reader performRead:out maxLength:n readOperation:op];
+    else
+    {
+      if (reader.stream.streamStatus == NSStreamStatusClosed)
+      {
+        if (reader.stream.streamError)
+          tanker_stream_read_operation_finish(op, -1);
+        else
+          tanker_stream_read_operation_finish(op, 0);
+        // now we can release the reader created in encryptStream/decryptStream
+        (void)(__bridge_transfer TKRAsyncStreamReader*) additional_data;
+      }
+      reader.cOut = out;
+      reader.cSize = n;
+      reader.cOp = op;
+    }
+  });
+}
 
 @implementation TKRAsyncStreamReader
 
