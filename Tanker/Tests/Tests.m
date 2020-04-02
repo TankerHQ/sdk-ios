@@ -1,5 +1,6 @@
 // https://github.com/Specta/Specta
 
+#import "TKREncryptionSession.h"
 #import "TKRError.h"
 #import "TKRInputStreamDataSource+Private.h"
 #import "TKRTanker.h"
@@ -311,7 +312,7 @@ SpecBegin(TankerSpecs)
       beforeEach(^{
         tankerOptions = createTankerOptions(url, appID);
       });
-        
+
       describe(@"prehashPassword", ^{
         it(@"should fail to hash an empty password", ^{
           expect(^{
@@ -319,14 +320,14 @@ SpecBegin(TankerSpecs)
           })
               .to.raise(NSInvalidArgumentException);
         });
-          
+
         it(@"should hash a test vector 1", ^{
           NSString* input = @"super secretive password";
           NSString* expected = @"UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=";
           NSString* hashed = [TKRTanker prehashPassword:input];
           expect(hashed).to.equal(expected);
         });
-          
+
         it(@"should hash a test vector 2", ^{
           NSString* input = @"test éå 한국어 😃";
           NSString* expected = @"Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=";
@@ -726,6 +727,94 @@ SpecBegin(TankerSpecs)
 
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
+      });
+
+      describe(@"encryptionSession", ^{
+        __block TKRTanker* aliceTanker;
+        __block TKRTanker* bobTanker;
+        __block NSString* aliceIdentity;
+        __block NSString* alicePublicIdentity;
+        __block NSString* bobIdentity;
+        __block NSString* bobPublicIdentity;
+
+        beforeEach(^{
+          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(aliceTanker).toNot.beNil();
+          expect(bobTanker).toNot.beNil();
+
+          aliceIdentity = createIdentity(createUUID(), appID, appSecret);
+          bobIdentity = createIdentity(createUUID(), appID, appSecret);
+          alicePublicIdentity = getPublicIdentity(aliceIdentity);
+          bobPublicIdentity = getPublicIdentity(bobIdentity);
+
+          startWithIdentityAndRegister(
+              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndRegister(
+              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+        });
+
+        afterEach(^{
+          stop(aliceTanker);
+          stop(bobTanker);
+        });
+
+        it(@"should be able to share with an encryption session", ^{
+          TKRSharingOptions* opts = [TKRSharingOptions options];
+          opts.shareWithUsers = @[ bobPublicIdentity ];
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter sharingOptions:opts];
+          });
+          NSString* clearText = @"Rosebud";
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptString:clearText completionHandler:adapter];
+          });
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+          expect(decryptedString).to.equal(clearText);
+        });
+
+        it(@"should be able to encrypt streams with an encryption session", ^{
+          TKRSharingOptions* opts = [TKRSharingOptions options];
+          opts.shareWithUsers = @[ bobPublicIdentity ];
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter sharingOptions:opts];
+          });
+
+          NSData* clearData = [NSMutableData dataWithLength:1024 * 1024 * 2 + 4];
+          TKRCustomDataSource* dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
+          TKRTestAsyncStreamReader* reader = [[TKRTestAsyncStreamReader alloc] init];
+          NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+
+          NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptStream:clearStream completionHandler:adapter];
+          });
+
+          NSInputStream* decryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStream:encryptedStream completionHandler:adapter];
+          });
+          NSData* decryptedData = [PMKPromise hang:[reader readAll:decryptedStream]];
+          expect(decryptedData).to.equal(clearData);
+        });
+
+        it(@"should have a matching resource ID for the session and ciphertexts", ^{
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter];
+          });
+          NSString* clearText = @"Rosebud";
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptString:clearText completionHandler:adapter];
+          });
+
+          NSError* err = nil;
+          NSString* cipherResourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
+          expect(err).to.beNil();
+          NSString* sessResourceID = [encSess resourceID];
+          expect(sessResourceID).to.equal(cipherResourceID);
         });
       });
 
