@@ -1,8 +1,7 @@
-#import <POSInputStreamLibrary/POSBlobInputStream.h>
-
 #import "TKRAsyncStreamReader+Private.h"
 #import "TKREncryptionSession+Private.h"
 #import "TKRInputStreamDataSource+Private.h"
+#import "TKRTanker+Private.h"
 #import "TKRUtils+Private.h"
 
 #include "ctanker/encryptionsession.h"
@@ -72,26 +71,11 @@
   [clearStream scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
   [clearStream open];
 
-  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    if (err)
-    {
-      handler(nil, err);
-      return;
-    }
-    tanker_stream_t* stream = numberToPtr(ptrValue);
-    TKRInputStreamDataSource* dataSource =
-        [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream asyncReader:reader];
-    POSBlobInputStream* encryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
-    handler(encryptionStream, nil);
-  };
-
-  tanker_future_t* create_fut = tanker_encryption_session_stream_encrypt((tanker_encryption_session_t*)self.cSession,
+  tanker_future_t* stream_fut = tanker_encryption_session_stream_encrypt((tanker_encryption_session_t*)self.cSession,
                                                                          (tanker_stream_input_source_t)&readInput,
                                                                          (__bridge_retained void*)reader);
-  tanker_future_t* resolve_fut =
-      tanker_future_then(create_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(resolve_fut);
-  tanker_future_destroy(create_fut);
+  completeStreamEncrypt(reader, stream_fut, handler);
+  tanker_future_destroy(stream_fut);
 }
 
 @end
