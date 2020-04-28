@@ -134,7 +134,6 @@ class Builder:
 
     def build_and_test_pod(self) -> None:
         ui.info_2("building pod and launching tests")
-        generate_test_config(self.pod_path / "Tests", config_name="dev")
         ci.run(
             "pod",
             "lib",
@@ -254,19 +253,6 @@ class PodPublisher:
         self.publish_pod()
 
 
-def generate_test_config(src_path: Path, *, config_name: str) -> None:
-    filepath = ci.tanker_configs.get_path()
-    to_write = textwrap.dedent(
-        f"""\
-        #define TANKER_CONFIG_FILEPATH @"{filepath}"
-        #define TANKER_CONFIG_NAME @"{config_name}"
-        """
-    )
-    config_header = src_path / "TKRTestConfig.h"
-    config_header.write_text(to_write)
-    ui.info("Config written to", config_header)
-
-
 def build_and_test(
     *, use_tanker: str, only_macos_archs: bool = False, debug: bool = False
 ) -> None:
@@ -315,7 +301,6 @@ def main():
     )
 
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
-    subparsers.add_parser("generate-test-config")
 
     check_parser = subparsers.add_parser("build-and-test")
     check_parser.add_argument("--debug", action="store_true", default=False)
@@ -344,10 +329,6 @@ def main():
             debug=args.debug,
             only_macos_archs=args.only_macos_archs,
         )
-    elif args.command == "generate-test-config":
-        src_path = Path(__file__).abspath().parent
-        generate_test_config(src_path / "Tanker" / "Tests", config_name="dev")
-        return
     elif args.command == "deploy":
         git_tag = args.git_tag
         deploy(git_tag=git_tag)

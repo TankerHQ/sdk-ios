@@ -10,7 +10,6 @@
 
 #import "TKRCustomDataSource.h"
 #import "TKRTestAsyncStreamReader.h"
-#import "TKRTestConfig.h"
 
 @import POSInputStreamLibrary;
 @import Expecta;
@@ -171,7 +170,7 @@ SpecBegin(TankerSpecs)
       __block NSString* url;
       __block NSString* appID;
       __block NSString* appSecret;
-      __block NSDictionary* jsonConfig;
+      __block NSDictionary* oidcTestConfig;
 
       __block TKRTankerOptions* tankerOptions;
 
@@ -262,22 +261,24 @@ SpecBegin(TankerSpecs)
       };
 
       beforeAll(^{
-        NSString* configName = TANKER_CONFIG_NAME;
-        NSString* configPath = TANKER_CONFIG_FILEPATH;
-        NSLog(@"Reading config from %@", configPath);
-        NSData* data = [NSData dataWithContentsOfFile:configPath];
-        expect(data).toNot.beNil();
-        NSError* error = nil;
-        expect(error).to.beNil();
-        NSDictionary* dict = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
-        jsonConfig = dict;
-        expect(dict).toNot.beNil();
-        NSDictionary* config = [dict valueForKey:configName];
-        expect(config).toNot.beNil();
-        url = [config valueForKey:@"url"];
+        NSDictionary* env = [[NSProcessInfo processInfo] environment];
+        url = env[@"TANKER_TRUSTCHAIND_URL"];
         expect(url).toNot.beNil();
-        NSString* idToken = [config valueForKey:@"idToken"];
+        NSString* idToken = env[@"TANKER_ID_TOKEN"];
         expect(idToken).toNot.beNil();
+        
+        oidcTestConfig = @{
+          @"clientId": env[@"TANKER_OIDC_CLIENT_ID"],
+          @"clientSecret": env[@"TANKER_OIDC_CLIENT_SECRET"],
+          @"provider": env[@"TANKER_OIDC_PROVIDER"],
+          @"users": @{
+            @"martine": @{
+              @"email": env[@"TANKER_OIDC_MARTINE_EMAIL"],
+              @"refreshToken": env[@"TANKER_OIDC_MARTINE_REFRESH_TOKEN"]
+            }
+          }
+        };
+        
         char const* curl = [url cStringUsingEncoding:NSUTF8StringEncoding];
         char const* id_token = [idToken cStringUsingEncoding:NSUTF8StringEncoding];
         tanker_future_t* connect_fut = tanker_admin_connect(curl, id_token);
@@ -1080,7 +1081,6 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should setup verification with an OIDC ID Token", ^{
-          NSDictionary* oidcTestConfig = jsonConfig[@"oidc"][@"googleAuth"];
           NSString* oidcClientID = oidcTestConfig[@"clientId"];
           NSString* oidcClientSecret = oidcTestConfig[@"clientSecret"];
           NSString* oidcClientProvider = oidcTestConfig[@"provider"];
