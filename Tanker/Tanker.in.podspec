@@ -47,6 +47,19 @@ It's available for browsers, desktop, iOS and Android.
     test_spec.dependency 'PromiseKit/When', '~> 1.7'
     # tests use admin parts
     test_spec.vendored_libraries = 'Libraries/*.a'
+    test_spec.scheme = {
+      :environment_variables => Hash[
+        [
+          'TANKER_TRUSTCHAIND_URL',
+          'TANKER_ID_TOKEN',
+          'TANKER_OIDC_CLIENT_ID',
+          'TANKER_OIDC_CLIENT_SECRET',
+          'TANKER_OIDC_PROVIDER',
+          'TANKER_OIDC_MARTINE_EMAIL',
+          'TANKER_OIDC_MARTINE_REFRESH_TOKEN'
+        ].map { |key| [key, ENV[key]] }
+      ]
+    }
   end
 
 end
