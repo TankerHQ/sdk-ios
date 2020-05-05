@@ -5,7 +5,6 @@ import re
 import shutil
 import sys
 import tempfile
-import textwrap
 
 import ci
 import ci.conan
