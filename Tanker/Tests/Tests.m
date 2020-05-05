@@ -168,8 +168,10 @@ SpecBegin(TankerSpecs)
     describe(@"Tanker Bindings", ^{
       __block tanker_admin_t* admin;
       __block NSString* url;
+      __block char* curl;
       __block NSString* appID;
       __block NSString* appSecret;
+      __block NSString* authToken;
       __block NSDictionary* oidcTestConfig;
 
       __block TKRTankerOptions* tankerOptions;
@@ -250,9 +252,12 @@ SpecBegin(TankerSpecs)
       };
 
       __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
-        tanker_future_t* f = tanker_admin_get_verification_code(admin,
-                                                                [appID cStringUsingEncoding:NSUTF8StringEncoding],
-                                                                [email cStringUsingEncoding:NSUTF8StringEncoding]);
+        tanker_future_t* f = tanker_get_verification_code(
+            curl,
+            [appID cStringUsingEncoding:NSUTF8StringEncoding],
+            [authToken cStringUsingEncoding:NSUTF8StringEncoding],
+            [email cStringUsingEncoding:NSUTF8StringEncoding]
+        );
         tanker_future_wait(f);
         char* code = (char*)tanker_future_get_voidptr(f);
         NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
@@ -263,7 +268,9 @@ SpecBegin(TankerSpecs)
       beforeAll(^{
         NSDictionary* env = [[NSProcessInfo processInfo] environment];
         url = env[@"TANKER_TRUSTCHAIND_URL"];
+        NSString* adminUrl = env[@"TANKER_ADMIND_URL"];
         expect(url).toNot.beNil();
+        expect(adminUrl).toNot.beNil();
         NSString* idToken = env[@"TANKER_ID_TOKEN"];
         expect(idToken).toNot.beNil();
         
@@ -279,9 +286,10 @@ SpecBegin(TankerSpecs)
           }
         };
         
-        char const* curl = [url cStringUsingEncoding:NSUTF8StringEncoding];
+        curl = [url cStringUsingEncoding:NSUTF8StringEncoding];
+        char const* cadminUrl = [adminUrl cStringUsingEncoding:NSUTF8StringEncoding];
         char const* id_token = [idToken cStringUsingEncoding:NSUTF8StringEncoding];
-        tanker_future_t* connect_fut = tanker_admin_connect(curl, id_token);
+        tanker_future_t* connect_fut = tanker_admin_connect(cadminUrl, id_token);
         tanker_future_wait(connect_fut);
         NSError* connectError = getOptionalFutureError(connect_fut);
         expect(connectError).to.beNil();
@@ -294,6 +302,7 @@ SpecBegin(TankerSpecs)
         tanker_app_descriptor_t* app = (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
         appID = [NSString stringWithCString:app->id encoding:NSUTF8StringEncoding];
         appSecret = [NSString stringWithCString:app->private_key encoding:NSUTF8StringEncoding];
+        authToken = [NSString stringWithCString:app->auth_token encoding:NSUTF8StringEncoding];
         tanker_future_destroy(app_fut);
         tanker_admin_app_descriptor_free(app);
       });
