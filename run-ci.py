@@ -5,7 +5,6 @@ import re
 import shutil
 import sys
 import tempfile
-import textwrap
 
 import ci
 import ci.conan
@@ -16,7 +15,7 @@ import ci.tanker_configs
 import cli_ui as ui
 from path import Path
 
-DEPLOYED_TANKER = "tanker/2.4.0-beta1@tanker/stable"
+DEPLOYED_TANKER = "tanker/2.4.0-beta3@tanker/stable"
 LOCAL_TANKER = "tanker/dev@tanker/dev"
 
 ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
