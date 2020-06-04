@@ -4,7 +4,7 @@
 [license-link]: https://opensource.org/licenses/Apache-2.0
 [platform-badge]: https://img.shields.io/static/v1.svg?label=Platform&message=ios&color=lightgrey
 
-<img src="https://cdn.jsdelivr.net/gh/TankerHQ/sdk-js@v1.10.1/src/public/tanker.png" alt="Tanker logo" width="180" />
+<img src="https://tanker.io/images/github-logo.png" alt="Tanker logo" width="180" />
 
 [![License][license-badge]][license-link]
 ![Cocoapods][cocoapods-badge]
