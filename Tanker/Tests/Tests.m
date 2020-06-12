@@ -1075,7 +1075,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should setup verification with an email", ^{
-          NSString* email = @"bob@alice.dk";
+          NSString* email = @"bob.alice@tanker.io";
           startWithIdentityAndRegister(
               firstDevice,
               identity,
