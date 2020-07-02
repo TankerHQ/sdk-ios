@@ -29,6 +29,7 @@
 typedef void (^TKRAdapter)(NSNumber* _Nullable ptrValue, NSError* _Nullable err);
 
 NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts, tanker_encrypt_options_t* _Nonnull);
+NSError* _Nullable convertSharingOptions(TKRSharingOptions* _Nonnull opts, tanker_sharing_options_t* _Nonnull);
 void runOnMainQueue(void (^_Nonnull block)(void));
 void freeCStringArray(char* _Nonnull* _Nonnull toFree, NSUInteger nbElems);
 NSError* _Nonnull createNSError(char const* _Nonnull message, TKRError code);
