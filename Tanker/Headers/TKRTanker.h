@@ -295,7 +295,7 @@
 /*!
  @brief Create an encryption session shared with the given users and groups.
 
- @param options recipient identities and group IDs to share with.
+ @param sharingOptions recipient identities and group IDs to share with.
  */
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
                                       sharingOptions:(nonnull TKRSharingOptions*)sharingOptions;

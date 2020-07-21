@@ -168,7 +168,7 @@ SpecBegin(TankerSpecs)
     describe(@"Tanker Bindings", ^{
       __block tanker_admin_t* admin;
       __block NSString* url;
-      __block char* curl;
+      __block char const* curl;
       __block NSString* appID;
       __block NSString* appSecret;
       __block NSString* authToken;

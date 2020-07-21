@@ -2,7 +2,7 @@
 #import "TKRAsyncStreamReader+Private.h"
 #import "TKRUtils+Private.h"
 
-void readInput(uint8_t* out, int64_t n, tanker_stream_read_operation_t* op, void* additional_data)
+void readInput(uint8_t* _Nonnull out, int64_t n, tanker_stream_read_operation_t* _Nonnull op, void* _Nonnull additional_data)
 {
   // do not __bridge_transfer now, this method will be called numerous times
   TKRAsyncStreamReader* reader = (__bridge typeof(TKRAsyncStreamReader*))additional_data;
