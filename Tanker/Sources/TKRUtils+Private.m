@@ -166,7 +166,7 @@ NSError* convertEncryptionOptions(TKREncryptionOptions* opts, tanker_encrypt_opt
   c_opts->nb_users = (uint32_t)opts.shareWithUsers.count;
   c_opts->share_with_groups = (char const* const*)group_ids;
   c_opts->nb_groups = (uint32_t)opts.shareWithGroups.count;
-  c_opts->share_with_self = true;
+  c_opts->share_with_self = opts.shareWithSelf;
   return nil;
 }
 
