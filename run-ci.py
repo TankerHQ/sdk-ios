@@ -11,7 +11,6 @@ import ci.conan
 import ci.cpp
 import ci.gcp
 import ci.git
-import ci.tanker_configs
 import cli_ui as ui
 from path import Path
 
