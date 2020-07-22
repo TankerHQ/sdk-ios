@@ -24,6 +24,11 @@
 @property NSArray<NSString*>* shareWithGroups;
 
 /*!
+ @brief Should the resources be shared with the current user (defaults to true)
+ */
+@property bool shareWithSelf;
+
+/*!
  @brief Create a TKREncryptionOptions with empty values.
  */
 + (instancetype)options;

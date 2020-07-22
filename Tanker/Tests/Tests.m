@@ -168,7 +168,7 @@ SpecBegin(TankerSpecs)
     describe(@"Tanker Bindings", ^{
       __block tanker_admin_t* admin;
       __block NSString* url;
-      __block char* curl;
+      __block char const* curl;
       __block NSString* appID;
       __block NSString* appSecret;
       __block NSString* authToken;
@@ -786,6 +786,30 @@ SpecBegin(TankerSpecs)
           });
           expect(decryptedString).to.equal(clearText);
         });
+        
+        it(@"should be able to share with an encryption session, but not with self", ^{
+          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          opts.shareWithUsers = @[ bobPublicIdentity ];
+          opts.shareWithSelf = false;
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
+          });
+          NSString* clearText = @"Rosebud";
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptString:clearText completionHandler:adapter];
+          });
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+          expect(decryptedString).to.equal(clearText);
+          
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
 
         it(@"should be able to encrypt streams with an encryption session", ^{
           TKRSharingOptions* opts = [TKRSharingOptions options];
@@ -937,6 +961,29 @@ SpecBegin(TankerSpecs)
 
           expect(decryptedString).to.equal(@"Rosebud");
         });
+        
+        it(@"should encrypt a string for Bob, but not for Alice", ^{
+          NSString* clearString = @"Rosebud";
+          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          encryptionOptions.shareWithSelf = false;
+          encryptionOptions.shareWithUsers = @[ bobPublicIdentity ];
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptString:clearString options:encryptionOptions completionHandler:adapter];
+          });
+
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+
+          expect(decryptedString).to.equal(clearString);
+          
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
 
         it(@"should share data to multiple users who can decrypt it", ^{
           __block NSString* clearText = @"Rosebud";
@@ -964,6 +1011,8 @@ SpecBegin(TankerSpecs)
           hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:resourceIDs options:opts completionHandler:resolve];
           });
+          
+          
 
           NSArray* decryptPromises = @[
             [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {

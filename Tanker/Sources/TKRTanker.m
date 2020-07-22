@@ -527,11 +527,11 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
 {
-  [self createEncryptionSessionWithCompletionHandler:handler sharingOptions:[TKRSharingOptions options]];
+  [self createEncryptionSessionWithCompletionHandler:handler encryptionOptions:[TKREncryptionOptions options]];
 }
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
-                                      sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
+                                   encryptionOptions:(nonnull TKREncryptionOptions*)encryptionOptions
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     if (err)
@@ -544,12 +544,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(encSess, nil);
   };
 
-  TKREncryptionOptions* opts = [TKREncryptionOptions options];
-  opts.shareWithUsers = sharingOptions.shareWithUsers;
-  opts.shareWithGroups = sharingOptions.shareWithGroups;
-
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
-  NSError* err = convertEncryptionOptions(opts, &encryption_options);
+  NSError* err = convertEncryptionOptions(encryptionOptions, &encryption_options);
   if (err)
   {
     runOnMainQueue(^{
@@ -570,6 +566,17 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   freeCStringArray((char**)encryption_options.share_with_users,
                    encryption_options.nb_users);
   freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
+}
+
+- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
+                                      sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
+{
+  TKREncryptionOptions* opts = [TKREncryptionOptions options];
+  opts.shareWithUsers = sharingOptions.shareWithUsers;
+  opts.shareWithGroups = sharingOptions.shareWithGroups;
+  opts.shareWithSelf = true;
+
+  return [self createEncryptionSessionWithCompletionHandler:handler encryptionOptions:opts];
 }
 
 - (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
