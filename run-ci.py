@@ -6,11 +6,11 @@ import shutil
 import sys
 import tempfile
 
-import ci
-import ci.conan
-import ci.cpp
-import ci.gcp
-import ci.git
+import tankerci
+import tankerci.conan
+import tankerci.cpp
+import tankerci.gcp
+import tankerci.git
 import cli_ui as ui
 from path import Path
 
@@ -70,7 +70,7 @@ class Builder:
     def get_all_dependency_libs(self) -> Dict[str, List[Path]]:
         all_libs: Dict[str, List[Path]] = dict()
         for arch in self.archs:
-            deps = ci.conan.get_dependencies_libs(
+            deps = tankerci.conan.get_dependencies_libs(
                 self.get_build_path(arch) / "conanbuildinfo.json"
             )
             for _, libs in deps.items():
@@ -87,13 +87,13 @@ class Builder:
 
         for lib_name, libs in self.get_all_dependency_libs().items():
             output = self.libraries_path / lib_name
-            ci.run("lipo", "-create", "-output", output, *libs, cwd=self.conan_out_path)
+            tankerci.run("lipo", "-create", "-output", output, *libs, cwd=self.conan_out_path)
 
     def copy_headers(self) -> None:
         first_arch = list(self.archs)[0]
         # we assume that all archs have the same includes
         conan_info = self.get_build_path(first_arch) / "conanbuildinfo.json"
-        include_paths = ci.conan.get_dependencies_include_paths(conan_info)
+        include_paths = tankerci.conan.get_dependencies_include_paths(conan_info)
         for src_include_path in include_paths["tanker"]:
             _copy_folder_content(src_include_path, self.headers_path)
 
@@ -107,7 +107,7 @@ class Builder:
     def install_sdk_native(self, tanker_conan_ref: str) -> None:
         for arch in self.archs:
             # fmt: off
-            ci.conan.run(
+            tankerci.conan.run(
                 "install", tanker_conan_ref,
                 "--update",
                 "--profile", self.get_profile_name(arch),
@@ -126,12 +126,12 @@ class Builder:
 
     def handle_ios_deps(self) -> None:
         ui.info_2("Installing Tanker pod dependencies")
-        ci.run("pod", "deintegrate", cwd=self.example_path)
-        ci.run("pod", "install", "--repo-update", cwd=self.example_path)
+        tankerci.run("pod", "deintegrate", cwd=self.example_path)
+        tankerci.run("pod", "install", "--repo-update", cwd=self.example_path)
 
     def build_and_test_pod(self) -> None:
         ui.info_2("building pod and launching tests")
-        ci.run(
+        tankerci.run(
             "pod",
             "lib",
             "lint",
@@ -204,19 +204,19 @@ class PodPublisher:
         ui.info_1("Generating archive, version:", version)
         archive_name = "tanker-ios-sdk-%s.tar.gz" % version
         with self.dest_path:
-            ci.run("tar cfvz %s *" % archive_name, shell=True)
+            tankerci.run("tar cfvz %s *" % archive_name, shell=True)
             shutil.copy(archive_name, self.src_path)
             res = self.src_path / archive_name
         ui.info_2("Generated", res)
         return res
 
     def upload_archive(self, archive_path: Path) -> None:
-        ci.gcp.GcpProject("tanker-prod").auth()
-        ci.run("gsutil", "cp", archive_path, "gs://cocoapods.tanker.io/ios/")
+        tankerci.gcp.GcpProject("tanker-prod").auth()
+        tankerci.run("gsutil", "cp", archive_path, "gs://cocoapods.tanker.io/ios/")
 
     def build_pod(self) -> None:
         # fmt: off
-        ci.run(
+        tankerci.run(
             "pod", "spec", "lint", "Tanker/Tanker.podspec",
             "--verbose",
             "--allow-warnings",
@@ -227,7 +227,7 @@ class PodPublisher:
 
     def publish_pod(self) -> None:
         # fmt: off
-        ci.run(
+        tankerci.run(
             "pod", "repo", "push", "tanker", "Tanker/Tanker.podspec",
             "--skip-tests",
             "--verbose",
@@ -253,20 +253,20 @@ class PodPublisher:
 def build_and_test(
     *, use_tanker: str, only_macos_archs: bool = False, debug: bool = False
 ) -> None:
-    ci.conan.update_config()
+    tankerci.conan.update_config()
     src_path = Path.getcwd()
     tanker_conan_ref = LOCAL_TANKER
 
     if use_tanker == "deployed":
         tanker_conan_ref = DEPLOYED_TANKER
     elif use_tanker == "local":
-        ci.conan.export(
+        tankerci.conan.export(
             src_path=Path.getcwd().parent / "sdk-native", ref_or_channel="tanker/dev"
         )
     elif use_tanker == "same-as-branch":
-        workspace = ci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
+        workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
-        ci.conan.export(src_path=workspace / "sdk-native", ref_or_channel="tanker/dev")
+        tankerci.conan.export(src_path=workspace / "sdk-native", ref_or_channel="tanker/dev")
 
     if only_macos_archs:
         archs = ["x86_64", "x86"]
@@ -280,8 +280,8 @@ def build_and_test(
 
 
 def deploy(*, git_tag: str) -> None:
-    version = ci.version_from_git_tag(git_tag)
-    ci.bump_files(version)
+    version = tankerci.version_from_git_tag(git_tag)
+    tankerci.bump_files(version)
     build_and_test(use_tanker="deployed", debug=False, only_macos_archs=False)
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
@@ -318,7 +318,7 @@ def main():
 
     args = parser.parse_args()
     if args.home_isolation:
-        ci.conan.set_home_isolation()
+        tankerci.conan.set_home_isolation()
 
     if args.command == "build-and-test":
         build_and_test(
@@ -330,7 +330,7 @@ def main():
         git_tag = args.git_tag
         deploy(git_tag=git_tag)
     elif args.command == "mirror":
-        ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
+        tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
     else:
         parser.print_help()
         sys.exit()
