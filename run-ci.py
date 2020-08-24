@@ -290,7 +290,7 @@ def build_and_test(
         for arch in archs:
             profile = f"ios-{arch}-release"
             tankerci.conan.export_pkg(
-                src_path=Path.getcwd() / "artifacts" / "conanfile.py",
+                src_path=Path.getcwd() / "package" / "conanfile.py",
                 profile=profile,
                 force=True,
                 package_folder=Path.getcwd() / "conan" / "out" / arch,
