@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import argparse
 import re
@@ -12,6 +12,7 @@ import tankerci.conan
 import tankerci.cpp
 import tankerci.gcp
 import tankerci.git
+import tankerci.gitlab
 import cli_ui as ui
 from path import Path
 
@@ -25,6 +26,7 @@ class TankerSource(Enum):
     LOCAL = "local"
     SAME_AS_BRANCH = "same-as-branch"
     DEPLOYED = "deployed"
+    UPSTREAM = "upstream"
 
 
 def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
@@ -117,6 +119,9 @@ class Builder:
         if tanker_source in [TankerSource.LOCAL, TankerSource.SAME_AS_BRANCH]:
             tanker_conan_ref = LOCAL_TANKER
             tanker_conan_extra_flags = ["--update", "--build=tanker"]
+        elif tanker_source == TankerSource.UPSTREAM:
+            tanker_conan_ref = LOCAL_TANKER
+            tanker_conan_extra_flags = []
         else:
             tanker_conan_ref = DEPLOYED_TANKER
             tanker_conan_extra_flags = []
@@ -272,10 +277,24 @@ def build_and_test(
     tankerci.conan.update_config()
     src_path = Path.getcwd()
 
+    if only_macos_archs:
+        archs = ["x86_64", "x86"]
+    else:
+        archs = ARCHS
+
     if tanker_source == TankerSource.LOCAL:
         tankerci.conan.export(
             src_path=Path.getcwd().parent / "sdk-native", ref_or_channel="tanker/dev"
         )
+    elif tanker_source == TankerSource.UPSTREAM:
+        for arch in archs:
+            profile = f"ios-{arch}-release"
+            tankerci.conan.export_pkg(
+                src_path=Path.getcwd() / "artifacts" / "conanfile.py",
+                profile=profile,
+                force=True,
+                package_folder=Path.getcwd() / "conan" / "out" / arch,
+            )
     elif tanker_source == TankerSource.SAME_AS_BRANCH:
         workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
@@ -283,10 +302,6 @@ def build_and_test(
             src_path=workspace / "sdk-native", ref_or_channel="tanker/dev"
         )
 
-    if only_macos_archs:
-        archs = ["x86_64", "x86"]
-    else:
-        archs = ARCHS
     builder = Builder(src_path=src_path, debug=debug, archs=archs)
     builder.handle_sdk_deps(tanker_source=tanker_source)
     builder.generate_podspec()
@@ -316,6 +331,14 @@ def main():
 
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
+    reset_branch_parser = subparsers.add_parser("reset-branch")
+    reset_branch_parser.add_argument("branch")
+
+    download_artifacts_parser = subparsers.add_parser("download-artifacts")
+    download_artifacts_parser.add_argument("--project-id", required=True)
+    download_artifacts_parser.add_argument("--pipeline-id", required=True)
+    download_artifacts_parser.add_argument("--job-name", required=True)
+
     check_parser = subparsers.add_parser("build-and-test")
     check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument(
@@ -326,7 +349,7 @@ def main():
         action="store_true",
         dest="only_macos_archs",
         default=False,
-        help="skip ios architectures - useful if you only want to run the tests or use `pod check`.",
+        help="skip ios architectures - useful if you only want to run the tests or use `pod check`.",  # noqa: E501
     )
 
     deploy_parser = subparsers.add_parser("deploy")
@@ -346,6 +369,14 @@ def main():
     elif args.command == "deploy":
         git_tag = args.git_tag
         deploy(git_tag=git_tag)
+    elif args.command == "reset-branch":
+        tankerci.git.reset(Path.getcwd(), f"origin/{args.branch}")
+    elif args.command == "download-artifacts":
+        tankerci.gitlab.download_artifacts(
+            project_id=args.project_id,
+            pipeline_id=args.pipeline_id,
+            job_name=args.job_name,
+        )
     elif args.command == "mirror":
         tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
     else:
