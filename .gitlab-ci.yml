@@ -40,6 +40,8 @@ nightly:
 
 downstream/check:
   stage: check
+  tags:
+    - macos
   rules:
     - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
       when: manual
