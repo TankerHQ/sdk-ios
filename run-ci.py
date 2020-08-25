@@ -22,8 +22,9 @@ ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
 
 
 class TankerSource(Enum):
-    LOCAL = 1
-    DEPLOYED = 2
+    LOCAL = "local"
+    SAME_AS_BRANCH = "same-as-branch"
+    DEPLOYED = "deployed"
 
 
 def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
@@ -113,7 +114,7 @@ class Builder:
         return f"ios-{arch}-{build_type}"
 
     def install_sdk_native(self, tanker_source: TankerSource) -> None:
-        if tanker_source == TankerSource.LOCAL:
+        if tanker_source in [TankerSource.LOCAL, TankerSource.SAME_AS_BRANCH]:
             tanker_conan_ref = LOCAL_TANKER
             tanker_conan_extra_flags = ["--update", "--build=tanker"]
         else:
@@ -266,20 +267,16 @@ class PodPublisher:
 
 
 def build_and_test(
-    *, use_tanker: str, only_macos_archs: bool = False, debug: bool = False
+    *, tanker_source: TankerSource, only_macos_archs: bool = False, debug: bool = False
 ) -> None:
     tankerci.conan.update_config()
     src_path = Path.getcwd()
 
-    if use_tanker == "deployed":
-        tanker_source = TankerSource.DEPLOYED
-    elif use_tanker == "local":
-        tanker_source = TankerSource.LOCAL
+    if tanker_source == TankerSource.LOCAL:
         tankerci.conan.export(
             src_path=Path.getcwd().parent / "sdk-native", ref_or_channel="tanker/dev"
         )
-    elif use_tanker == "same-as-branch":
-        tanker_source = TankerSource.LOCAL
+    elif tanker_source == TankerSource.SAME_AS_BRANCH:
         workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
         tankerci.conan.export(
@@ -300,7 +297,9 @@ def build_and_test(
 def deploy(*, git_tag: str) -> None:
     version = tankerci.version_from_git_tag(git_tag)
     tankerci.bump_files(version)
-    build_and_test(use_tanker="deployed", debug=False, only_macos_archs=False)
+    build_and_test(
+        tanker_source=TankerSource.DEPLOYED, debug=False, only_macos_archs=False
+    )
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -320,7 +319,7 @@ def main():
     check_parser = subparsers.add_parser("build-and-test")
     check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument(
-        "--use-tanker", choices=["deployed", "local", "same-as-branch"], default="local"
+        "--use-tanker", type=TankerSource, default=TankerSource.LOCAL
     )
     check_parser.add_argument(
         "--only-macos-archs",
@@ -340,7 +339,7 @@ def main():
 
     if args.command == "build-and-test":
         build_and_test(
-            use_tanker=args.use_tanker,
+            tanker_source=args.use_tanker,
             debug=args.debug,
             only_macos_archs=args.only_macos_archs,
         )
