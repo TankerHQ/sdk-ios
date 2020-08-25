@@ -5,6 +5,7 @@ import re
 import shutil
 import sys
 import tempfile
+from enum import Enum
 
 import tankerci
 import tankerci.conan
@@ -18,6 +19,11 @@ DEPLOYED_TANKER = "tanker/2.5.0@tanker/stable"
 LOCAL_TANKER = "tanker/dev@tanker/dev"
 
 ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
+
+
+class TankerSource(Enum):
+    LOCAL = 1
+    DEPLOYED = 2
 
 
 def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
@@ -87,7 +93,9 @@ class Builder:
 
         for lib_name, libs in self.get_all_dependency_libs().items():
             output = self.libraries_path / lib_name
-            tankerci.run("lipo", "-create", "-output", output, *libs, cwd=self.conan_out_path)
+            tankerci.run(
+                "lipo", "-create", "-output", output, *libs, cwd=self.conan_out_path
+            )
 
     def copy_headers(self) -> None:
         first_arch = list(self.archs)[0]
@@ -104,23 +112,30 @@ class Builder:
             build_type = "release"
         return f"ios-{arch}-{build_type}"
 
-    def install_sdk_native(self, tanker_conan_ref: str) -> None:
+    def install_sdk_native(self, tanker_source: TankerSource) -> None:
+        if tanker_source == TankerSource.LOCAL:
+            tanker_conan_ref = LOCAL_TANKER
+            tanker_conan_extra_flags = ["--update", "--build=tanker"]
+        else:
+            tanker_conan_ref = DEPLOYED_TANKER
+            tanker_conan_extra_flags = []
+
         for arch in self.archs:
             # fmt: off
             tankerci.conan.run(
                 "install", tanker_conan_ref,
-                "--update",
+                *tanker_conan_extra_flags,
                 "--profile", self.get_profile_name(arch),
                 "--install-folder", self.get_build_path(arch),
                 "--generator", "json"
             )
             # fmt: on
 
-    def handle_sdk_deps(self, *, tanker_conan_ref: str) -> None:
+    def handle_sdk_deps(self, *, tanker_source: TankerSource) -> None:
         ui.info_1("Installing sdk-native for archs: ", self.archs)
         # clean last build files, to avoid losing 2 days when an unexpected binary is used.
         self.conan_out_path.rmtree_p()
-        self.install_sdk_native(tanker_conan_ref)
+        self.install_sdk_native(tanker_source)
         self.generate_fat_libraries()
         self.copy_headers()
 
@@ -255,25 +270,28 @@ def build_and_test(
 ) -> None:
     tankerci.conan.update_config()
     src_path = Path.getcwd()
-    tanker_conan_ref = LOCAL_TANKER
 
     if use_tanker == "deployed":
-        tanker_conan_ref = DEPLOYED_TANKER
+        tanker_source = TankerSource.DEPLOYED
     elif use_tanker == "local":
+        tanker_source = TankerSource.LOCAL
         tankerci.conan.export(
             src_path=Path.getcwd().parent / "sdk-native", ref_or_channel="tanker/dev"
         )
     elif use_tanker == "same-as-branch":
+        tanker_source = TankerSource.LOCAL
         workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
-        tankerci.conan.export(src_path=workspace / "sdk-native", ref_or_channel="tanker/dev")
+        tankerci.conan.export(
+            src_path=workspace / "sdk-native", ref_or_channel="tanker/dev"
+        )
 
     if only_macos_archs:
         archs = ["x86_64", "x86"]
     else:
         archs = ARCHS
     builder = Builder(src_path=src_path, debug=debug, archs=archs)
-    builder.handle_sdk_deps(tanker_conan_ref=tanker_conan_ref)
+    builder.handle_sdk_deps(tanker_source=tanker_source)
     builder.generate_podspec()
     builder.handle_ios_deps()
     builder.build_and_test_pod()
