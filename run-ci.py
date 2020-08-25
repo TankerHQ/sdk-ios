@@ -370,7 +370,10 @@ def main():
         git_tag = args.git_tag
         deploy(git_tag=git_tag)
     elif args.command == "reset-branch":
-        tankerci.git.reset(Path.getcwd(), f"origin/{args.branch}")
+        ref = tankerci.git.find_ref(
+            Path.getcwd(), [f"origin/{args.branch}", "origin/master"]
+        )
+        tankerci.git.reset(Path.getcwd(), ref)
     elif args.command == "download-artifacts":
         tankerci.gitlab.download_artifacts(
             project_id=args.project_id,
