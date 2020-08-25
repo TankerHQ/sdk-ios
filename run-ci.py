@@ -17,7 +17,7 @@ import cli_ui as ui
 from path import Path
 
 DEPLOYED_TANKER = "tanker/2.5.0@tanker/stable"
-LOCAL_TANKER = "tanker/dev@tanker/dev"
+LOCAL_TANKER = "tanker/dev@"
 
 ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
 
@@ -284,12 +284,13 @@ def build_and_test(
 
     if tanker_source == TankerSource.LOCAL:
         tankerci.conan.export(
-            src_path=Path.getcwd().parent / "sdk-native", ref_or_channel="tanker/dev"
+            src_path=Path.getcwd().parent / "sdk-native",
         )
     elif tanker_source == TankerSource.UPSTREAM:
         for arch in archs:
             profile = f"ios-{arch}-release"
             package_folder = Path.getcwd() / "package" / profile
+
             tankerci.conan.export_pkg(
                 Path.getcwd() / "package" / "conanfile.py",
                 profile=profile,
@@ -300,7 +301,7 @@ def build_and_test(
         workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
         tankerci.conan.export(
-            src_path=workspace / "sdk-native", ref_or_channel="tanker/dev"
+            src_path=workspace / "sdk-native",
         )
 
     builder = Builder(src_path=src_path, debug=debug, archs=archs)
