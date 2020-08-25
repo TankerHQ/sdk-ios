@@ -617,7 +617,7 @@ description = "Tanker CI library"
 name = "tankerci"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "2020.8.2714"
+version = "2020.8.2717"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
@@ -1088,8 +1088,8 @@ tabulate = [
     {file = "tabulate-0.8.7.tar.gz", hash = "sha256:db2723a20d04bcda8522165c73eea7c300eda74e0ce852d9022e0159d7895007"},
 ]
 tankerci = [
-    {file = "tankerci-2020.8.2714-py3-none-any.whl", hash = "md5:12112aae2c3149f2c47625f687b0a155"},
-    {file = "tankerci-2020.8.2714.tar.gz", hash = "md5:6f2ffa2bbdb7ac8e78d74e046ddf481c"},
+    {file = "tankerci-2020.8.2717-py3-none-any.whl", hash = "md5:e34c17669fd7a75108895ac9a61803a3"},
+    {file = "tankerci-2020.8.2717.tar.gz", hash = "md5:94471b397a2e5442e678b9ee0df0dc79"},
 ]
 tbump = [
     {file = "tbump-6.0.5-py3-none-any.whl", hash = "sha256:e6a4f82d9e4b341e3c00a20fcad73b0eb2880b6e53767cad288b143bf3cd8bd4"},
