@@ -288,9 +288,8 @@ def build_and_test(
         )
     elif tanker_source == TankerSource.UPSTREAM:
         for arch in archs:
-            package_folder = Path.getcwd() / "conan" / "out" / arch
-            package_folder.makedirs_p()
             profile = f"ios-{arch}-release"
+            package_folder = Path.getcwd() / "package" / profile
             tankerci.conan.export_pkg(
                 Path.getcwd() / "package" / "conanfile.py",
                 profile=profile,
