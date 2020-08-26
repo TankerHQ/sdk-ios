@@ -56,7 +56,7 @@ nightly:
 deploy:
   stage: deploy
   rules:
-    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG
       when: manual
   script:
     - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --git-tag ${CI_COMMIT_TAG}
