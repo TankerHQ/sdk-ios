@@ -118,7 +118,7 @@ class Builder:
     def install_sdk_native(self, tanker_source: TankerSource) -> None:
         if tanker_source in [TankerSource.LOCAL, TankerSource.SAME_AS_BRANCH]:
             tanker_conan_ref = LOCAL_TANKER
-            tanker_conan_extra_flags = ["--update", "--build=tanker"]
+            tanker_conan_extra_flags = ["--build=tanker"]
         elif tanker_source == TankerSource.UPSTREAM:
             tanker_conan_ref = LOCAL_TANKER
             tanker_conan_extra_flags = []
@@ -131,6 +131,7 @@ class Builder:
             tankerci.conan.run(
                 "install", tanker_conan_ref,
                 *tanker_conan_extra_flags,
+                "--update",
                 "--profile", self.get_profile_name(arch),
                 "--install-folder", self.get_build_path(arch),
                 "--generator", "json"
