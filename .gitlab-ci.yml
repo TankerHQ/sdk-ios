@@ -67,6 +67,8 @@ mirror:
     - macos
   stage: deploy
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - if: $CI_COMMIT_REF_NAME =~ /\Av[0-9.]+\z/
     - if: $CI_COMMIT_REF_NAME =~ /\Arelease\/.*\z/
     - if: $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/
