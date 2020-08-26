@@ -289,8 +289,6 @@ def build_and_test(
             ref_or_channel=LOCAL_TANKER,
         )
     elif tanker_source == TankerSource.UPSTREAM:
-        # remove the cache to get latest deps
-        tankerci.conan.run("remove", "*", "--force")
         for arch in archs:
             profile = f"ios-{arch}-release"
             package_folder = Path.getcwd() / "package" / profile
