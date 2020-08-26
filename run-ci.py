@@ -286,6 +286,7 @@ def build_and_test(
     if tanker_source == TankerSource.LOCAL:
         tankerci.conan.export(
             src_path=Path.getcwd().parent / "sdk-native",
+            ref_or_channel=LOCAL_TANKER,
         )
     elif tanker_source == TankerSource.UPSTREAM:
         # remove the cache to get latest deps
@@ -305,6 +306,7 @@ def build_and_test(
         src_path = workspace / "sdk-ios"
         tankerci.conan.export(
             src_path=workspace / "sdk-native",
+            ref_or_channel=LOCAL_TANKER,
         )
 
     builder = Builder(src_path=src_path, debug=debug, archs=archs)
