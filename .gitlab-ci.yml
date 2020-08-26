@@ -67,13 +67,12 @@ mirror:
     - macos
   stage: deploy
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE != "push"
       when: never
     - if: $CI_COMMIT_REF_NAME =~ /\Av[0-9.]+\z/
     - if: $CI_COMMIT_REF_NAME =~ /\Arelease\/.*\z/
     - if: $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/
     - if: $CI_COMMIT_REF_NAME == "master"
-
   script:
     - poetry run python run-ci.py mirror
 
