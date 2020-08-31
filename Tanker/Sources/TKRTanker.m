@@ -718,6 +718,11 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(create_fut);
 }
 
+- (TKRStatus)status
+{
+  return (TKRStatus)tanker_status((tanker_t*)self.cTanker);
+}
+
 - (void)dealloc
 {
   [self disconnectEvents];

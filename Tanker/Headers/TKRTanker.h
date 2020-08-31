@@ -346,4 +346,7 @@
 /// Options with which the TKRTanker object was initialized.
 @property(nonnull, readonly) TKRTankerOptions* options;
 
+/// Current Tanker status
+@property(readonly) TKRStatus status;
+
 @end
