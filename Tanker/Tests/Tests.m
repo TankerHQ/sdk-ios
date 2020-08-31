@@ -186,6 +186,7 @@ SpecBegin(TankerSpecs)
                   }];
         });
         expect(err).to.beNil();
+        expect(tanker.status).to.equal(TKRStatusReady);
       };
 
       __block void (^startWithIdentityAndRegister)(TKRTanker*, NSString*, TKRVerification*) =
@@ -198,6 +199,7 @@ SpecBegin(TankerSpecs)
                         else
                         {
                           expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
+                          expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
                           [tanker registerIdentityWithVerification:verification completionHandler:resolver];
                         }
                       }];
@@ -215,6 +217,7 @@ SpecBegin(TankerSpecs)
                         else
                         {
                           expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
+                          expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
                           [tanker generateVerificationKeyWithCompletionHandler:adapter];
                         }
                       }];
@@ -224,6 +227,7 @@ SpecBegin(TankerSpecs)
               [tanker registerIdentityWithVerification:[TKRVerification verificationFromVerificationKey:verificationKey]
                                      completionHandler:resolver];
             });
+            expect(tanker.status).to.equal(TKRStatusReady);
             expect(err).to.beNil();
             return verificationKey;
           };
@@ -238,6 +242,7 @@ SpecBegin(TankerSpecs)
                         else
                         {
                           expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                          expect(tanker.status).to.equal(TKRStatusIdentityVerificationNeeded);
                           [tanker verifyIdentityWithVerification:verification completionHandler:resolver];
                         }
                       }];
@@ -249,6 +254,7 @@ SpecBegin(TankerSpecs)
         hangWithResolver(^(PMKResolver resolve) {
           [tanker stopWithCompletionHandler:resolve];
         });
+        expect(tanker.status).to.equal(TKRStatusStopped);
       };
 
       __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
