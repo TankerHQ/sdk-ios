@@ -9,6 +9,7 @@ from enum import Enum
 
 import tankerci
 import tankerci.conan
+import tankerci.context
 import tankerci.cpp
 import tankerci.gcp
 import tankerci.git
@@ -325,6 +326,17 @@ def deploy(*, git_tag: str) -> None:
     pod_publisher.publish()
 
 
+def new_deploy(*, git_tag: str) -> None:
+    version = tankerci.version_from_git_tag(git_tag)
+    tankerci.bump_files(version)
+    src_path = Path.getcwd()
+    pod_publisher = PodPublisher(src_path=src_path)
+    pod_publisher.publish()
+    tankerci.git.run(Path.getcwd(), "tag", git_tag)
+    ssh_url = tankerci.context.get_gitlab_ssh_url()
+    tankerci.git.run(Path.getcwd(), "push", f"{ssh_url}:Tanker/sdk-ios", git_tag)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -359,6 +371,8 @@ def main():
 
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument("--git-tag", required=True)
+    new_deploy_parser = subparsers.add_parser("new-deploy")
+    new_deploy_parser.add_argument("--git-tag", required=True)
     subparsers.add_parser("mirror")
 
     args = parser.parse_args()
@@ -374,6 +388,9 @@ def main():
     elif args.command == "deploy":
         git_tag = args.git_tag
         deploy(git_tag=git_tag)
+    elif args.command == "new-deploy":
+        git_tag = args.git_tag
+        new_deploy(git_tag=git_tag)
     elif args.command == "reset-branch":
         ref = tankerci.git.find_ref(
             Path.getcwd(), [f"origin/{args.branch}", "origin/master"]

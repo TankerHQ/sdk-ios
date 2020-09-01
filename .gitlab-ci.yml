@@ -9,16 +9,30 @@ before_script:
     - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
     - poetry install
 
+workflow:
+  rules:
+    # only allow web pipelines for releases
+    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+      when: never
+    # allow everything else
+    - when: always
+
 check/deployed-native:
   stage: check
   rules:
-    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "web"
     # We can tag an alpha/beta version on a commit that is part of a MR
     # This will trigger two pipelines, one linked to the MR, the job will be manual
     # The other pipeline will run check/deployed-native automatically, and will also create the deploy job
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true
+  artifacts:
+    paths:
+      - Tanker/Headers/ctanker
+      - Tanker/Headers/ctanker.h
+      - Tanker/Libraries
+      - Tanker/Tanker.podspec
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed
   tags:
@@ -63,6 +77,17 @@ deploy:
       when: manual
   script:
     - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --git-tag ${CI_COMMIT_TAG}
+  tags:
+    - macos
+
+new-deploy:
+  stage: deploy
+  rules:
+    # already filtered by workflow rules
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  script:
+    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home new-deploy --git-tag v${SDK_IOS_RELEASE_VERSION}
   tags:
     - macos
 
