@@ -9,6 +9,7 @@ from enum import Enum
 
 import tankerci
 import tankerci.conan
+import tankerci.context
 import tankerci.cpp
 import tankerci.gcp
 import tankerci.git
@@ -317,12 +318,12 @@ def build_and_test(
 def deploy(*, git_tag: str) -> None:
     version = tankerci.version_from_git_tag(git_tag)
     tankerci.bump_files(version)
-    build_and_test(
-        tanker_source=TankerSource.DEPLOYED, debug=False, only_macos_archs=False
-    )
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
+    tankerci.git.run(Path.getcwd(), "tag", git_tag)
+    ssh_url = tankerci.context.get_gitlab_ssh_url()
+    tankerci.git.run(Path.getcwd(), "push", f"{ssh_url}:Tanker/sdk-ios", git_tag)
 
 
 def main():
