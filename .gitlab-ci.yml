@@ -97,7 +97,10 @@ deploy:
     - if: $SDK_IOS_RELEASE_VERSION && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "pipeline")
       when: manual
   script:
-    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --git-tag v${SDK_IOS_RELEASE_VERSION}
+    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION
+  release:
+    description: sdk-ios v$SDK_IOS_RELEASE_VERSION
+    tag_name: v$SDK_IOS_RELEASE_VERSION
   tags:
     - macos
 

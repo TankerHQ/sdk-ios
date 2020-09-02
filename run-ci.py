@@ -318,15 +318,11 @@ def build_and_test(
     builder.build_and_test_pod()
 
 
-def deploy(*, git_tag: str) -> None:
-    version = tankerci.version_from_git_tag(git_tag)
+def deploy(*, version: str) -> None:
     tankerci.bump_files(version)
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
-    tankerci.git.run(Path.getcwd(), "tag", git_tag)
-    ssh_url = tankerci.context.get_gitlab_ssh_url()
-    tankerci.git.run(Path.getcwd(), "push", f"{ssh_url}:Tanker/sdk-ios", git_tag)
 
 
 def main():
@@ -362,7 +358,7 @@ def main():
     )
 
     deploy_parser = subparsers.add_parser("deploy")
-    deploy_parser.add_argument("--git-tag", required=True)
+    deploy_parser.add_argument("--version", required=True)
     subparsers.add_parser("mirror")
 
     args = parser.parse_args()
@@ -376,8 +372,7 @@ def main():
             only_macos_archs=args.only_macos_archs,
         )
     elif args.command == "deploy":
-        git_tag = args.git_tag
-        deploy(git_tag=git_tag)
+        deploy(version=args.version)
     elif args.command == "reset-branch":
         ref = tankerci.git.find_ref(
             Path.getcwd(), [f"origin/{args.branch}", "origin/master"]
