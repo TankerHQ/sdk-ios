@@ -121,7 +121,10 @@ class Builder:
             tanker_conan_ref = LOCAL_TANKER
             tanker_conan_extra_flags = ["--build=tanker"]
         elif tanker_source == TankerSource.UPSTREAM:
-            tanker_conan_ref = LOCAL_TANKER
+            recipe_info = tankerci.conan.inspect(Path.getcwd() / "package" / "conanfile.py")
+            name = recipe_info["name"]
+            version = recipe_info["version"]
+            tanker_conan_ref = f"{name}/{version}@"
             tanker_conan_extra_flags = []
         else:
             tanker_conan_ref = DEPLOYED_TANKER
