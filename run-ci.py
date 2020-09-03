@@ -5,6 +5,7 @@ import re
 import shutil
 import sys
 import tempfile
+import os
 from enum import Enum
 
 import tankerci
@@ -17,7 +18,6 @@ import tankerci.gitlab
 import cli_ui as ui
 from path import Path
 
-DEPLOYED_TANKER = "tanker/2.5.0@tanker/stable"
 LOCAL_TANKER = "tanker/dev@"
 
 ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
@@ -127,7 +127,7 @@ class Builder:
             tanker_conan_ref = f"{name}/{version}@"
             tanker_conan_extra_flags = []
         else:
-            tanker_conan_ref = DEPLOYED_TANKER
+            tanker_conan_ref = os.environ["SDK_NATIVE_LATEST_CONAN_REFERENCE"]
             tanker_conan_extra_flags = []
 
         for arch in self.archs:

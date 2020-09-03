@@ -11,8 +11,8 @@ before_script:
 
 workflow:
   rules:
-    # web pipelines for releases
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
+    # web pipelines for releases only
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
       when: never
     # downstream pipelines for releases (also allow regular CI downstream pipelines)
     - if: $CI_PIPELINE_SOURCE == "pipeline" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
@@ -23,10 +23,9 @@ workflow:
 check/deployed-native:
   stage: check
   rules:
+    - if: $SDK_NATIVE_LATEST_CONAN_REFERENCE !~ /\Atanker\/[0-9.]+(-[a-z]+[0-9]+)?@([a-z]+\/[a-z]+)?\z/
+      when: never
     - if: $CI_PIPELINE_SOURCE == "web"
-    # We can tag an alpha/beta version on a commit that is part of a MR
-    # This will trigger two pipelines, one linked to the MR, the job will be manual
-    # The other pipeline will run check/deployed-native automatically, and will also create the deploy job
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true
