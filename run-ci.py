@@ -5,10 +5,12 @@ import re
 import shutil
 import sys
 import tempfile
+import os
 from enum import Enum
 
 import tankerci
 import tankerci.conan
+import tankerci.context
 import tankerci.cpp
 import tankerci.gcp
 import tankerci.git
@@ -16,7 +18,6 @@ import tankerci.gitlab
 import cli_ui as ui
 from path import Path
 
-DEPLOYED_TANKER = "tanker/2.5.0@tanker/stable"
 LOCAL_TANKER = "tanker/dev@"
 
 ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
@@ -120,10 +121,13 @@ class Builder:
             tanker_conan_ref = LOCAL_TANKER
             tanker_conan_extra_flags = ["--build=tanker"]
         elif tanker_source == TankerSource.UPSTREAM:
-            tanker_conan_ref = LOCAL_TANKER
+            recipe_info = tankerci.conan.inspect(Path.getcwd() / "package" / "conanfile.py")
+            name = recipe_info["name"]
+            version = recipe_info["version"]
+            tanker_conan_ref = f"{name}/{version}@"
             tanker_conan_extra_flags = []
         else:
-            tanker_conan_ref = DEPLOYED_TANKER
+            tanker_conan_ref = os.environ["SDK_NATIVE_LATEST_CONAN_REFERENCE"]
             tanker_conan_extra_flags = []
 
         for arch in self.archs:
@@ -314,12 +318,8 @@ def build_and_test(
     builder.build_and_test_pod()
 
 
-def deploy(*, git_tag: str) -> None:
-    version = tankerci.version_from_git_tag(git_tag)
+def deploy(*, version: str) -> None:
     tankerci.bump_files(version)
-    build_and_test(
-        tanker_source=TankerSource.DEPLOYED, debug=False, only_macos_archs=False
-    )
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -358,7 +358,7 @@ def main():
     )
 
     deploy_parser = subparsers.add_parser("deploy")
-    deploy_parser.add_argument("--git-tag", required=True)
+    deploy_parser.add_argument("--version", required=True)
     subparsers.add_parser("mirror")
 
     args = parser.parse_args()
@@ -372,8 +372,7 @@ def main():
             only_macos_archs=args.only_macos_archs,
         )
     elif args.command == "deploy":
-        git_tag = args.git_tag
-        deploy(git_tag=git_tag)
+        deploy(version=args.version)
     elif args.command == "reset-branch":
         ref = tankerci.git.find_ref(
             Path.getcwd(), [f"origin/{args.branch}", "origin/master"]
