@@ -89,10 +89,12 @@ nightly:
 deploy:
   stage: deploy
   rules:
+    - if: $SDK_NATIVE_LATEST_CONAN_REFERENCE !~ /\Atanker\/[0-9.]+(-[a-z]+[0-9]+)?@([a-z]+\/[a-z]+)?\z/
+      when: never
     - if: ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "pipeline") && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
       when: manual
   script:
-    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION
+    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --use-tanker=deployed
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
     tag_name: v$SDK_IOS_RELEASE_VERSION

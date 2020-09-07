@@ -9,7 +9,7 @@ version = "1.4.4"
 [[package]]
 category = "main"
 description = "Fast ASN.1 parser and serializer with definitions for private keys, public keys, certificates, CRL, OCSP, CMS, PKCS#3, PKCS#7, PKCS#8, PKCS#12, PKCS#5, X.509 and TSP"
-marker = "sys_platform == \"darwin\" or sys_platform == \"linux\""
+marker = "sys_platform == \"darwin\""
 name = "asn1crypto"
 optional = false
 python-versions = "*"
@@ -51,19 +51,6 @@ d = ["aiohttp (>=3.3.2)", "aiohttp-cors"]
 
 [[package]]
 category = "main"
-description = "An easy safelist-based HTML-sanitizing tool."
-name = "bleach"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "3.1.5"
-
-[package.dependencies]
-packaging = "*"
-six = ">=1.9.0"
-webencodings = "*"
-
-[[package]]
-category = "main"
 description = "Fast and simple WSGI-framework for small web-applications."
 name = "bottle"
 optional = false
@@ -81,7 +68,7 @@ version = "2020.6.20"
 [[package]]
 category = "main"
 description = "Foreign Function Interface for Python calling C code."
-marker = "sys_platform == \"darwin\" or sys_platform == \"linux\""
+marker = "sys_platform == \"darwin\""
 name = "cffi"
 optional = false
 python-versions = "*"
@@ -173,7 +160,7 @@ version = "0.6.0.post1"
 [[package]]
 category = "main"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
-marker = "sys_platform == \"darwin\" or sys_platform == \"linux\""
+marker = "sys_platform == \"darwin\""
 name = "cryptography"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
@@ -217,14 +204,6 @@ name = "docopt"
 optional = false
 python-versions = "*"
 version = "0.6.2"
-
-[[package]]
-category = "main"
-description = "Docutils -- Python Documentation Utilities"
-name = "docutils"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "0.16"
 
 [[package]]
 category = "main"
@@ -289,18 +268,6 @@ testing = ["packaging", "pep517", "importlib-resources (>=1.3)"]
 
 [[package]]
 category = "main"
-description = "Low-level, pure Python DBus protocol wrapper."
-marker = "sys_platform == \"linux\""
-name = "jeepney"
-optional = false
-python-versions = ">=3.5"
-version = "0.4.3"
-
-[package.extras]
-dev = ["testpath"]
-
-[[package]]
-category = "main"
 description = "A very fast and expressive template engine."
 name = "jinja2"
 optional = false
@@ -312,27 +279,6 @@ MarkupSafe = ">=0.23"
 
 [package.extras]
 i18n = ["Babel (>=0.8)"]
-
-[[package]]
-category = "main"
-description = "Store and access your passwords safely."
-name = "keyring"
-optional = false
-python-versions = ">=3.6"
-version = "21.4.0"
-
-[package.dependencies]
-SecretStorage = ">=3"
-jeepney = ">=0.4.2"
-pywin32-ctypes = "<0.1.0 || >0.1.0,<0.1.1 || >0.1.1"
-
-[package.dependencies.importlib-metadata]
-python = "<3.8"
-version = "*"
-
-[package.extras]
-docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
-testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-black (>=0.3.7)", "pytest-cov", "pytest-mypy"]
 
 [[package]]
 category = "main"
@@ -440,17 +386,6 @@ version = "0.8.0"
 
 [[package]]
 category = "main"
-description = "Query metadatdata from sdists / bdists / installed packages."
-name = "pkginfo"
-optional = false
-python-versions = "*"
-version = "1.5.0.1"
-
-[package.extras]
-testing = ["nose", "coverage"]
-
-[[package]]
-category = "main"
 description = "PluginBase is a module for Python that enables the development of flexible plugin systems in Python."
 name = "pluginbase"
 optional = false
@@ -479,7 +414,7 @@ version = "2.6.0"
 [[package]]
 category = "main"
 description = "C parser in Python"
-marker = "sys_platform == \"darwin\" or sys_platform == \"linux\""
+marker = "sys_platform == \"darwin\""
 name = "pycparser"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -578,37 +513,11 @@ yaml = ["PyYaml (>=5.2)"]
 
 [[package]]
 category = "main"
-description = ""
-marker = "sys_platform == \"win32\""
-name = "pywin32-ctypes"
-optional = false
-python-versions = "*"
-version = "0.2.0"
-
-[[package]]
-category = "main"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "5.3.1"
-
-[[package]]
-category = "main"
-description = "readme_renderer is a library for rendering \"readme\" descriptions for Warehouse"
-name = "readme-renderer"
-optional = false
-python-versions = "*"
-version = "26.0"
-
-[package.dependencies]
-Pygments = ">=2.5.1"
-bleach = ">=2.1.0"
-docutils = ">=0.13.1"
-six = "*"
-
-[package.extras]
-md = ["cmarkgfm (>=0.2.0)"]
 
 [[package]]
 category = "dev"
@@ -635,28 +544,6 @@ urllib3 = ">=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26"
 [package.extras]
 security = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)"]
 socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7)", "win-inet-pton"]
-
-[[package]]
-category = "main"
-description = "A utility belt for advanced users of python-requests"
-name = "requests-toolbelt"
-optional = false
-python-versions = "*"
-version = "0.9.1"
-
-[package.dependencies]
-requests = ">=2.0.1,<3.0.0"
-
-[[package]]
-category = "main"
-description = "Validating URI References per RFC 3986"
-name = "rfc3986"
-optional = false
-python-versions = "*"
-version = "1.4.0"
-
-[package.extras]
-idna2008 = ["idna"]
 
 [[package]]
 category = "main"
@@ -697,19 +584,6 @@ contextlib2 = ">=0.5.5"
 
 [[package]]
 category = "main"
-description = "Python bindings to FreeDesktop.org Secret Service API"
-marker = "sys_platform == \"linux\""
-name = "secretstorage"
-optional = false
-python-versions = ">=3.5"
-version = "3.1.2"
-
-[package.dependencies]
-cryptography = "*"
-jeepney = ">=0.4.2"
-
-[[package]]
-category = "main"
 description = "Python bindings for Selenium"
 name = "selenium"
 optional = false
@@ -744,7 +618,7 @@ description = "Tanker CI library"
 name = "tankerci"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "2020.9.2780"
+version = "2020.9.2810"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
@@ -757,7 +631,6 @@ python-gitlab = ">=2.0.0,<3.0.0"
 selenium = ">=3.141.0,<4.0.0"
 tbump = ">=6.0.5,<7.0.0"
 tomlkit = ">=0.5.8,<0.6.0"
-twine = ">=3.2.0,<4.0.0"
 
 [package.source]
 reference = "gitlab"
@@ -811,29 +684,6 @@ version = "4.48.2"
 dev = ["py-make (>=0.1.0)", "twine", "argopt", "pydoc-markdown"]
 
 [[package]]
-category = "main"
-description = "Collection of utilities for publishing packages on PyPI"
-name = "twine"
-optional = false
-python-versions = ">=3.6"
-version = "3.2.0"
-
-[package.dependencies]
-colorama = ">=0.4.3"
-keyring = ">=15.1"
-pkginfo = ">=1.4.2"
-readme-renderer = ">=21.0"
-requests = ">=2.20"
-requests-toolbelt = ">=0.8.0,<0.9.0 || >0.9.0"
-rfc3986 = ">=1.4.0"
-setuptools = ">=0.7.0"
-tqdm = ">=4.14"
-
-[package.dependencies.importlib-metadata]
-python = "<3.8"
-version = "*"
-
-[[package]]
 category = "dev"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
 name = "typed-ast"
@@ -872,14 +722,6 @@ socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
 category = "main"
-description = "Character encoding aliases for legacy web content"
-name = "webencodings"
-optional = false
-python-versions = "*"
-version = "0.5.1"
-
-[[package]]
-category = "main"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 marker = "python_version < \"3.8\""
 name = "zipp"
@@ -912,10 +754,6 @@ attrs = [
 black = [
     {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
     {file = "black-19.10b0.tar.gz", hash = "sha256:c2edb73a08e9e0e6f65a0e6af18b059b8b1cdd5bef997d7a0b181df93dc81539"},
-]
-bleach = [
-    {file = "bleach-3.1.5-py2.py3-none-any.whl", hash = "sha256:2bce3d8fab545a6528c8fa5d9f9ae8ebc85a56da365c7f85180bfe96a35ef22f"},
-    {file = "bleach-3.1.5.tar.gz", hash = "sha256:3c4c520fdb9db59ef139915a5db79f8b51bc2a7257ea0389f30c846883430a4b"},
 ]
 bottle = [
     {file = "bottle-0.12.18-py3-none-any.whl", hash = "sha256:43157254e88f32c6be16f8d9eb1f1d1472396a4e174ebd2bf62544854ecf37e7"},
@@ -1010,10 +848,6 @@ distro = [
 docopt = [
     {file = "docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
 ]
-docutils = [
-    {file = "docutils-0.16-py2.py3-none-any.whl", hash = "sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af"},
-    {file = "docutils-0.16.tar.gz", hash = "sha256:c2de3a60e9e7d07be26b7f2b00ca0309c207e06c100f9cc2a94931fc75a478fc"},
-]
 fasteners = [
     {file = "fasteners-0.15-py2.py3-none-any.whl", hash = "sha256:007e4d2b2d4a10093f67e932e5166722d2eab83b77724156e92ad013c6226574"},
     {file = "fasteners-0.15.tar.gz", hash = "sha256:3a176da6b70df9bb88498e1a18a9e4a8579ed5b9141207762368a1017bf8f5ef"},
@@ -1033,17 +867,9 @@ importlib-metadata = [
     {file = "importlib_metadata-1.7.0-py2.py3-none-any.whl", hash = "sha256:dc15b2969b4ce36305c51eebe62d418ac7791e9a157911d58bfb1f9ccd8e2070"},
     {file = "importlib_metadata-1.7.0.tar.gz", hash = "sha256:90bb658cdbbf6d1735b6341ce708fc7024a3e14e99ffdc5783edea9f9b077f83"},
 ]
-jeepney = [
-    {file = "jeepney-0.4.3-py3-none-any.whl", hash = "sha256:d6c6b49683446d2407d2fe3acb7a368a77ff063f9182fe427da15d622adc24cf"},
-    {file = "jeepney-0.4.3.tar.gz", hash = "sha256:3479b861cc2b6407de5188695fa1a8d57e5072d7059322469b62628869b8e36e"},
-]
 jinja2 = [
     {file = "Jinja2-2.11.2-py2.py3-none-any.whl", hash = "sha256:f0a4641d3cf955324a89c04f3d94663aa4d638abe8f733ecd3582848e1c37035"},
     {file = "Jinja2-2.11.2.tar.gz", hash = "sha256:89aab215427ef59c34ad58735269eb58b1a5808103067f7bb9d5836c651b3bb0"},
-]
-keyring = [
-    {file = "keyring-21.4.0-py3-none-any.whl", hash = "sha256:4e34ea2fdec90c1c43d6610b5a5fafa1b9097db1802948e90caf5763974b8f8d"},
-    {file = "keyring-21.4.0.tar.gz", hash = "sha256:9aeadd006a852b78f4b4ef7c7556c2774d2432bbef8ee538a3e9089ac8b11466"},
 ]
 markupsafe = [
     {file = "MarkupSafe-1.1.1-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:09027a7803a62ca78792ad89403b1b7a73a01c8cb65909cd876f7fcebd79b161"},
@@ -1127,10 +953,6 @@ pathspec = [
     {file = "pathspec-0.8.0-py2.py3-none-any.whl", hash = "sha256:7d91249d21749788d07a2d0f94147accd8f845507400749ea19c1ec9054a12b0"},
     {file = "pathspec-0.8.0.tar.gz", hash = "sha256:da45173eb3a6f2a5a487efba21f050af2b41948be6ab52b6a1e3ff22bb8b7061"},
 ]
-pkginfo = [
-    {file = "pkginfo-1.5.0.1-py2.py3-none-any.whl", hash = "sha256:a6d9e40ca61ad3ebd0b72fbadd4fba16e4c0e4df0428c041e01e06eb6ee71f32"},
-    {file = "pkginfo-1.5.0.1.tar.gz", hash = "sha256:7424f2c8511c186cd5424bbf31045b77435b37a8d604990b79d4e70d741148bb"},
-]
 pluginbase = [
     {file = "pluginbase-0.7.tar.gz", hash = "sha256:c0abe3218b86533cca287e7057a37481883c07acef7814b70583406938214cc8"},
 ]
@@ -1187,10 +1009,6 @@ python-gitlab = [
     {file = "python-gitlab-2.5.0.tar.gz", hash = "sha256:68b42aafd4b620ab2534ff78a52584c7f799e4e55d5ac297eab4263066e6f74b"},
     {file = "python_gitlab-2.5.0-py3-none-any.whl", hash = "sha256:61270e1f8ac24fe248f41834c840c6465d2e0b216493d3508d296a02960122c0"},
 ]
-pywin32-ctypes = [
-    {file = "pywin32-ctypes-0.2.0.tar.gz", hash = "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942"},
-    {file = "pywin32_ctypes-0.2.0-py2.py3-none-any.whl", hash = "sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98"},
-]
 pyyaml = [
     {file = "PyYAML-5.3.1-cp27-cp27m-win32.whl", hash = "sha256:74809a57b329d6cc0fdccee6318f44b9b8649961fa73144a98735b0aaf029f1f"},
     {file = "PyYAML-5.3.1-cp27-cp27m-win_amd64.whl", hash = "sha256:240097ff019d7c70a4922b6869d8a86407758333f02203e0fc6ff79c5dcede76"},
@@ -1203,10 +1021,6 @@ pyyaml = [
     {file = "PyYAML-5.3.1-cp38-cp38-win32.whl", hash = "sha256:06a0d7ba600ce0b2d2fe2e78453a470b5a6e000a985dd4a4e54e436cc36b0e97"},
     {file = "PyYAML-5.3.1-cp38-cp38-win_amd64.whl", hash = "sha256:95f71d2af0ff4227885f7a6605c37fd53d3a106fcab511b8860ecca9fcf400ee"},
     {file = "PyYAML-5.3.1.tar.gz", hash = "sha256:b8eac752c5e14d3eca0e6dd9199cd627518cb5ec06add0de9d32baeee6fe645d"},
-]
-readme-renderer = [
-    {file = "readme_renderer-26.0-py2.py3-none-any.whl", hash = "sha256:cc4957a803106e820d05d14f71033092537a22daa4f406dfbdd61177e0936376"},
-    {file = "readme_renderer-26.0.tar.gz", hash = "sha256:cbe9db71defedd2428a1589cdc545f9bd98e59297449f69d721ef8f1cfced68d"},
 ]
 regex = [
     {file = "regex-2020.7.14-cp27-cp27m-win32.whl", hash = "sha256:e46d13f38cfcbb79bfdb2964b0fe12561fe633caf964a77a5f8d4e45fe5d2ef7"},
@@ -1234,14 +1048,6 @@ regex = [
 requests = [
     {file = "requests-2.24.0-py2.py3-none-any.whl", hash = "sha256:fe75cc94a9443b9246fc7049224f75604b113c36acb93f87b80ed42c44cbb898"},
     {file = "requests-2.24.0.tar.gz", hash = "sha256:b3559a131db72c33ee969480840fff4bb6dd111de7dd27c8ee1f820f4f00231b"},
-]
-requests-toolbelt = [
-    {file = "requests-toolbelt-0.9.1.tar.gz", hash = "sha256:968089d4584ad4ad7c171454f0a5c6dac23971e9472521ea3b6d49d610aa6fc0"},
-    {file = "requests_toolbelt-0.9.1-py2.py3-none-any.whl", hash = "sha256:380606e1d10dc85c3bd47bf5a6095f815ec007be7a8b69c878507068df059e6f"},
-]
-rfc3986 = [
-    {file = "rfc3986-1.4.0-py2.py3-none-any.whl", hash = "sha256:af9147e9aceda37c91a05f4deb128d4b4b49d6b199775fd2d2927768abdc8f50"},
-    {file = "rfc3986-1.4.0.tar.gz", hash = "sha256:112398da31a3344dc25dbf477d8df6cb34f9278a94fee2625d89e4514be8bb9d"},
 ]
 "ruamel.yaml" = [
     {file = "ruamel.yaml-0.16.12-py2.py3-none-any.whl", hash = "sha256:012b9470a0ea06e4e44e99e7920277edf6b46eee0232a04487ea73a7386340a5"},
@@ -1275,10 +1081,6 @@ schema = [
     {file = "schema-0.7.3-py2.py3-none-any.whl", hash = "sha256:c331438b60f634cab5664ab720d3083cc444f924d55269530c36b33e3354276f"},
     {file = "schema-0.7.3.tar.gz", hash = "sha256:4cf529318cfd1e844ecbe02f41f7e5aa027463e7403666a52746f31f04f47a5e"},
 ]
-secretstorage = [
-    {file = "SecretStorage-3.1.2-py3-none-any.whl", hash = "sha256:b5ec909dde94d4ae2fa26af7c089036997030f0cf0a5cb372b4cccabd81c143b"},
-    {file = "SecretStorage-3.1.2.tar.gz", hash = "sha256:15da8a989b65498e29be338b3b279965f1b8f09b9668bd8010da183024c8bff6"},
-]
 selenium = [
     {file = "selenium-3.141.0-py2.py3-none-any.whl", hash = "sha256:2d7131d7bc5a5b99a2d9b04aaf2612c411b03b8ca1b1ee8d3de5845a9be2cb3c"},
     {file = "selenium-3.141.0.tar.gz", hash = "sha256:deaf32b60ad91a4611b98d8002757f29e6f2c2d5fcaf202e1c9ad06d6772300d"},
@@ -1292,8 +1094,8 @@ tabulate = [
     {file = "tabulate-0.8.7.tar.gz", hash = "sha256:db2723a20d04bcda8522165c73eea7c300eda74e0ce852d9022e0159d7895007"},
 ]
 tankerci = [
-    {file = "tankerci-2020.9.2780-py3-none-any.whl", hash = "sha256:26cd5037beb82a85922728ecd6d200afec0937af5dfb775832c600e522fa2d9e"},
-    {file = "tankerci-2020.9.2780.tar.gz", hash = "sha256:d440fdebec686afae7ac4160d83d8793cd7ce13164cd39cd7b875ec0be8c9e5f"},
+    {file = "tankerci-2020.9.2810-py3-none-any.whl", hash = "sha256:39b72c1777be70aa17dac3aa3e95b5e1d09bb7d601da9782a18f9f5cc4e82755"},
+    {file = "tankerci-2020.9.2810.tar.gz", hash = "sha256:082ea02abbb6acafec73b64ca6c43b7561c9b3091129e000ab2c500a6cd7ca0f"},
 ]
 tbump = [
     {file = "tbump-6.0.5-py3-none-any.whl", hash = "sha256:e6a4f82d9e4b341e3c00a20fcad73b0eb2880b6e53767cad288b143bf3cd8bd4"},
@@ -1310,10 +1112,6 @@ tomlkit = [
 tqdm = [
     {file = "tqdm-4.48.2-py2.py3-none-any.whl", hash = "sha256:1a336d2b829be50e46b84668691e0a2719f26c97c62846298dd5ae2937e4d5cf"},
     {file = "tqdm-4.48.2.tar.gz", hash = "sha256:564d632ea2b9cb52979f7956e093e831c28d441c11751682f84c86fc46e4fd21"},
-]
-twine = [
-    {file = "twine-3.2.0-py3-none-any.whl", hash = "sha256:ba9ff477b8d6de0c89dd450e70b2185da190514e91c42cc62f96850025c10472"},
-    {file = "twine-3.2.0.tar.gz", hash = "sha256:34352fd52ec3b9d29837e6072d5a2a7c6fe4290e97bba46bb8d478b5c598f7ab"},
 ]
 typed-ast = [
     {file = "typed_ast-1.4.1-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:73d785a950fc82dd2a25897d525d003f6378d1cb23ab305578394694202a58c3"},
@@ -1350,10 +1148,6 @@ unidecode = [
 urllib3 = [
     {file = "urllib3-1.25.10-py2.py3-none-any.whl", hash = "sha256:e7983572181f5e1522d9c98453462384ee92a0be7fac5f1413a1e35c56cc0461"},
     {file = "urllib3-1.25.10.tar.gz", hash = "sha256:91056c15fa70756691db97756772bb1eb9678fa585d9184f24534b100dc60f4a"},
-]
-webencodings = [
-    {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
-    {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
 ]
 zipp = [
     {file = "zipp-3.1.0-py3-none-any.whl", hash = "sha256:aa36550ff0c0b7ef7fa639055d797116ee891440eac1a56f378e2d3179e0320b"},
