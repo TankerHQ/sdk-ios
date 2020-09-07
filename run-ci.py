@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import argparse
 import re
@@ -121,7 +121,9 @@ class Builder:
             tanker_conan_ref = LOCAL_TANKER
             tanker_conan_extra_flags = ["--build=tanker"]
         elif tanker_source == TankerSource.UPSTREAM:
-            recipe_info = tankerci.conan.inspect(Path.getcwd() / "package" / "conanfile.py")
+            recipe_info = tankerci.conan.inspect(
+                Path.getcwd() / "package" / "conanfile.py"
+            )
             name = recipe_info["name"]
             version = recipe_info["version"]
             tanker_conan_ref = f"{name}/{version}@"
@@ -289,8 +291,7 @@ def build_and_test(
 
     if tanker_source == TankerSource.LOCAL:
         tankerci.conan.export(
-            src_path=Path.getcwd().parent / "sdk-native",
-            ref_or_channel=LOCAL_TANKER,
+            src_path=Path.getcwd().parent / "sdk-native", ref_or_channel=LOCAL_TANKER,
         )
     elif tanker_source == TankerSource.UPSTREAM:
         for arch in archs:
@@ -307,8 +308,7 @@ def build_and_test(
         workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
         tankerci.conan.export(
-            src_path=workspace / "sdk-native",
-            ref_or_channel=LOCAL_TANKER,
+            src_path=workspace / "sdk-native", ref_or_channel=LOCAL_TANKER,
         )
 
     builder = Builder(src_path=src_path, debug=debug, archs=archs)
@@ -320,12 +320,13 @@ def build_and_test(
 
 def deploy(*, version: str) -> None:
     tankerci.bump_files(version)
+    build_and_test(tanker_source=TankerSource.DEPLOYED, debug=False, only_macos_archs=False)
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--isolate-conan-user-home",
