@@ -14,9 +14,6 @@ workflow:
     # web pipelines for releases only
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
       when: never
-    # downstream pipelines for releases (also allow regular CI downstream pipelines)
-    - if: $CI_PIPELINE_SOURCE == "pipeline" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
-      when: never
     # allow everything else
     - when: always
 
@@ -57,7 +54,8 @@ check/downstream:
   tags:
     - macos
   rules:
-    - if: $CI_PIPELINE_SOURCE == "pipeline" && $SDK_IOS_RELEASE_VERSION == null
+    # SDK_IOS_RELEASE_VERSION is unconditionally defined by upstream job
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $SDK_IOS_RELEASE_VERSION == ""
   script:
     - poetry run python run-ci.py reset-branch $UPSTREAM_BRANCH_NAME
     - poetry run python run-ci.py download-artifacts --project-id=$UPSTREAM_PROJECT_ID --pipeline-id=$UPSTREAM_PIPELINE_ID --job-name=$UPSTREAM_JOB_NAME
@@ -68,7 +66,7 @@ check/downstream/release:
   tags:
     - macos
   rules:
-    - if: $CI_PIPELINE_SOURCE == "pipeline" && $SDK_IOS_RELEASE_VERSION
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
   script:
     - poetry run python run-ci.py reset-branch $UPSTREAM_BRANCH_NAME
     - poetry run python run-ci.py download-artifacts --project-id=$UPSTREAM_PROJECT_ID --pipeline-id=$UPSTREAM_PIPELINE_ID --job-name=$UPSTREAM_JOB_NAME
@@ -92,8 +90,7 @@ nightly:
 deploy:
   stage: deploy
   rules:
-    # version env var already filtered by workflow rules
-    - if: $SDK_IOS_RELEASE_VERSION && ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "pipeline")
+    - if: ($CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "pipeline") && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
       when: manual
   script:
     - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION
