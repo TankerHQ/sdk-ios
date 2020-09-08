@@ -320,7 +320,9 @@ def build_and_test(
 
 def deploy(*, version: str) -> None:
     tankerci.bump_files(version)
-    build_and_test(tanker_source=TankerSource.DEPLOYED, debug=False, only_macos_archs=False)
+    build_and_test(
+        tanker_source=TankerSource.DEPLOYED, debug=False, only_macos_archs=False
+    )
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -375,8 +377,10 @@ def main() -> None:
     elif args.command == "deploy":
         deploy(version=args.version)
     elif args.command == "reset-branch":
+        fallback = os.environ["CI_COMMIT_REF_NAME"]
         ref = tankerci.git.find_ref(
-            Path.getcwd(), [f"origin/{args.branch}", "origin/master"]
+            Path.getcwd(),
+            [f"origin/{args.branch}", f"origin/{fallback}"]
         )
         tankerci.git.reset(Path.getcwd(), ref)
     elif args.command == "download-artifacts":
