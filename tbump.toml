@@ -23,7 +23,7 @@ message_template = "Bump to {new_version}"
 tag_template = "v{new_version}"
 
 [[file]]
-src = "Tanker/Tanker.podspec"
+src = "Tanker/Tanker.in.podspec"
 search = 's.version'
 
 [[file]]
