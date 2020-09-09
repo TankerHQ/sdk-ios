@@ -1,13 +1,14 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
+default:
+  before_script: &global_before_script
+    - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
+    - poetry install
+
 stages:
   - check
   - deploy
-
-before_script: &global_before_script
-    - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
-    - poetry install
 
 ##########
 # Stages #
