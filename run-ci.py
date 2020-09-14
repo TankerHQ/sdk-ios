@@ -6,10 +6,10 @@ import shutil
 import sys
 import tempfile
 import os
-from enum import Enum
 
 import tankerci
 import tankerci.conan
+from tankerci.conan import TankerSource
 import tankerci.context
 import tankerci.cpp
 import tankerci.gcp
@@ -18,16 +18,13 @@ import tankerci.gitlab
 import cli_ui as ui
 from path import Path
 
-LOCAL_TANKER = "tanker/dev@"
-
-ARCHS = ["armv7", "armv7s", "armv8", "x86", "x86_64"]
-
-
-class TankerSource(Enum):
-    LOCAL = "local"
-    SAME_AS_BRANCH = "same-as-branch"
-    DEPLOYED = "deployed"
-    UPSTREAM = "upstream"
+PROFILES = [
+    "ios-armv7-release",
+    "ios-armv7s-release",
+    "ios-armv8-release",
+    "ios-x86-release",
+    "ios-x86_64-release",
+]
 
 
 def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
@@ -45,16 +42,15 @@ def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
 
 
 class Builder:
-    def __init__(self, *, src_path: Path, debug: bool, archs: List[str]):
+    def __init__(self, *, src_path: Path, debug: bool, profiles: List[str]):
         self.src_path = src_path
         self.pod_path = self.src_path / "Tanker"
         self.conan_path = self.pod_path / "conan"
-        self.conan_out_path = self.conan_path / "out"
         self.libraries_path = self.pod_path / "Libraries"
         self.headers_path = self.pod_path / "Headers"
         self.example_path = self.pod_path / "Example"
         self.debug = debug
-        self.archs = archs
+        self.profiles = profiles
 
     def generate_podspec(self) -> None:
         static_libs = self.get_static_libs()
@@ -64,24 +60,22 @@ class Builder:
             f"-l{x.name[3:-2]}" for x in static_libs
         ]  # strip 'lib' prefix and '.a' suffix
         contents = contents.replace("@static_libs_link_flags@", " ".join(link_flags))
-        out_path = self.src_path / "Tanker/Tanker.podspec"
+        out_path = self.pod_path / "Tanker.podspec"
         out_path.write_text(contents)
         ui.info_2("Generated", out_path)
 
     def get_static_libs(self) -> List[Path]:
-        libs_path = self.src_path / "Tanker/Libraries"
+        libs_path = self.libraries_path
         return libs_path.glob("*.a")  # type: ignore
 
-    def get_build_path(self, arch: str) -> Path:
-        res = self.conan_out_path / arch
-        res.makedirs_p()
-        return res
+    def get_build_path(self, profile: str) -> Path:
+        return self.conan_path / profile
 
     def get_all_dependency_libs(self) -> Dict[str, List[Path]]:
         all_libs: Dict[str, List[Path]] = dict()
-        for arch in self.archs:
+        for profile in self.profiles:
             deps = tankerci.conan.get_dependencies_libs(
-                self.get_build_path(arch) / "conanbuildinfo.json"
+                self.get_build_path(profile) / "conanbuildinfo.json"
             )
             for _, libs in deps.items():
                 if not libs:
@@ -98,57 +92,19 @@ class Builder:
         for lib_name, libs in self.get_all_dependency_libs().items():
             output = self.libraries_path / lib_name
             tankerci.run(
-                "lipo", "-create", "-output", output, *libs, cwd=self.conan_out_path
+                "lipo", "-create", "-output", output, *libs, cwd=self.conan_path
             )
 
     def copy_headers(self) -> None:
-        first_arch = list(self.archs)[0]
-        # we assume that all archs have the same includes
-        conan_info = self.get_build_path(first_arch) / "conanbuildinfo.json"
+        first_profile = list(self.profiles)[0]
+        # we assume that all profiles have the same includes
+        conan_info = self.get_build_path(first_profile) / "conanbuildinfo.json"
         include_paths = tankerci.conan.get_dependencies_include_paths(conan_info)
         for src_include_path in include_paths["tanker"]:
             _copy_folder_content(src_include_path, self.headers_path)
 
-    def get_profile_name(self, arch: str) -> str:
-        if self.debug:
-            build_type = "debug"
-        else:
-            build_type = "release"
-        return f"ios-{arch}-{build_type}"
-
-    def install_sdk_native(self, tanker_source: TankerSource) -> None:
-        if tanker_source in [TankerSource.LOCAL, TankerSource.SAME_AS_BRANCH]:
-            tanker_conan_ref = LOCAL_TANKER
-            tanker_conan_extra_flags = ["--build=tanker"]
-        elif tanker_source == TankerSource.UPSTREAM:
-            recipe_info = tankerci.conan.inspect(
-                Path.getcwd() / "package" / "conanfile.py"
-            )
-            name = recipe_info["name"]
-            version = recipe_info["version"]
-            tanker_conan_ref = f"{name}/{version}@"
-            tanker_conan_extra_flags = []
-        else:
-            tanker_conan_ref = os.environ["SDK_NATIVE_LATEST_CONAN_REFERENCE"]
-            tanker_conan_extra_flags = []
-
-        for arch in self.archs:
-            # fmt: off
-            tankerci.conan.run(
-                "install", tanker_conan_ref,
-                *tanker_conan_extra_flags,
-                "--update",
-                "--profile", self.get_profile_name(arch),
-                "--install-folder", self.get_build_path(arch),
-                "--generator", "json"
-            )
-            # fmt: on
-
     def handle_sdk_deps(self, *, tanker_source: TankerSource) -> None:
-        ui.info_1("Installing sdk-native for archs: ", self.archs)
-        # clean last build files, to avoid losing 2 days when an unexpected binary is used.
-        self.conan_out_path.rmtree_p()
-        self.install_sdk_native(tanker_source)
+        ui.info_1("copying sdk-native for profiles: ", self.profiles)
         self.generate_fat_libraries()
         self.copy_headers()
 
@@ -174,7 +130,6 @@ class PodPublisher:
         self.src_path = src_path
         self.dest_path = self.src_path / "artifacts"
         self.dest_path.rmtree_p()
-        self.conan_out_path = self.src_path / "Tanker/conan/out"
 
     def copy_static_libs(self) -> None:
         ui.info_1("Copying static libs")
@@ -278,35 +233,26 @@ class PodPublisher:
         self.publish_pod()
 
 
+def prepare(tanker_source: TankerSource, update: bool) -> None:
+    artifact_path = Path.getcwd() / "package"
+    if tanker_source == TankerSource.UPSTREAM:
+        profiles = [d.basename() for d in artifact_path.dirs()]
+    else:
+        profiles = PROFILES
+    tankerci.conan.install_tanker_source(
+        tanker_source,
+        output_path=Path("Tanker/conan"),
+        profiles=profiles,
+        update=update,
+    )
+
+
 def build_and_test(*, tanker_source: TankerSource, debug: bool = False) -> None:
     tankerci.conan.update_config()
     src_path = Path.getcwd()
+    prepare(tanker_source, False)
 
-    archs = ARCHS
-
-    if tanker_source == TankerSource.LOCAL:
-        tankerci.conan.export(
-            src_path=Path.getcwd().parent / "sdk-native", ref_or_channel=LOCAL_TANKER,
-        )
-    elif tanker_source == TankerSource.UPSTREAM:
-        for arch in archs:
-            profile = f"ios-{arch}-release"
-            package_folder = Path.getcwd() / "package" / profile
-
-            tankerci.conan.export_pkg(
-                Path.getcwd() / "package" / "conanfile.py",
-                profile=profile,
-                force=True,
-                package_folder=package_folder,
-            )
-    elif tanker_source == TankerSource.SAME_AS_BRANCH:
-        workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
-        src_path = workspace / "sdk-ios"
-        tankerci.conan.export(
-            src_path=workspace / "sdk-native", ref_or_channel=LOCAL_TANKER,
-        )
-
-    builder = Builder(src_path=src_path, debug=debug, archs=archs)
+    builder = Builder(src_path=src_path, debug=debug, profiles=PROFILES)
     builder.handle_sdk_deps(tanker_source=tanker_source)
     builder.generate_podspec()
     builder.handle_ios_deps()
@@ -345,8 +291,20 @@ def main() -> None:
     check_parser = subparsers.add_parser("build-and-test")
     check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument(
-        "--use-tanker", type=TankerSource, default=TankerSource.LOCAL
+        "--use-tanker", type=TankerSource, default=TankerSource.EDITABLE
     )
+
+    prepare_parser = subparsers.add_parser("prepare")
+    prepare_parser.add_argument(
+        "--use-tanker",
+        type=TankerSource,
+        default=TankerSource.EDITABLE,
+        dest="tanker_source",
+    )
+    prepare_parser.add_argument(
+        "--update", action="store_true", default=False, dest="update",
+    )
+
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument("--version", required=True)
     subparsers.add_parser("mirror")
@@ -359,6 +317,8 @@ def main() -> None:
         build_and_test(
             tanker_source=args.use_tanker, debug=args.debug,
         )
+    elif args.command == "prepare":
+        prepare(args.tanker_source, args.update)
     elif args.command == "deploy":
         deploy(version=args.version)
     elif args.command == "reset-branch":
