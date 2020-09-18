@@ -153,7 +153,7 @@ check/native-from-sources:
     - .check
     - .rules/native-from-sources
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch --only-macos-archs
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
 
 check/downstream:
   extends:
