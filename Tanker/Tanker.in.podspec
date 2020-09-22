@@ -22,7 +22,10 @@ It's available for browsers, desktop, iOS and Android.
     'USE_HEADERMAP' => "NO",
     'HEADER_SEARCH_PATHS' => '"$(inherited)" "$(PODS_TARGET_SRCROOT)/Headers"',
     'LIBRARY_SEARCH_PATHS' => '$(PODS_TARGET_SRCROOT)/Libraries',
-    'OTHER_LDFLAGS' => "'-exported_symbols_list ${PODS_TARGET_SRCROOT}/export_symbols.list -nostdlib++ @static_libs_link_flags@'"
+    'OTHER_LDFLAGS' => "'-exported_symbols_list ${PODS_TARGET_SRCROOT}/export_symbols.list -nostdlib++ @static_libs_link_flags@'",
+    # Until Apple provides a way to have both x86_64 and arm64 simulators working with the same static libs, simply exclude arm64 for simulators.
+    # This will likely cause issues in the future w.r.t Apple Silicon
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64'
     }
 
 
