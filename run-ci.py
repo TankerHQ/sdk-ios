@@ -161,8 +161,6 @@ class Builder:
             "pod",
             "lib",
             "lint",
-            # avoid using broken Cocoapods CDN
-            "--sources=https://github.com/CocoaPods/Specs.git",
             "--verbose",
             "--allow-warnings",
             self.pod_path / "Tanker.podspec",
