@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import argparse
 import re
@@ -121,7 +121,9 @@ class Builder:
             tanker_conan_ref = LOCAL_TANKER
             tanker_conan_extra_flags = ["--build=tanker"]
         elif tanker_source == TankerSource.UPSTREAM:
-            recipe_info = tankerci.conan.inspect(Path.getcwd() / "package" / "conanfile.py")
+            recipe_info = tankerci.conan.inspect(
+                Path.getcwd() / "package" / "conanfile.py"
+            )
             name = recipe_info["name"]
             version = recipe_info["version"]
             tanker_conan_ref = f"{name}/{version}@"
@@ -276,21 +278,15 @@ class PodPublisher:
         self.publish_pod()
 
 
-def build_and_test(
-    *, tanker_source: TankerSource, only_macos_archs: bool = False, debug: bool = False
-) -> None:
+def build_and_test(*, tanker_source: TankerSource, debug: bool = False) -> None:
     tankerci.conan.update_config()
     src_path = Path.getcwd()
 
-    if only_macos_archs:
-        archs = ["x86_64", "x86"]
-    else:
-        archs = ARCHS
+    archs = ARCHS
 
     if tanker_source == TankerSource.LOCAL:
         tankerci.conan.export(
-            src_path=Path.getcwd().parent / "sdk-native",
-            ref_or_channel=LOCAL_TANKER,
+            src_path=Path.getcwd().parent / "sdk-native", ref_or_channel=LOCAL_TANKER,
         )
     elif tanker_source == TankerSource.UPSTREAM:
         for arch in archs:
@@ -307,8 +303,7 @@ def build_and_test(
         workspace = tankerci.git.prepare_sources(repos=["sdk-native", "sdk-ios"])
         src_path = workspace / "sdk-ios"
         tankerci.conan.export(
-            src_path=workspace / "sdk-native",
-            ref_or_channel=LOCAL_TANKER,
+            src_path=workspace / "sdk-native", ref_or_channel=LOCAL_TANKER,
         )
 
     builder = Builder(src_path=src_path, debug=debug, archs=archs)
@@ -320,12 +315,15 @@ def build_and_test(
 
 def deploy(*, version: str) -> None:
     tankerci.bump_files(version)
+    build_and_test(
+        tanker_source=TankerSource.DEPLOYED, debug=False,
+    )
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--isolate-conan-user-home",
@@ -349,14 +347,6 @@ def main():
     check_parser.add_argument(
         "--use-tanker", type=TankerSource, default=TankerSource.LOCAL
     )
-    check_parser.add_argument(
-        "--only-macos-archs",
-        action="store_true",
-        dest="only_macos_archs",
-        default=False,
-        help="skip ios architectures - useful if you only want to run the tests or use `pod check`.",  # noqa: E501
-    )
-
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument("--version", required=True)
     subparsers.add_parser("mirror")
@@ -367,15 +357,14 @@ def main():
 
     if args.command == "build-and-test":
         build_and_test(
-            tanker_source=args.use_tanker,
-            debug=args.debug,
-            only_macos_archs=args.only_macos_archs,
+            tanker_source=args.use_tanker, debug=args.debug,
         )
     elif args.command == "deploy":
         deploy(version=args.version)
     elif args.command == "reset-branch":
+        fallback = os.environ["CI_COMMIT_REF_NAME"]
         ref = tankerci.git.find_ref(
-            Path.getcwd(), [f"origin/{args.branch}", "origin/master"]
+            Path.getcwd(), [f"origin/{args.branch}", f"origin/{fallback}"]
         )
         tankerci.git.reset(Path.getcwd(), ref)
     elif args.command == "download-artifacts":
