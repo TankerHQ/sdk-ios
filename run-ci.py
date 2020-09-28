@@ -42,14 +42,13 @@ def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
 
 
 class Builder:
-    def __init__(self, *, src_path: Path, debug: bool, profiles: List[str]):
+    def __init__(self, *, src_path: Path, profiles: List[str]):
         self.src_path = src_path
         self.pod_path = self.src_path / "Tanker"
         self.conan_path = self.pod_path / "conan"
         self.libraries_path = self.pod_path / "Libraries"
         self.headers_path = self.pod_path / "Headers"
         self.example_path = self.pod_path / "Example"
-        self.debug = debug
         self.profiles = profiles
 
     def generate_podspec(self) -> None:
@@ -233,7 +232,7 @@ class PodPublisher:
         self.publish_pod()
 
 
-def prepare(tanker_source: TankerSource, update: bool) -> None:
+def prepare(tanker_source: TankerSource, update: bool) -> Builder:
     artifact_path = Path.getcwd() / "package"
     if tanker_source == TankerSource.UPSTREAM:
         profiles = [d.basename() for d in artifact_path.dirs()]
@@ -245,25 +244,22 @@ def prepare(tanker_source: TankerSource, update: bool) -> None:
         profiles=profiles,
         update=update,
     )
-
-
-def build_and_test(*, tanker_source: TankerSource, debug: bool = False) -> None:
-    tankerci.conan.update_config()
-    src_path = Path.getcwd()
-    prepare(tanker_source, False)
-
-    builder = Builder(src_path=src_path, debug=debug, profiles=PROFILES)
+    builder = Builder(src_path=Path.getcwd(), profiles=PROFILES)
     builder.handle_sdk_deps(tanker_source=tanker_source)
     builder.generate_podspec()
     builder.handle_ios_deps()
+    return builder
+
+
+def build_and_test(*, tanker_source: TankerSource,) -> None:
+    tankerci.conan.update_config()
+    builder = prepare(tanker_source, False)
     builder.build_and_test_pod()
 
 
 def deploy(*, version: str) -> None:
     tankerci.bump_files(version)
-    build_and_test(
-        tanker_source=TankerSource.DEPLOYED, debug=False,
-    )
+    build_and_test(tanker_source=TankerSource.DEPLOYED,)
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -289,9 +285,11 @@ def main() -> None:
     download_artifacts_parser.add_argument("--job-name", required=True)
 
     check_parser = subparsers.add_parser("build-and-test")
-    check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument(
         "--use-tanker", type=TankerSource, default=TankerSource.EDITABLE
+    )
+    check_parser.add_argument(
+        "--update", action="store_true", default=False, dest="update",
     )
 
     prepare_parser = subparsers.add_parser("prepare")
@@ -314,9 +312,7 @@ def main() -> None:
         tankerci.conan.set_home_isolation()
 
     if args.command == "build-and-test":
-        build_and_test(
-            tanker_source=args.use_tanker, debug=args.debug,
-        )
+        build_and_test(tanker_source=args.use_tanker)
     elif args.command == "prepare":
         prepare(args.tanker_source, args.update)
     elif args.command == "deploy":
