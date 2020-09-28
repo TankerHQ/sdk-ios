@@ -232,7 +232,7 @@ class PodPublisher:
         self.publish_pod()
 
 
-def prepare(tanker_source: TankerSource, update: bool) -> None:
+def prepare(tanker_source: TankerSource, update: bool) -> Builder:
     artifact_path = Path.getcwd() / "package"
     if tanker_source == TankerSource.UPSTREAM:
         profiles = [d.basename() for d in artifact_path.dirs()]
@@ -244,17 +244,16 @@ def prepare(tanker_source: TankerSource, update: bool) -> None:
         profiles=profiles,
         update=update,
     )
-
-
-def build_and_test(*, tanker_source: TankerSource) -> None:
-    tankerci.conan.update_config()
-    src_path = Path.getcwd()
-    prepare(tanker_source, False)
-
-    builder = Builder(src_path=src_path, debug=debug, profiles=PROFILES)
+    builder = Builder(src_path=Path.getcwd(), profiles=PROFILES)
     builder.handle_sdk_deps(tanker_source=tanker_source)
     builder.generate_podspec()
     builder.handle_ios_deps()
+    return builder
+
+
+def build_and_test(*, tanker_source: TankerSource,) -> None:
+    tankerci.conan.update_config()
+    builder = prepare(tanker_source, False)
     builder.build_and_test_pod()
 
 
