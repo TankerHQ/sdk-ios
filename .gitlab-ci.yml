@@ -12,7 +12,7 @@ check/deployed-native:
     - .check
     - .rules/deployed-native
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
 
 check/native-from-sources:
   extends:
@@ -34,7 +34,7 @@ deploy:
     - .deploy
     - .rules/deploy/ios
   script:
-    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION
+    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
     tag_name: v$SDK_IOS_RELEASE_VERSION
