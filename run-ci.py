@@ -42,14 +42,13 @@ def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
 
 
 class Builder:
-    def __init__(self, *, src_path: Path, debug: bool, profiles: List[str]):
+    def __init__(self, *, src_path: Path, profiles: List[str]):
         self.src_path = src_path
         self.pod_path = self.src_path / "Tanker"
         self.conan_path = self.pod_path / "conan"
         self.libraries_path = self.pod_path / "Libraries"
         self.headers_path = self.pod_path / "Headers"
         self.example_path = self.pod_path / "Example"
-        self.debug = debug
         self.profiles = profiles
 
     def generate_podspec(self) -> None:
@@ -247,7 +246,7 @@ def prepare(tanker_source: TankerSource, update: bool) -> None:
     )
 
 
-def build_and_test(*, tanker_source: TankerSource, debug: bool = False) -> None:
+def build_and_test(*, tanker_source: TankerSource) -> None:
     tankerci.conan.update_config()
     src_path = Path.getcwd()
     prepare(tanker_source, False)
@@ -261,9 +260,7 @@ def build_and_test(*, tanker_source: TankerSource, debug: bool = False) -> None:
 
 def deploy(*, version: str) -> None:
     tankerci.bump_files(version)
-    build_and_test(
-        tanker_source=TankerSource.DEPLOYED, debug=False,
-    )
+    build_and_test(tanker_source=TankerSource.DEPLOYED,)
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -316,9 +313,7 @@ def main() -> None:
         tankerci.conan.set_home_isolation()
 
     if args.command == "build-and-test":
-        build_and_test(
-            tanker_source=args.use_tanker, debug=args.debug,
-        )
+        build_and_test(tanker_source=args.use_tanker)
     elif args.command == "prepare":
         prepare(args.tanker_source, args.update)
     elif args.command == "deploy":
