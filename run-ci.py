@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import argparse
 import re
@@ -232,7 +232,7 @@ class PodPublisher:
         self.publish_pod()
 
 
-def prepare(tanker_source: TankerSource, update: bool) -> Builder:
+def prepare(tanker_source: TankerSource, update: bool, tanker_deployed_ref: Optional[str]) -> Builder:
     artifact_path = Path.getcwd() / "package"
     if tanker_source == TankerSource.UPSTREAM:
         profiles = [d.basename() for d in artifact_path.dirs()]
@@ -243,6 +243,7 @@ def prepare(tanker_source: TankerSource, update: bool) -> Builder:
         output_path=Path("Tanker/conan"),
         profiles=profiles,
         update=update,
+        tanker_deployed_ref=tanker_deployed_ref,
     )
     builder = Builder(src_path=Path.getcwd(), profiles=PROFILES)
     builder.handle_sdk_deps(tanker_source=tanker_source)
@@ -299,6 +300,7 @@ def main() -> None:
         default=TankerSource.EDITABLE,
         dest="tanker_source",
     )
+    prepare_parser.add_argument("--tanker-deployed-ref")
     prepare_parser.add_argument(
         "--update", action="store_true", default=False, dest="update",
     )
@@ -314,7 +316,7 @@ def main() -> None:
     if args.command == "build-and-test":
         build_and_test(tanker_source=args.use_tanker)
     elif args.command == "prepare":
-        prepare(args.tanker_source, args.update)
+        prepare(args.tanker_source, args.update, args.tanker_deployed_ref)
     elif args.command == "deploy":
         deploy(version=args.version)
     elif args.command == "reset-branch":
