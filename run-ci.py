@@ -289,9 +289,11 @@ def main() -> None:
     download_artifacts_parser.add_argument("--job-name", required=True)
 
     check_parser = subparsers.add_parser("build-and-test")
-    check_parser.add_argument("--debug", action="store_true", default=False)
     check_parser.add_argument(
         "--use-tanker", type=TankerSource, default=TankerSource.EDITABLE
+    )
+    check_parser.add_argument(
+        "--update", action="store_true", default=False, dest="update",
     )
 
     prepare_parser = subparsers.add_parser("prepare")
