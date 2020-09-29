@@ -274,6 +274,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.home_isolation:
         tankerci.conan.set_home_isolation()
+        tankerci.conan.update_config()
 
     if args.command == "build-and-test":
         build_and_test(
