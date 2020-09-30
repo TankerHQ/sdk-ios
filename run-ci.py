@@ -231,7 +231,7 @@ class PodPublisher:
 
 
 def prepare(
-    tanker_source: TankerSource, update: bool, tanker_deployed_ref: Optional[str]
+    tanker_source: TankerSource, update: bool, tanker_ref: Optional[str]
 ) -> Builder:
     artifact_path = Path.getcwd() / "package"
     if tanker_source == TankerSource.UPSTREAM:
@@ -243,7 +243,7 @@ def prepare(
         output_path=Path("Tanker/conan"),
         profiles=profiles,
         update=update,
-        tanker_deployed_ref=tanker_deployed_ref,
+        tanker_ref=tanker_ref,
     )
     builder = Builder(src_path=Path.getcwd(), profiles=profiles)
     builder.handle_sdk_deps(tanker_source=tanker_source)
@@ -253,10 +253,10 @@ def prepare(
 
 
 def build_and_test(
-    *, tanker_source: TankerSource, tanker_deployed_ref: Optional[str] = None
+    *, tanker_source: TankerSource, tanker_ref: Optional[str] = None
 ) -> None:
     tankerci.conan.update_config()
-    builder = prepare(tanker_source, False, tanker_deployed_ref)
+    builder = prepare(tanker_source, False, tanker_ref)
     builder.build_and_test_pod()
 
 
@@ -279,10 +279,10 @@ def main() -> None:
     if args.command == "build-and-test":
         build_and_test(
             tanker_source=args.tanker_source,
-            tanker_deployed_ref=args.tanker_deployed_ref,
+            tanker_ref=args.tanker_ref,
         )
     elif args.command == "prepare":
-        prepare(args.tanker_source, args.update, args.tanker_deployed_ref)
+        prepare(args.tanker_source, args.update, args.tanker_ref)
     elif args.command == "deploy":
         deploy(version=args.version)
     elif args.command == "mirror":
