@@ -1,11 +1,11 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import argparse
+import os
 import re
 import shutil
 import sys
 import tempfile
-import os
 
 import tankerci
 import tankerci.conan
@@ -232,34 +232,42 @@ class PodPublisher:
         self.publish_pod()
 
 
-def prepare(tanker_source: TankerSource, update: bool) -> Builder:
+def prepare(
+    tanker_source: TankerSource, update: bool, tanker_ref: Optional[str]
+) -> Builder:
     artifact_path = Path.getcwd() / "package"
+    tanker_deployed_ref = tanker_ref
+
     if tanker_source == TankerSource.UPSTREAM:
         profiles = [d.basename() for d in artifact_path.dirs()]
     else:
         profiles = PROFILES
+    if tanker_source == TankerSource.DEPLOYED and not tanker_deployed_ref:
+        tanker_deployed_ref = "tanker/latest-stable@"
     tankerci.conan.install_tanker_source(
         tanker_source,
         output_path=Path("Tanker/conan"),
         profiles=profiles,
         update=update,
+        tanker_deployed_ref=tanker_deployed_ref,
     )
-    builder = Builder(src_path=Path.getcwd(), profiles=PROFILES)
+    builder = Builder(src_path=Path.getcwd(), profiles=profiles)
     builder.handle_sdk_deps(tanker_source=tanker_source)
     builder.generate_podspec()
     builder.handle_ios_deps()
     return builder
 
 
-def build_and_test(*, tanker_source: TankerSource,) -> None:
-    tankerci.conan.update_config()
-    builder = prepare(tanker_source, False)
+def build_and_test(
+    *, tanker_source: TankerSource, tanker_ref: Optional[str] = None
+) -> None:
+    builder = prepare(tanker_source, False, tanker_ref)
     builder.build_and_test_pod()
 
 
-def deploy(*, version: str) -> None:
+def deploy(*, version: str, tanker_ref: str) -> None:
     tankerci.bump_files(version)
-    build_and_test(tanker_source=TankerSource.DEPLOYED,)
+    build_and_test(tanker_source=TankerSource.DEPLOYED, tanker_ref=tanker_ref)
     src_path = Path.getcwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -284,53 +292,67 @@ def main() -> None:
     download_artifacts_parser.add_argument("--pipeline-id", required=True)
     download_artifacts_parser.add_argument("--job-name", required=True)
 
-    check_parser = subparsers.add_parser("build-and-test")
-    check_parser.add_argument(
-        "--use-tanker", type=TankerSource, default=TankerSource.EDITABLE
+    build_and_test_parser = subparsers.add_parser("build-and-test")
+    build_and_test_parser.add_argument(
+        "--use-tanker",
+        type=tankerci.conan.TankerSource,
+        default=tankerci.conan.TankerSource.EDITABLE,
+        dest="tanker_source",
     )
-    check_parser.add_argument(
-        "--update", action="store_true", default=False, dest="update",
-    )
+    build_and_test_parser.add_argument("--tanker-ref")
 
     prepare_parser = subparsers.add_parser("prepare")
     prepare_parser.add_argument(
         "--use-tanker",
-        type=TankerSource,
-        default=TankerSource.EDITABLE,
+        type=tankerci.conan.TankerSource,
+        default=tankerci.conan.TankerSource.EDITABLE,
         dest="tanker_source",
     )
+    prepare_parser.add_argument("--tanker-ref")
     prepare_parser.add_argument(
         "--update", action="store_true", default=False, dest="update",
     )
 
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument("--version", required=True)
+    deploy_parser.add_argument("--tanker-ref", required=True)
     subparsers.add_parser("mirror")
 
     args = parser.parse_args()
+    command = args.command
+
     if args.home_isolation:
         tankerci.conan.set_home_isolation()
+        tankerci.conan.update_config()
+        if command in ("build-and-test", "deploy"):
+            # Because of GitLab issue https://gitlab.com/gitlab-org/gitlab/-/issues/254323
+            # the downstream deploy jobs will be triggered even if upstream has failed
+            # By removing the cache we ensure that we do not use a
+            # previously built (and potentially broken) release candidate to deploy a binding
+            tankerci.conan.run("remove", "tanker/*", "--force")
 
-    if args.command == "build-and-test":
-        build_and_test(tanker_source=args.use_tanker)
-    elif args.command == "prepare":
-        prepare(args.tanker_source, args.update)
-    elif args.command == "deploy":
-        deploy(version=args.version)
-    elif args.command == "reset-branch":
+    if command == "build-and-test":
+        build_and_test(
+            tanker_source=args.tanker_source, tanker_ref=args.tanker_ref,
+        )
+    elif command == "prepare":
+        prepare(args.tanker_source, args.update, args.tanker_ref)
+    elif command == "deploy":
+        deploy(version=args.version, tanker_ref=args.tanker_ref)
+    elif command == "mirror":
+        tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
+    elif command == "reset-branch":
         fallback = os.environ["CI_COMMIT_REF_NAME"]
         ref = tankerci.git.find_ref(
             Path.getcwd(), [f"origin/{args.branch}", f"origin/{fallback}"]
         )
         tankerci.git.reset(Path.getcwd(), ref)
-    elif args.command == "download-artifacts":
+    elif command == "download-artifacts":
         tankerci.gitlab.download_artifacts(
             project_id=args.project_id,
             pipeline_id=args.pipeline_id,
             job_name=args.job_name,
         )
-    elif args.command == "mirror":
-        tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
     else:
         parser.print_help()
         sys.exit()
