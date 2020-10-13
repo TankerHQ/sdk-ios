@@ -15,6 +15,7 @@ import tankerci.cpp
 import tankerci.gcp
 import tankerci.git
 import tankerci.gitlab
+from tankerci.build_info import DepsConfig
 import cli_ui as ui
 from path import Path
 
@@ -73,14 +74,8 @@ class Builder:
     def get_all_dependency_libs(self) -> Dict[str, List[Path]]:
         all_libs: Dict[str, List[Path]] = dict()
         for profile in self.profiles:
-            deps = tankerci.conan.get_dependencies_libs(
-                self.get_build_path(profile) / "conanbuildinfo.json"
-            )
-            for _, libs in deps.items():
-                if not libs:
-                    continue
-                for lib in libs:
-                    all_libs.setdefault(lib.name, []).extend([lib])
+            for lib in DepsConfig(self.get_build_path(profile)).all_lib_paths():
+                all_libs.setdefault(lib.name, []).append(lib)
         return all_libs
 
     def generate_fat_libraries(self) -> None:
@@ -97,10 +92,9 @@ class Builder:
     def copy_headers(self) -> None:
         first_profile = list(self.profiles)[0]
         # we assume that all profiles have the same includes
-        conan_info = self.get_build_path(first_profile) / "conanbuildinfo.json"
-        include_paths = tankerci.conan.get_dependencies_include_paths(conan_info)
-        for src_include_path in include_paths["tanker"]:
-            _copy_folder_content(src_include_path, self.headers_path)
+        deps_info = DepsConfig(self.get_build_path(first_profile))
+        for include_path in deps_info["tanker"].include_dirs:
+            Path(include_path).merge_tree(self.headers_path)
 
     def handle_sdk_deps(self, *, tanker_source: TankerSource) -> None:
         ui.info_1("copying sdk-native for profiles: ", self.profiles)
