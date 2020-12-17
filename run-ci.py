@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 
 import argparse
 import os
+from pathlib import Path
 import re
 import shutil
 import sys
@@ -17,7 +18,6 @@ import tankerci.git
 import tankerci.gitlab
 from tankerci.build_info import DepsConfig
 import cli_ui as ui
-from path import Path
 
 PROFILES = [
     "ios-armv7-release",
@@ -30,16 +30,20 @@ PROFILES = [
 
 def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
     ui.info_1("Moving content of", src_path, "to", dest_path)
-    for src_dir in src_path.dirs():
-        dest_dir = dest_path / src_dir.basename()
-        dest_dir.rmtree_p()
+    src_dirs = [p for p in src_path.iterdir() if p.is_dir()]
+    for src_dir in src_dirs:
+        dest_dir = dest_path / src_dir.name
+        if dest_dir.exists():
+            shutil.rmtree(dest_dir)
         ui.info_2(src_dir, "->", dest_dir)
-        src_dir.copytree(dest_dir)
-    for src_file in src_path.files():
-        dest_file = dest_path / src_file.basename()
-        dest_file.remove_p()
+        shutil.copytree(src_dir, dest_dir)
+    src_files = [p for p in src_path.iterdir() if p.is_file()]
+    for src_file in src_files:
+        dest_file = dest_path / src_file.name
+        if dest_file.exists():
+            dest_file.unlink()
         ui.info_2(src_file, "->", dest_file)
-        src_file.copy2(dest_file)
+        shutil.copy2(src_file, dest_file)
 
 
 class Builder:
@@ -55,7 +59,7 @@ class Builder:
     def generate_podspec(self) -> None:
         static_libs = self.get_static_libs()
         in_path = self.src_path / "Tanker/Tanker.in.podspec"
-        contents = in_path.text()
+        contents = in_path.read_text()
         link_flags = [
             f"-l{x.name[3:-2]}" for x in static_libs
         ]  # strip 'lib' prefix and '.a' suffix
@@ -80,21 +84,36 @@ class Builder:
 
     def generate_fat_libraries(self) -> None:
         ui.info_1("Generating fat libraries")
-        self.libraries_path.rmtree_p()
-        self.libraries_path.makedirs_p()
+        if self.libraries_path.exists():
+            shutil.rmtree(self.libraries_path)
+        self.libraries_path.mkdir(parents=True, exist_ok=True)
 
         for lib_name, libs in self.get_all_dependency_libs().items():
             output = self.libraries_path / lib_name
+            lib_strings: List[str] = [str(x) for x in libs]
             tankerci.run(
-                "lipo", "-create", "-output", output, *libs, cwd=self.conan_path
+                "lipo",
+                "-create",
+                "-output",
+                str(output),
+                *lib_strings,
+                cwd=self.conan_path,
             )
 
     def copy_headers(self) -> None:
         first_profile = list(self.profiles)[0]
         # we assume that all profiles have the same includes
         deps_info = DepsConfig(self.get_build_path(first_profile))
-        for include_path in deps_info["tanker"].include_dirs:
-            Path(include_path).merge_tree(self.headers_path)
+        for include_dir in deps_info["tanker"].include_dirs:
+            include_path = Path(include_dir)
+            for header in include_path.glob("**/*"):
+                if header.is_dir():
+                    continue
+                rel_dir = header.parent.relative_to(include_dir)
+                header_dest_dir = self.headers_path / rel_dir
+                header_dest_dir.mkdir(parents=True, exist_ok=True)
+                ui.info_2(header, "->", header_dest_dir)
+                shutil.copy(header, header_dest_dir)
 
     def handle_sdk_deps(self, *, tanker_source: TankerSource) -> None:
         ui.info_1("copying sdk-native for profiles: ", self.profiles)
@@ -114,7 +133,7 @@ class Builder:
             "lint",
             "--verbose",
             "--allow-warnings",
-            self.pod_path / "Tanker.podspec",
+            str(self.pod_path / "Tanker.podspec"),
         )
 
 
@@ -122,57 +141,58 @@ class PodPublisher:
     def __init__(self, *, src_path: Path) -> None:
         self.src_path = src_path
         self.dest_path = self.src_path / "artifacts"
-        self.dest_path.rmtree_p()
+        if self.dest_path.exists():
+            shutil.rmtree(self.dest_path)
 
     def copy_static_libs(self) -> None:
         ui.info_1("Copying static libs")
         libraries_path = self.src_path / "Tanker/Libraries"
         dest_path = self.dest_path / "Libraries"
         ui.info_2(libraries_path, "->", dest_path)
-        libraries_path.copytree(dest_path)
+        shutil.copytree(libraries_path, dest_path)
 
     def copy_sources(self) -> None:
         ui.info_1("Copying sources")
         sources_path = self.src_path / "Tanker/Sources"
 
         ui.info_2(sources_path, "->", self.dest_path)
-        sources_path.copytree(self.dest_path / "Sources")
+        shutil.copytree(sources_path, self.dest_path / "Sources")
 
         export_list_src = self.src_path / "Tanker/export_symbols.list"
         export_list_dest = self.dest_path / "export_symbols.list"
 
         ui.info_2(export_list_src, "->", export_list_dest)
-        export_list_src.copy(export_list_dest)
+        shutil.copy(export_list_src, export_list_dest)
 
     def copy_top_files(self) -> None:
         ui.info_1("Copying top files")
         for name in ("Tanker/LICENSE", "Tanker/Tanker.podspec"):
             src = self.src_path / name
             ui.info_2(src, "->", self.dest_path)
-            src.copy(self.dest_path)
+            shutil.copy(src, self.dest_path)
 
     def copy_headers(self) -> None:
         ui.info_1("Copying headers")
         headers_path = self.src_path / "Tanker" / "Headers"
         dest_path = self.dest_path / "Headers"
         ui.info_2(headers_path, "->", dest_path)
-        headers_path.copytree(dest_path)
+        shutil.copytree(headers_path, dest_path)
 
     def copy_test_sources(self) -> None:
         # trick cocoapods copy the Dummy.m to avoid error during validation
         ui.info_1("Copying dummy test file")
         dummy_test_path = self.src_path / "Tanker/Tests/Dummy.m"
         dest_path = self.dest_path / "Tests"
-        dest_path.makedirs_p()
+        dest_path.mkdir(parents=True, exist_ok=True)
         ui.info_2(dummy_test_path, "->", dest_path)
-        dummy_test_path.copy(dest_path)
+        shutil.copy(dummy_test_path, dest_path)
 
     def get_version_from_spec(self) -> str:
-        contents = (self.src_path / "Tanker/Tanker.podspec").text()
+        contents = (self.src_path / "Tanker/Tanker.podspec").read_text()
         for line in contents.splitlines():
             match = re.match(r"^\s+s\.version\s+=\s+'(.*?)'", line)
             if match:
-                return match.groups()[0]  # type: ignore
+                return match.groups()[0]
         sys.exit("Could not find version from Tanker.podspec")
 
     def generate_archive(self) -> Path:
@@ -188,7 +208,7 @@ class PodPublisher:
 
     def upload_archive(self, archive_path: Path) -> None:
         tankerci.gcp.GcpProject("tanker-prod").auth()
-        tankerci.run("gsutil", "cp", archive_path, "gs://cocoapods.tanker.io/ios/")
+        tankerci.run("gsutil", "cp", str(archive_path), "gs://cocoapods.tanker.io/ios/")
 
     def build_pod(self) -> None:
         # fmt: off
@@ -229,11 +249,11 @@ class PodPublisher:
 def prepare(
     tanker_source: TankerSource, update: bool, tanker_ref: Optional[str]
 ) -> Builder:
-    artifact_path = Path.getcwd() / "package"
+    artifact_path = Path.cwd() / "package"
     tanker_deployed_ref = tanker_ref
 
     if tanker_source == TankerSource.UPSTREAM:
-        profiles = [d.basename() for d in artifact_path.dirs()]
+        profiles = [d.name for d in artifact_path.iterdir() if d.is_dir()]
     else:
         profiles = PROFILES
     if tanker_source == TankerSource.DEPLOYED and not tanker_deployed_ref:
@@ -245,7 +265,7 @@ def prepare(
         update=update,
         tanker_deployed_ref=tanker_deployed_ref,
     )
-    builder = Builder(src_path=Path.getcwd(), profiles=profiles)
+    builder = Builder(src_path=Path.cwd(), profiles=profiles)
     builder.handle_sdk_deps(tanker_source=tanker_source)
     builder.generate_podspec()
     builder.handle_ios_deps()
@@ -262,7 +282,7 @@ def build_and_test(
 def deploy(*, version: str, tanker_ref: str) -> None:
     tankerci.bump_files(version)
     build_and_test(tanker_source=TankerSource.DEPLOYED, tanker_ref=tanker_ref)
-    src_path = Path.getcwd()
+    src_path = Path.cwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
 
@@ -304,7 +324,10 @@ def main() -> None:
     )
     prepare_parser.add_argument("--tanker-ref")
     prepare_parser.add_argument(
-        "--update", action="store_true", default=False, dest="update",
+        "--update",
+        action="store_true",
+        default=False,
+        dest="update",
     )
 
     deploy_parser = subparsers.add_parser("deploy")
@@ -327,7 +350,8 @@ def main() -> None:
 
     if command == "build-and-test":
         build_and_test(
-            tanker_source=args.tanker_source, tanker_ref=args.tanker_ref,
+            tanker_source=args.tanker_source,
+            tanker_ref=args.tanker_ref,
         )
     elif command == "prepare":
         prepare(args.tanker_source, args.update, args.tanker_ref)
@@ -338,9 +362,9 @@ def main() -> None:
     elif command == "reset-branch":
         fallback = os.environ["CI_COMMIT_REF_NAME"]
         ref = tankerci.git.find_ref(
-            Path.getcwd(), [f"origin/{args.branch}", f"origin/{fallback}"]
+            Path.cwd(), [f"origin/{args.branch}", f"origin/{fallback}"]
         )
-        tankerci.git.reset(Path.getcwd(), ref)
+        tankerci.git.reset(Path.cwd(), ref)
     elif command == "download-artifacts":
         tankerci.gitlab.download_artifacts(
             project_id=args.project_id,
