@@ -15,4 +15,5 @@ typedef NS_ENUM(NSUInteger, TKRError) {
   TKRErrorIOError,
   TKRErrorDeviceRevoked,
   TKRErrorConflict,
+  TKRErrorUpgradeRequired,
 };
