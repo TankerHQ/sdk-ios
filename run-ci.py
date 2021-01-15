@@ -199,7 +199,7 @@ class PodPublisher:
         version = self.get_version_from_spec()
         ui.info_1("Generating archive, version:", version)
         archive_name = "tanker-ios-sdk-%s.tar.gz" % version
-        with self.dest_path:
+        with tankerci.working_directory(self.dest_path):
             tankerci.run("tar cfvz %s *" % archive_name, shell=True)
             shutil.copy(archive_name, self.src_path)
             res = self.src_path / archive_name
