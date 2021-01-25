@@ -51,8 +51,12 @@
  @discussion The handler will be called as soon as the device is revoked.
 
  @param handler the block called without any argument. Runs on a background queue.
+
+ @deprecated the DeviceRevoked event is deprecated, it will be removed in the future
  */
-- (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler;
+- (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
+  DEPRECATED_MSG_ATTRIBUTE("the DeviceRevoked event is deprecated, it will be removed in the future");
+;
 
 /*!
  @brief Get the list of the registered verification methods.
@@ -284,8 +288,11 @@
  @param handler the block called with an NSError, or nil.
 
  @pre @a deviceId must be the ID of one of the current user's devices.
+
+ @deprecated revokeDevice is deprecated, it will be removed in the future
  */
-- (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler;
+- (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler
+  DEPRECATED_MSG_ATTRIBUTE("revokeDevice is deprecated, it will be removed in the future");
 
 /*!
 @brief Create an encryption session without sharing it with other users or group.
