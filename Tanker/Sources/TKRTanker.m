@@ -191,13 +191,15 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-    completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
-  [self registerIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:handler];
+  [self registerIdentityWithVerification:verification
+                                 options:[TKRVerificationOptions options]
+                       completionHandler:handler];
 }
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                                 options:(nonnull TKRVerificationOptions*) options
+                                 options:(nonnull TKRVerificationOptions*)options
                        completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
@@ -249,13 +251,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
-    completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+            completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   [self setVerificationMethod:verification options:[TKRVerificationOptions options] completionHandler:handler];
 }
 
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
-                      options:(nonnull TKRVerificationOptions*) options
+                      options:(nonnull TKRVerificationOptions*)options
             completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
@@ -283,13 +285,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-    completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   [self verifyIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:handler];
 }
 
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                               options:(nonnull TKRVerificationOptions*) options
+                               options:(nonnull TKRVerificationOptions*)options
                      completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
@@ -563,10 +565,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     return;
   }
 
-  tanker_future_t* share_future = tanker_share((tanker_t*)self.cTanker,
-                                               (char const* const*)resource_ids,
-                                               resourceIDs.count,
-                                               &sharing_options);
+  tanker_future_t* share_future =
+      tanker_share((tanker_t*)self.cTanker, (char const* const*)resource_ids, resourceIDs.count, &sharing_options);
 
   tanker_future_t* resolve_future =
       tanker_future_then(share_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
@@ -575,8 +575,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 
   freeCStringArray(resource_ids, resourceIDs.count);
-  freeCStringArray((char**)sharing_options.share_with_users,
-                   sharing_options.nb_users);
+  freeCStringArray((char**)sharing_options.share_with_users, sharing_options.nb_users);
   freeCStringArray((char**)sharing_options.share_with_groups, sharing_options.nb_groups);
 }
 
@@ -609,8 +608,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     return;
   }
 
-  tanker_future_t* sess_future = tanker_encryption_session_open((tanker_t*)self.cTanker,
-                                                                &encryption_options);
+  tanker_future_t* sess_future = tanker_encryption_session_open((tanker_t*)self.cTanker, &encryption_options);
 
   tanker_future_t* resolve_future =
       tanker_future_then(sess_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
@@ -618,8 +616,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(sess_future);
   tanker_future_destroy(resolve_future);
 
-  freeCStringArray((char**)encryption_options.share_with_users,
-                   encryption_options.nb_users);
+  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
   freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
 }
 
@@ -733,8 +730,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                                                       &encryption_options);
   completeStreamEncrypt(reader, stream_fut, handler);
   tanker_future_destroy(stream_fut);
-  freeCStringArray((char**)encryption_options.share_with_users,
-                   encryption_options.nb_users);
+  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
   freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
 }
 

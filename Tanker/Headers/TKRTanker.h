@@ -9,9 +9,9 @@
 #import "TKRStatus.h"
 #import "TKRTankerOptions.h"
 #import "TKRVerification.h"
-#import "TKRVerificationOptions.h"
 #import "TKRVerificationKey.h"
 #import "TKRVerificationMethod.h"
+#import "TKRVerificationOptions.h"
 
 #define TKRErrorDomain @"TKRErrorDomain"
 
@@ -56,7 +56,7 @@
  @deprecated the DeviceRevoked event is deprecated, it will be removed in the future
  */
 - (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
-  DEPRECATED_MSG_ATTRIBUTE("the DeviceRevoked event is deprecated, it will be removed in the future");
+    DEPRECATED_MSG_ATTRIBUTE("the DeviceRevoked event is deprecated, it will be removed in the future");
 ;
 
 /*!
@@ -89,7 +89,7 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
-                      options:(nonnull TKRVerificationOptions*) options
+                      options:(nonnull TKRVerificationOptions*)options
             completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
@@ -123,7 +123,7 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                                 options:(nonnull TKRVerificationOptions*) options
+                                 options:(nonnull TKRVerificationOptions*)options
                        completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
@@ -147,7 +147,7 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                               options:(nonnull TKRVerificationOptions*) options
+                               options:(nonnull TKRVerificationOptions*)options
                      completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
@@ -332,8 +332,9 @@
 
  @deprecated revokeDevice is deprecated, it will be removed in the future
  */
-- (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler
-  DEPRECATED_MSG_ATTRIBUTE("revokeDevice is deprecated, it will be removed in the future");
+- (void)revokeDevice:(nonnull NSString*)deviceId
+    completionHandler:(nonnull TKRErrorHandler)handler
+    DEPRECATED_MSG_ATTRIBUTE("revokeDevice is deprecated, it will be removed in the future");
 
 /*!
 @brief Create an encryption session without sharing it with other users or group.
@@ -347,7 +348,7 @@
  */
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
                                       sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
-  DEPRECATED_MSG_ATTRIBUTE("use createEncryptionSessionWithCompletionHandler:encryptionOptions instead");
+    DEPRECATED_MSG_ATTRIBUTE("use createEncryptionSessionWithCompletionHandler:encryptionOptions instead");
 
 /*!
  @brief Create an encryption session shared with the given users and groups.

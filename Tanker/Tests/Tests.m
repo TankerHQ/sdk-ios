@@ -104,7 +104,8 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   return opts;
 }
 
-void updateAdminApp(tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider, bool* enable2FA)
+void updateAdminApp(
+    tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider, bool* enable2FA)
 {
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_app_update_options_t options = TANKER_APP_UPDATE_OPTIONS_INIT;
@@ -206,8 +207,7 @@ SpecBegin(TankerSpecs)
                         {
                           expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
-                          [tanker registerIdentityWithVerification:verification
-                                                 completionHandler:adapter];
+                          [tanker registerIdentityWithVerification:verification completionHandler:adapter];
                         }
                       }];
             });
@@ -250,8 +250,7 @@ SpecBegin(TankerSpecs)
                         {
                           expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityVerificationNeeded);
-                          [tanker verifyIdentityWithVerification:verification
-                                               completionHandler:adapter];
+                          [tanker verifyIdentityWithVerification:verification completionHandler:adapter];
                         }
                       }];
             });
@@ -266,12 +265,10 @@ SpecBegin(TankerSpecs)
       };
 
       __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
-        tanker_future_t* f = tanker_get_verification_code(
-            ctrustchaindurl,
-            [appID cStringUsingEncoding:NSUTF8StringEncoding],
-            [authToken cStringUsingEncoding:NSUTF8StringEncoding],
-            [email cStringUsingEncoding:NSUTF8StringEncoding]
-        );
+        tanker_future_t* f = tanker_get_verification_code(ctrustchaindurl,
+                                                          [appID cStringUsingEncoding:NSUTF8StringEncoding],
+                                                          [authToken cStringUsingEncoding:NSUTF8StringEncoding],
+                                                          [email cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(f);
         char* code = (char*)tanker_future_get_voidptr(f);
         NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
@@ -290,13 +287,13 @@ SpecBegin(TankerSpecs)
         expect(idToken).toNot.beNil();
 
         oidcTestConfig = @{
-          @"clientId": env[@"TANKER_OIDC_CLIENT_ID"],
-          @"clientSecret": env[@"TANKER_OIDC_CLIENT_SECRET"],
-          @"provider": env[@"TANKER_OIDC_PROVIDER"],
-          @"users": @{
-            @"martine": @{
-              @"email": env[@"TANKER_OIDC_MARTINE_EMAIL"],
-              @"refreshToken": env[@"TANKER_OIDC_MARTINE_REFRESH_TOKEN"]
+          @"clientId" : env[@"TANKER_OIDC_CLIENT_ID"],
+          @"clientSecret" : env[@"TANKER_OIDC_CLIENT_SECRET"],
+          @"provider" : env[@"TANKER_OIDC_PROVIDER"],
+          @"users" : @{
+            @"martine" : @{
+              @"email" : env[@"TANKER_OIDC_MARTINE_EMAIL"],
+              @"refreshToken" : env[@"TANKER_OIDC_MARTINE_REFRESH_TOKEN"]
             }
           }
         };
@@ -1028,8 +1025,6 @@ SpecBegin(TankerSpecs)
             [aliceTanker shareResourceIDs:resourceIDs options:opts completionHandler:resolve];
           });
 
-
-
           NSArray* decryptPromises = @[
             [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
               [bobTanker decryptStringFromData:encryptedTexts[0] completionHandler:adapter];
@@ -1333,7 +1328,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"can get a session token using registerIdentityWithVerification", ^{
-          NSString* token =  hangWithAdapter(^(PMKAdapter adapter) {
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker startWithIdentity:identity
                     completionHandler:^(TKRStatus status, NSError* err) {
                       if (err)
@@ -1344,9 +1339,7 @@ SpecBegin(TankerSpecs)
                         expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
                         TKRVerificationOptions* opts = [TKRVerificationOptions options];
                         opts.withSessionToken = true;
-                        [tanker registerIdentityWithVerification:verification
-                                                         options:opts
-                                               completionHandler:adapter];
+                        [tanker registerIdentityWithVerification:verification options:opts completionHandler:adapter];
                       }
                     }];
           });
@@ -1357,11 +1350,9 @@ SpecBegin(TankerSpecs)
         it(@"can get a session token using verifyIdentityWithVerification", ^{
           startWithIdentityAndRegister(tanker, identity, verification);
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions *opts = [TKRVerificationOptions options];
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
             opts.withSessionToken = true;
-            [tanker verifyIdentityWithVerification:verification
-                                           options:opts
-                                 completionHandler:adapter];
+            [tanker verifyIdentityWithVerification:verification options:opts completionHandler:adapter];
           });
           expect(token).toNot.beNil();
           expect(token.length).to.equal(expectedTokenLength);
@@ -1370,11 +1361,9 @@ SpecBegin(TankerSpecs)
         it(@"can get a session token using setVerificationMethod", ^{
           startWithIdentityAndRegister(tanker, identity, verification);
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions *opts = [TKRVerificationOptions options];
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
             opts.withSessionToken = true;
-            [tanker setVerificationMethod:verification
-                                  options:opts
-                        completionHandler:adapter];
+            [tanker setVerificationMethod:verification options:opts completionHandler:adapter];
           });
           expect(token).toNot.beNil();
           expect(token.length).to.equal(expectedTokenLength);
