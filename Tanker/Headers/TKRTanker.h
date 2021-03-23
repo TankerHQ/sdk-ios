@@ -9,6 +9,7 @@
 #import "TKRStatus.h"
 #import "TKRTankerOptions.h"
 #import "TKRVerification.h"
+#import "TKRVerificationOptions.h"
 #import "TKRVerificationKey.h"
 #import "TKRVerificationMethod.h"
 
@@ -75,7 +76,9 @@
  @param verification the verification.
  @param handler the block called with an NSError*, or nil.
  */
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler;
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification
+                      options:(nonnull TKRVerificationOptions*) options
+            completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
  @brief Start Tanker
@@ -96,7 +99,8 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                       completionHandler:(nonnull TKRErrorHandler)handler;
+                                 options:(nonnull TKRVerificationOptions*) options
+                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
  @brief Verify an identity
@@ -107,7 +111,8 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                     completionHandler:(nonnull TKRErrorHandler)handler;
+                               options:(nonnull TKRVerificationOptions*) options
+                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
  @brief Attach a provisional identity to the current user

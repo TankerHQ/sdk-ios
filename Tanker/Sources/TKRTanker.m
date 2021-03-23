@@ -191,15 +191,27 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                       completionHandler:(nonnull TKRErrorHandler)handler
+                                 options:(nonnull TKRVerificationOptions*) options
+                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
+  TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
+    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    if (err || !session_token)
+      handler(nil, err);
+    else
+    {
+      NSString* ret = [NSString stringWithCString:session_token encoding:NSUTF8StringEncoding];
+      tanker_free_buffer(session_token);
+      handler(ret, nil);
+    }
   };
   tanker_verification_t c_verification = TANKER_VERIFICATION_INIT;
 
+  tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
+  coptions.with_session_token = options.withSessionToken;
+
   verificationToCVerification(verification, &c_verification);
-  tanker_future_t* register_future = tanker_register_identity((tanker_t*)self.cTanker, &c_verification);
+  tanker_future_t* register_future = tanker_register_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
       tanker_future_then(register_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(register_future);
@@ -230,15 +242,28 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification
+                      options:(nonnull TKRVerificationOptions*) options
+            completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
+  TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
+    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    if (err || !session_token)
+      handler(nil, err);
+    else
+    {
+      NSString* ret = [NSString stringWithCString:session_token encoding:NSUTF8StringEncoding];
+      tanker_free_buffer(session_token);
+      handler(ret, nil);
+    }
   };
   tanker_verification_t c_verification = TANKER_VERIFICATION_INIT;
   verificationToCVerification(verification, &c_verification);
 
-  tanker_future_t* set_future = tanker_set_verification_method((tanker_t*)self.cTanker, &c_verification);
+  tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
+  coptions.with_session_token = options.withSessionToken;
+
+  tanker_future_t* set_future = tanker_set_verification_method((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
       tanker_future_then(set_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(set_future);
@@ -246,15 +271,27 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                     completionHandler:(nonnull TKRErrorHandler)handler
+                               options:(nonnull TKRVerificationOptions*) options
+                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
+  TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
+    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    if (err || !session_token)
+      handler(nil, err);
+    else
+    {
+      NSString* ret = [NSString stringWithCString:session_token encoding:NSUTF8StringEncoding];
+      tanker_free_buffer(session_token);
+      handler(ret, nil);
+    }
   };
   tanker_verification_t c_verification = TANKER_VERIFICATION_INIT;
   verificationToCVerification(verification, &c_verification);
 
-  tanker_future_t* verify_future = tanker_verify_identity((tanker_t*)self.cTanker, &c_verification);
+  tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
+  coptions.with_session_token = options.withSessionToken;
+
+  tanker_future_t* verify_future = tanker_verify_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
       tanker_future_then(verify_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(verify_future);

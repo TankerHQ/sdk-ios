@@ -104,12 +104,21 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   return opts;
 }
 
-void updateAdminApp(tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider)
+void updateAdminApp(tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider, bool* enable2FA)
 {
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
-  char const* oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
-  char const* oidc_client_provider = [oidcClientProvider cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_expected_t* update_fut = tanker_admin_app_update(admin, app_id, oidc_client_id, oidc_client_provider);
+  tanker_app_update_options_t options;
+  options.version = 1;
+  options.session_certificates = enable2FA;
+  if (oidcClientID)
+    options.oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
+  else
+    options.oidc_client_id = NULL;
+  if (oidcClientProvider)
+    options.oidc_client_provider = [oidcClientProvider cStringUsingEncoding:NSUTF8StringEncoding];
+  else
+    options.oidc_client_id = NULL;
+  tanker_expected_t* update_fut = tanker_admin_app_update(admin, app_id, &options);
   tanker_future_wait(update_fut);
   tanker_future_destroy(update_fut);
 }
@@ -193,16 +202,19 @@ SpecBegin(TankerSpecs)
 
       __block void (^startWithIdentityAndRegister)(TKRTanker*, NSString*, TKRVerification*) =
           ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker startWithIdentity:identity
                       completionHandler:^(TKRStatus status, NSError* err) {
                         if (err)
-                          resolver(err);
+                          adapter(nil, err);
                         else
                         {
                           expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
-                          [tanker registerIdentityWithVerification:verification completionHandler:resolver];
+                          TKRVerificationOptions* opts = [TKRVerificationOptions options];
+                          [tanker registerIdentityWithVerification:verification
+                                                           options:opts
+                                                 completionHandler:adapter];
                         }
                       }];
             });
@@ -225,9 +237,11 @@ SpecBegin(TankerSpecs)
                       }];
             });
             expect(verificationKey).toNot.beNil();
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+              TKRVerificationOptions* opts = [TKRVerificationOptions options];
               [tanker registerIdentityWithVerification:[TKRVerification verificationFromVerificationKey:verificationKey]
-                                     completionHandler:resolver];
+                                               options:opts
+                                     completionHandler:adapter];
             });
             expect(tanker.status).to.equal(TKRStatusReady);
             expect(err).to.beNil();
@@ -236,16 +250,19 @@ SpecBegin(TankerSpecs)
 
       __block void (^startWithIdentityAndVerify)(TKRTanker*, NSString*, TKRVerification*) =
           ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker startWithIdentity:identity
                       completionHandler:^(TKRStatus status, NSError* err) {
                         if (err)
-                          resolver(err);
+                          adapter(nil, err);
                         else
                         {
                           expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityVerificationNeeded);
-                          [tanker verifyIdentityWithVerification:verification completionHandler:resolver];
+                          TKRVerificationOptions* opts = [TKRVerificationOptions options];
+                          [tanker verifyIdentityWithVerification:verification
+                                                         options:opts
+                                               completionHandler:adapter];
                         }
                       }];
             });
@@ -282,7 +299,7 @@ SpecBegin(TankerSpecs)
         expect(adminUrl).toNot.beNil();
         NSString* idToken = env[@"TANKER_ID_TOKEN"];
         expect(idToken).toNot.beNil();
-        
+
         oidcTestConfig = @{
           @"clientId": env[@"TANKER_OIDC_CLIENT_ID"],
           @"clientSecret": env[@"TANKER_OIDC_CLIENT_SECRET"],
@@ -294,7 +311,7 @@ SpecBegin(TankerSpecs)
             }
           }
         };
-        
+
         curl = [url cStringUsingEncoding:NSUTF8StringEncoding];
         ctrustchaindurl = [trustchaindUrl cStringUsingEncoding:NSUTF8StringEncoding];
         char const* cadminUrl = [adminUrl cStringUsingEncoding:NSUTF8StringEncoding];
@@ -750,7 +767,7 @@ SpecBegin(TankerSpecs)
         });
       });
 
-      describe(@"encryptionSession", ^{
+      describe(@"encryptionSession", ^{
         __block TKRTanker* aliceTanker;
         __block TKRTanker* bobTanker;
         __block NSString* aliceIdentity;
@@ -796,7 +813,7 @@ SpecBegin(TankerSpecs)
           });
           expect(decryptedString).to.equal(clearText);
         });
-        
+
         it(@"should be able to share with an encryption session, but not with self", ^{
           TKREncryptionOptions* opts = [TKREncryptionOptions options];
           opts.shareWithUsers = @[ bobPublicIdentity ];
@@ -813,7 +830,7 @@ SpecBegin(TankerSpecs)
             [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
           });
           expect(decryptedString).to.equal(clearText);
-          
+
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
           });
@@ -971,7 +988,7 @@ SpecBegin(TankerSpecs)
 
           expect(decryptedString).to.equal(@"Rosebud");
         });
-        
+
         it(@"should encrypt a string for Bob, but not for Alice", ^{
           NSString* clearString = @"Rosebud";
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
@@ -987,7 +1004,7 @@ SpecBegin(TankerSpecs)
           });
 
           expect(decryptedString).to.equal(clearString);
-          
+
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
           });
@@ -1021,8 +1038,8 @@ SpecBegin(TankerSpecs)
           hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:resourceIDs options:opts completionHandler:resolve];
           });
-          
-          
+
+
 
           NSArray* decryptPromises = @[
             [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
@@ -1157,7 +1174,7 @@ SpecBegin(TankerSpecs)
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
           NSString* refreshToken = oidcTestConfig[@"users"][userName][@"refreshToken"];
 
-          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider);
+          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, NULL);
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           NSString* userIdentity = createIdentity(email, appID, appSecret);
 
@@ -1217,9 +1234,11 @@ SpecBegin(TankerSpecs)
         it(@"should fail to set a verification method if a verification key was generated", ^{
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
 
-          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
             [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"fail"]
-                             completionHandler:resolver];
+                                       options:opts
+                             completionHandler:adapter];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorPreconditionFailed);
@@ -1229,17 +1248,19 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
-          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice startWithIdentity:identity
                           completionHandler:^(TKRStatus status, NSError* err) {
                             if (err)
-                              resolver(err);
+                              adapter(nil, err);
                             else
                             {
                               expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                              TKRVerificationOptions* opts = [TKRVerificationOptions options];
                               [secondDevice
                                   verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:@"fail"]
-                                               completionHandler:resolver];
+                                                         options:opts
+                                               completionHandler:adapter];
                             }
                           }];
           });
@@ -1251,9 +1272,11 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
-          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
             [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"new passphrase"]
-                             completionHandler:resolver];
+                                       options:opts
+                             completionHandler:adapter];
           });
           expect(err).to.beNil();
 
@@ -1263,20 +1286,22 @@ SpecBegin(TankerSpecs)
 
         it(@"should throw when verifying an identity with an invalid verification key", ^{
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
-          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice
                 startWithIdentity:identity
                 completionHandler:^(TKRStatus status, NSError* err) {
                   if (err)
-                    resolver(err);
+                    adapter(nil, err);
                   else
                   {
                     expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                    TKRVerificationOptions* opts = [TKRVerificationOptions options];
                     [secondDevice
                         verifyIdentityWithVerification:
                             [TKRVerification
                                 verificationFromVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
-                                     completionHandler:resolver];
+                                               options:opts
+                                     completionHandler:adapter];
                   }
                 }];
           });
