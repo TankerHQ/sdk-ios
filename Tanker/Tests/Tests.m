@@ -1329,6 +1329,75 @@ SpecBegin(TankerSpecs)
         });
       });
 
+      describe(@"session tokens (2FA)", ^{
+        __block TKRTanker* tanker;
+        __block NSString* identity;
+        __block TKRVerification* verification;
+
+        beforeEach(^{
+          tanker = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(tanker).toNot.beNil();
+          identity = createIdentity(createUUID(), appID, appSecret);
+          verification = [TKRVerification verificationFromPassphrase:@"passphrase"];
+          bool enable2FA = true;
+          updateAdminApp(admin, appID, nil, nil, &enable2FA);
+        });
+
+        afterEach(^{
+          bool enable2FA = false;
+          updateAdminApp(admin, appID, nil, nil, &enable2FA);
+          stop(tanker);
+        });
+
+        it(@"can get a session token using registerIdentityWithVerification", ^{
+          NSString* token =  hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker startWithIdentity:identity
+                    completionHandler:^(TKRStatus status, NSError* err) {
+                      if (err)
+                        adapter(nil, err);
+                      else
+                      {
+                        expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
+                        expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
+                        TKRVerificationOptions* opts = [TKRVerificationOptions options];
+                        opts.withSessionToken = true;
+                        [tanker registerIdentityWithVerification:verification
+                                                         options:opts
+                                               completionHandler:adapter];
+                      }
+                    }];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(44); // Base64 hash size length
+        });
+
+        it(@"can get a session token using verifyIdentityWithVerification", ^{
+          startWithIdentityAndRegister(tanker, identity, verification);
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions *opts = [TKRVerificationOptions options];
+            opts.withSessionToken = true;
+            [tanker verifyIdentityWithVerification:verification
+                                           options:opts
+                                 completionHandler:adapter];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(44); // Base64 hash size length
+        });
+
+        it(@"can get a session token using setVerificationMethod", ^{
+          startWithIdentityAndRegister(tanker, identity, verification);
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions *opts = [TKRVerificationOptions options];
+            opts.withSessionToken = true;
+            [tanker setVerificationMethod:verification
+                                  options:opts
+                        completionHandler:adapter];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(44); // Base64 hash size length
+        });
+      });
+
       describe(@"revocation", ^{
         __block TKRTanker* tanker;
         __block TKRTanker* secondDevice;
