@@ -191,6 +191,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
+    completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+{
+  [self registerIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:handler];
+}
+
+- (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
                                  options:(nonnull TKRVerificationOptions*) options
                        completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
@@ -243,6 +249,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
+    completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+{
+  [self setVerificationMethod:verification options:[TKRVerificationOptions options] completionHandler:handler];
+}
+
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification
                       options:(nonnull TKRVerificationOptions*) options
             completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
@@ -268,6 +280,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       tanker_future_then(set_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(set_future);
   tanker_future_destroy(resolve_future);
+}
+
+- (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
+    completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+{
+  [self verifyIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:handler];
 }
 
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification

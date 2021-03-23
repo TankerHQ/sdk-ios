@@ -107,17 +107,12 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
 void updateAdminApp(tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider, bool* enable2FA)
 {
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_app_update_options_t options;
-  options.version = 1;
+  tanker_app_update_options_t options = TANKER_APP_UPDATE_OPTIONS_INIT;
   options.session_certificates = enable2FA;
   if (oidcClientID)
     options.oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
-  else
-    options.oidc_client_id = NULL;
   if (oidcClientProvider)
     options.oidc_client_provider = [oidcClientProvider cStringUsingEncoding:NSUTF8StringEncoding];
-  else
-    options.oidc_client_id = NULL;
   tanker_expected_t* update_fut = tanker_admin_app_update(admin, app_id, &options);
   tanker_future_wait(update_fut);
   tanker_future_destroy(update_fut);
@@ -211,9 +206,7 @@ SpecBegin(TankerSpecs)
                         {
                           expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
-                          TKRVerificationOptions* opts = [TKRVerificationOptions options];
                           [tanker registerIdentityWithVerification:verification
-                                                           options:opts
                                                  completionHandler:adapter];
                         }
                       }];
@@ -238,9 +231,7 @@ SpecBegin(TankerSpecs)
             });
             expect(verificationKey).toNot.beNil();
             NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-              TKRVerificationOptions* opts = [TKRVerificationOptions options];
               [tanker registerIdentityWithVerification:[TKRVerification verificationFromVerificationKey:verificationKey]
-                                               options:opts
                                      completionHandler:adapter];
             });
             expect(tanker.status).to.equal(TKRStatusReady);
@@ -259,9 +250,7 @@ SpecBegin(TankerSpecs)
                         {
                           expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityVerificationNeeded);
-                          TKRVerificationOptions* opts = [TKRVerificationOptions options];
                           [tanker verifyIdentityWithVerification:verification
-                                                         options:opts
                                                completionHandler:adapter];
                         }
                       }];
@@ -1174,7 +1163,7 @@ SpecBegin(TankerSpecs)
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
           NSString* refreshToken = oidcTestConfig[@"users"][userName][@"refreshToken"];
 
-          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, NULL);
+          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, nil);
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           NSString* userIdentity = createIdentity(email, appID, appSecret);
 
@@ -1235,9 +1224,7 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
 
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
             [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"fail"]
-                                       options:opts
                              completionHandler:adapter];
           });
           expect(err).toNot.beNil();
@@ -1256,10 +1243,8 @@ SpecBegin(TankerSpecs)
                             else
                             {
                               expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
-                              TKRVerificationOptions* opts = [TKRVerificationOptions options];
                               [secondDevice
                                   verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:@"fail"]
-                                                         options:opts
                                                completionHandler:adapter];
                             }
                           }];
@@ -1273,9 +1258,7 @@ SpecBegin(TankerSpecs)
               firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
             [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"new passphrase"]
-                                       options:opts
                              completionHandler:adapter];
           });
           expect(err).to.beNil();
@@ -1295,12 +1278,10 @@ SpecBegin(TankerSpecs)
                   else
                   {
                     expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
-                    TKRVerificationOptions* opts = [TKRVerificationOptions options];
                     [secondDevice
                         verifyIdentityWithVerification:
                             [TKRVerification
                                 verificationFromVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
-                                               options:opts
                                      completionHandler:adapter];
                   }
                 }];
@@ -1330,11 +1311,13 @@ SpecBegin(TankerSpecs)
       });
 
       describe(@"session tokens (2FA)", ^{
+        __block int expectedTokenLength;
         __block TKRTanker* tanker;
         __block NSString* identity;
         __block TKRVerification* verification;
 
         beforeEach(^{
+          expectedTokenLength = 44; // Base64 length of a session token (hash size)
           tanker = [TKRTanker tankerWithOptions:tankerOptions];
           expect(tanker).toNot.beNil();
           identity = createIdentity(createUUID(), appID, appSecret);
@@ -1368,7 +1351,7 @@ SpecBegin(TankerSpecs)
                     }];
           });
           expect(token).toNot.beNil();
-          expect(token.length).to.equal(44); // Base64 hash size length
+          expect(token.length).to.equal(expectedTokenLength);
         });
 
         it(@"can get a session token using verifyIdentityWithVerification", ^{
@@ -1381,7 +1364,7 @@ SpecBegin(TankerSpecs)
                                  completionHandler:adapter];
           });
           expect(token).toNot.beNil();
-          expect(token.length).to.equal(44); // Base64 hash size length
+          expect(token.length).to.equal(expectedTokenLength);
         });
 
         it(@"can get a session token using setVerificationMethod", ^{
@@ -1394,7 +1377,7 @@ SpecBegin(TankerSpecs)
                         completionHandler:adapter];
           });
           expect(token).toNot.beNil();
-          expect(token.length).to.equal(44); // Base64 hash size length
+          expect(token.length).to.equal(expectedTokenLength);
         });
       });
 

@@ -77,6 +77,18 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
+            completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+
+/*!
+ @brief Register or update a verification method.
+
+ @pre status must be TKRStatusReady
+
+ @param verification the verification.
+ @param options extra options for identity verification
+ @param handler the block called with an NSError*, or nil.
+ */
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification
                       options:(nonnull TKRVerificationOptions*) options
             completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
@@ -99,6 +111,18 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
+                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+
+/*!
+ @brief Register an identity and associate a verification method.
+
+ @pre status must be TKRStatusIdentityRegistrationNeeded
+
+ @param verification the verification.
+ @param options extra options for identity verification
+ @param handler the block called with an NSError*, or nil.
+ */
+- (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
                                  options:(nonnull TKRVerificationOptions*) options
                        completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
@@ -108,6 +132,18 @@
  @pre status must be TKRStatusIdentityVerificationNeeded
 
  @param verification the verification.
+ @param handler the block called with an NSError*, or nil.
+ */
+- (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
+                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+
+/*!
+ @brief Verify an identity
+
+ @pre status must be TKRStatusIdentityVerificationNeeded
+
+ @param verification the verification.
+ @param options extra options for identity verification
  @param handler the block called with an NSError*, or nil.
  */
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
