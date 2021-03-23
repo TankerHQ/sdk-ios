@@ -168,7 +168,9 @@ SpecBegin(TankerSpecs)
     describe(@"Tanker Bindings", ^{
       __block tanker_admin_t* admin;
       __block NSString* url;
+      __block NSString* trustchaindUrl;
       __block char const* curl;
+      __block char const* ctrustchaindurl;
       __block NSString* appID;
       __block NSString* appSecret;
       __block NSString* authToken;
@@ -259,7 +261,7 @@ SpecBegin(TankerSpecs)
 
       __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
         tanker_future_t* f = tanker_get_verification_code(
-            curl,
+            ctrustchaindurl,
             [appID cStringUsingEncoding:NSUTF8StringEncoding],
             [authToken cStringUsingEncoding:NSUTF8StringEncoding],
             [email cStringUsingEncoding:NSUTF8StringEncoding]
@@ -273,7 +275,8 @@ SpecBegin(TankerSpecs)
 
       beforeAll(^{
         NSDictionary* env = [[NSProcessInfo processInfo] environment];
-        url = env[@"TANKER_TRUSTCHAIND_URL"];
+        url = env[@"TANKER_APPD_URL"];
+        trustchaindUrl = env[@"TANKER_TRUSTCHAIND_URL"];
         NSString* adminUrl = env[@"TANKER_ADMIND_URL"];
         expect(url).toNot.beNil();
         expect(adminUrl).toNot.beNil();
@@ -293,6 +296,7 @@ SpecBegin(TankerSpecs)
         };
         
         curl = [url cStringUsingEncoding:NSUTF8StringEncoding];
+        ctrustchaindurl = [trustchaindUrl cStringUsingEncoding:NSUTF8StringEncoding];
         char const* cadminUrl = [adminUrl cStringUsingEncoding:NSUTF8StringEncoding];
         char const* id_token = [idToken cStringUsingEncoding:NSUTF8StringEncoding];
         tanker_future_t* connect_fut = tanker_admin_connect(cadminUrl, id_token);
