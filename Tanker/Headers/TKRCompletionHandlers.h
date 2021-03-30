@@ -75,6 +75,16 @@ typedef void (^TKRGroupIDHandler)(NSString* _Nullable groupID,
                                   NSError* _Nullable err);
 
 /*!
+ @typedef TKRIdentityVerificationHandler
+ @brief Block which may be called with a session token string.
+
+ @param sessionToken the token, or nil if none was requested or if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRIdentityVerificationHandler)(NSString* _Nullable sessionToken,
+                                               NSError* _Nullable err);
+
+/*!
  @typedef TKRVerificationKeyHandler
  @brief Block which will be called with a string.
 

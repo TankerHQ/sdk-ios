@@ -11,6 +11,7 @@
 #import "TKRVerification.h"
 #import "TKRVerificationKey.h"
 #import "TKRVerificationMethod.h"
+#import "TKRVerificationOptions.h"
 
 #define TKRErrorDomain @"TKRErrorDomain"
 
@@ -55,7 +56,7 @@
  @deprecated the DeviceRevoked event is deprecated, it will be removed in the future
  */
 - (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
-  DEPRECATED_MSG_ATTRIBUTE("the DeviceRevoked event is deprecated, it will be removed in the future");
+    DEPRECATED_MSG_ATTRIBUTE("the DeviceRevoked event is deprecated, it will be removed in the future");
 ;
 
 /*!
@@ -75,7 +76,21 @@
  @param verification the verification.
  @param handler the block called with an NSError*, or nil.
  */
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler;
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification
+            completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+
+/*!
+ @brief Register or update a verification method.
+
+ @pre status must be TKRStatusReady
+
+ @param verification the verification.
+ @param options extra options for identity verification
+ @param handler the block called with an NSError*, or nil.
+ */
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification
+                      options:(nonnull TKRVerificationOptions*)options
+            completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
  @brief Start Tanker
@@ -96,7 +111,20 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                       completionHandler:(nonnull TKRErrorHandler)handler;
+                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+
+/*!
+ @brief Register an identity and associate a verification method.
+
+ @pre status must be TKRStatusIdentityRegistrationNeeded
+
+ @param verification the verification.
+ @param options extra options for identity verification
+ @param handler the block called with an NSError*, or nil.
+ */
+- (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
+                                 options:(nonnull TKRVerificationOptions*)options
+                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
  @brief Verify an identity
@@ -107,7 +135,20 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                     completionHandler:(nonnull TKRErrorHandler)handler;
+                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+
+/*!
+ @brief Verify an identity
+
+ @pre status must be TKRStatusIdentityVerificationNeeded
+
+ @param verification the verification.
+ @param options extra options for identity verification
+ @param handler the block called with an NSError*, or nil.
+ */
+- (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
+                               options:(nonnull TKRVerificationOptions*)options
+                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
  @brief Attach a provisional identity to the current user
@@ -291,8 +332,9 @@
 
  @deprecated revokeDevice is deprecated, it will be removed in the future
  */
-- (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler
-  DEPRECATED_MSG_ATTRIBUTE("revokeDevice is deprecated, it will be removed in the future");
+- (void)revokeDevice:(nonnull NSString*)deviceId
+    completionHandler:(nonnull TKRErrorHandler)handler
+    DEPRECATED_MSG_ATTRIBUTE("revokeDevice is deprecated, it will be removed in the future");
 
 /*!
 @brief Create an encryption session without sharing it with other users or group.
@@ -306,7 +348,7 @@
  */
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
                                       sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
-  DEPRECATED_MSG_ATTRIBUTE("use createEncryptionSessionWithCompletionHandler:encryptionOptions instead");
+    DEPRECATED_MSG_ATTRIBUTE("use createEncryptionSessionWithCompletionHandler:encryptionOptions instead");
 
 /*!
  @brief Create an encryption session shared with the given users and groups.
