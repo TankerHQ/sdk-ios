@@ -13,6 +13,9 @@ check/deployed-native:
     - .rules/deployed-native
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
+  artifacts:
+    paths:
+      - pod
 
 check/native-from-sources:
   extends:
@@ -20,6 +23,9 @@ check/native-from-sources:
     - .rules/native-from-sources
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
+  artifacts:
+    paths:
+      - pod
 
 check/downstream:
   extends:
@@ -28,6 +34,9 @@ check/downstream:
     - .rules/check/downstream
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=upstream
+  artifacts:
+    paths:
+      - pod
 
 deploy:
   extends:
