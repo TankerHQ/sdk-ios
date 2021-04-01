@@ -198,16 +198,16 @@ SpecBegin(TankerSpecs)
 
       __block void (^startWithIdentityAndRegister)(TKRTanker*, NSString*, TKRVerification*) =
           ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
-            NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [tanker startWithIdentity:identity
                       completionHandler:^(TKRStatus status, NSError* err) {
                         if (err)
-                          adapter(nil, err);
+                          resolver(err);
                         else
                         {
                           expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
-                          [tanker registerIdentityWithVerification:verification completionHandler:adapter];
+                          [tanker registerIdentityWithVerification:verification completionHandler:resolver];
                         }
                       }];
             });
@@ -230,9 +230,9 @@ SpecBegin(TankerSpecs)
                       }];
             });
             expect(verificationKey).toNot.beNil();
-            NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [tanker registerIdentityWithVerification:[TKRVerification verificationFromVerificationKey:verificationKey]
-                                     completionHandler:adapter];
+                                     completionHandler:resolver];
             });
             expect(tanker.status).to.equal(TKRStatusReady);
             expect(err).to.beNil();
@@ -241,16 +241,16 @@ SpecBegin(TankerSpecs)
 
       __block void (^startWithIdentityAndVerify)(TKRTanker*, NSString*, TKRVerification*) =
           ^(TKRTanker* tanker, NSString* identity, TKRVerification* verification) {
-            NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [tanker startWithIdentity:identity
                       completionHandler:^(TKRStatus status, NSError* err) {
                         if (err)
-                          adapter(nil, err);
+                          resolver(err);
                         else
                         {
                           expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                           expect(tanker.status).to.equal(TKRStatusIdentityVerificationNeeded);
-                          [tanker verifyIdentityWithVerification:verification completionHandler:adapter];
+                          [tanker verifyIdentityWithVerification:verification completionHandler:resolver];
                         }
                       }];
             });
@@ -1218,9 +1218,9 @@ SpecBegin(TankerSpecs)
         it(@"should fail to set a verification method if a verification key was generated", ^{
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
 
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"fail"]
-                             completionHandler:adapter];
+                             completionHandler:resolver];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorPreconditionFailed);
@@ -1230,17 +1230,17 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [secondDevice startWithIdentity:identity
                           completionHandler:^(TKRStatus status, NSError* err) {
                             if (err)
-                              adapter(nil, err);
+                              resolver(err);
                             else
                             {
                               expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                               [secondDevice
                                   verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:@"fail"]
-                                               completionHandler:adapter];
+                                               completionHandler:resolver];
                             }
                           }];
           });
@@ -1252,9 +1252,9 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
 
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"new passphrase"]
-                             completionHandler:adapter];
+                             completionHandler:resolver];
           });
           expect(err).to.beNil();
 
@@ -1264,12 +1264,12 @@ SpecBegin(TankerSpecs)
 
         it(@"should throw when verifying an identity with an invalid verification key", ^{
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [secondDevice
                 startWithIdentity:identity
                 completionHandler:^(TKRStatus status, NSError* err) {
                   if (err)
-                    adapter(nil, err);
+                    resolver(err);
                   else
                   {
                     expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
@@ -1277,7 +1277,7 @@ SpecBegin(TankerSpecs)
                         verifyIdentityWithVerification:
                             [TKRVerification
                                 verificationFromVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
-                                     completionHandler:adapter];
+                                     completionHandler:resolver];
                   }
                 }];
           });

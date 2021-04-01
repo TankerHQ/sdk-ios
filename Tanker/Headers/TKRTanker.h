@@ -77,7 +77,7 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
-            completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+            completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Register or update a verification method.
@@ -111,7 +111,7 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+                       completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Register an identity and associate a verification method.
@@ -135,7 +135,7 @@
  @param handler the block called with an NSError*, or nil.
  */
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+                     completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Verify an identity
