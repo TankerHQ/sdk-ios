@@ -191,11 +191,15 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+                       completionHandler:(nonnull TKRErrorHandler)handler
 {
+  TKRIdentityVerificationHandler thunk = ^(NSString* _token, NSError* err) {
+    handler(err);
+  };
+
   [self registerIdentityWithVerification:verification
                                  options:[TKRVerificationOptions options]
-                       completionHandler:handler];
+                       completionHandler:thunk];
 }
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
@@ -251,9 +255,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
-            completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+            completionHandler:(nonnull TKRErrorHandler)handler
 {
-  [self setVerificationMethod:verification options:[TKRVerificationOptions options] completionHandler:handler];
+  TKRIdentityVerificationHandler thunk = ^(NSString* _token, NSError* err) {
+    handler(err);
+  };
+
+  [self setVerificationMethod:verification options:[TKRVerificationOptions options] completionHandler:thunk];
 }
 
 - (void)setVerificationMethod:(nonnull TKRVerification*)verification
@@ -285,9 +293,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler
+                     completionHandler:(nonnull TKRErrorHandler)handler
 {
-  [self verifyIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:handler];
+  TKRIdentityVerificationHandler thunk = ^(NSString* _token, NSError* err) {
+    handler(err);
+  };
+
+  [self verifyIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:thunk];
 }
 
 - (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
