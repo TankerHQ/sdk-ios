@@ -29,6 +29,7 @@ DerivedData/
 
 # Used by gitlab-ci
 artifacts/
+pod/
 
 .venv/
 .mypy_cache/

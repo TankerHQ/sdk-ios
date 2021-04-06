@@ -232,6 +232,17 @@ class PodPublisher:
         )
         # fmt: on
 
+    def write_artifacts(self) -> None:
+        self.dest_path = Path.cwd() / "pod"
+        shutil.rmtree(self.dest_path, ignore_errors=True)
+        self.dest_path.mkdir(parents=True)
+
+        self.copy_top_files()
+        self.copy_static_libs()
+        self.copy_sources()
+        self.copy_headers()
+        self.copy_test_sources()
+
     def publish(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             self.dest_path = Path(tmpdir)
@@ -353,6 +364,8 @@ def main() -> None:
             tanker_source=args.tanker_source,
             tanker_ref=args.tanker_ref,
         )
+        pod_publisher = PodPublisher(src_path=Path.cwd())
+        pod_publisher.write_artifacts()
     elif command == "prepare":
         prepare(args.tanker_source, args.update, args.tanker_ref)
     elif command == "deploy":
