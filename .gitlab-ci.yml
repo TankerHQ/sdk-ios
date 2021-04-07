@@ -1,15 +1,16 @@
 include:
   - project: TankerHQ/gitlab-ci-files
-    ref: 98ea16a090e6414744cd107c170505b715e92545
+    ref: f4fbb073851e9944d07179f3234d9c6035a98ade
     file: /ios.yml
 
-########
-# Jobs #
-########
+###############
+# check stage #
+###############
 
 check/deployed-native:
   extends:
     - .check
+    - .tags/macos
     - .rules/deployed-native
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
@@ -20,6 +21,7 @@ check/deployed-native:
 check/native-from-sources:
   extends:
     - .check
+    - .tags/macos
     - .rules/native-from-sources
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
@@ -30,6 +32,7 @@ check/native-from-sources:
 check/downstream:
   extends:
     - .check
+    - .tags/macos
     - .before-script/download-artifacts
     - .rules/check/downstream
   script:
@@ -38,9 +41,60 @@ check/downstream:
     paths:
       - pod
 
+######################
+# bridge-check stage #
+######################
+
+bridge/native-from-sources:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - check/native-from-sources
+  variables:
+    UPSTREAM_JOB_NAME: check/native-from-sources
+    UPSTREAM_JOB_TARGET: ios
+  trigger:
+    project: TankerHQ/sdk-react-native
+    strategy: depend
+
+bridge/deployed-native:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - check/deployed-native
+  variables:
+    UPSTREAM_JOB_NAME: check/deployed-native
+    UPSTREAM_JOB_TARGET: ios
+  trigger:
+    project: TankerHQ/sdk-react-native
+    strategy: depend
+
+bridge/downstream:
+  extends:
+    - .bridge-check
+    - .rules/check/downstream
+    - .variables/bridge-common
+  needs:
+    - check/downstream
+  variables:
+    UPSTREAM_JOB_NAME: check/downstream
+    UPSTREAM_JOB_TARGET: ios
+  trigger:
+    project: TankerHQ/sdk-react-native
+    strategy: depend
+
+################
+# deploy stage #
+################
+
 deploy:
   extends:
     - .deploy
+    - .tags/macos
     - .rules/deploy/ios
   script:
     - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
@@ -51,6 +105,7 @@ deploy:
 mirror:
   extends:
     - .deploy
+    - .tags/macos
     - .rules/mirror
   script:
     - poetry run python run-ci.py mirror
