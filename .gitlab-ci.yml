@@ -97,7 +97,7 @@ deploy:
     - .tags/macos
     - .rules/deploy/ios
   script:
-    - GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gitlab.json poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
+    - poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
     tag_name: v$SDK_IOS_RELEASE_VERSION
