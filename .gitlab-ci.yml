@@ -48,7 +48,7 @@ check/downstream:
 bridge/native-from-sources:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/native-from-sources
     - .variables/bridge-common
   needs:
     - check/native-from-sources
@@ -62,7 +62,7 @@ bridge/native-from-sources:
 bridge/deployed-native:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/deployed-native
     - .variables/bridge-common
   needs:
     - check/deployed-native
