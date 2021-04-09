@@ -1,6 +1,6 @@
 include:
   - project: TankerHQ/gitlab-ci-files
-    ref: f4fbb073851e9944d07179f3234d9c6035a98ade
+    ref: 1620156356fee62041af4da68cc1c9e799fe9c30
     file: /ios.yml
 
 ###############
