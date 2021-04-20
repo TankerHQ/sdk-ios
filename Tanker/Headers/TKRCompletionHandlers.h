@@ -6,6 +6,7 @@
 @class TKRVerificationMethod;
 @class TKRAttachResult;
 @class TKREncryptionSession;
+@class TKRLogEntry;
 
 /*!
  @typedef TKRStartHandler
@@ -133,3 +134,5 @@ typedef void (^TKRInputStreamHandler)(NSInputStream* _Nullable stream,
  */
 typedef void (^TKREncryptionSessionHandler)(
     TKREncryptionSession* _Nullable session, NSError* _Nullable err);
+
+typedef void (^TKRLogHandler)(TKRLogEntry* _Nonnull entry);

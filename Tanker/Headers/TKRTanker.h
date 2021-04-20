@@ -44,6 +44,8 @@
 
 + (nonnull NSString*)prehashPassword:(nonnull NSString*)password;
 
++ (void)connectLogHandler:(nonnull TKRLogHandler)handler;
+
 // MARK: Instance methods
 
 /*!
@@ -57,7 +59,6 @@
  */
 - (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
     DEPRECATED_MSG_ATTRIBUTE("the DeviceRevoked event is deprecated, it will be removed in the future");
-;
 
 /*!
  @brief Get the list of the registered verification methods.

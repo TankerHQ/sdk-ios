@@ -12,6 +12,7 @@
 #import "TKRVerification+Private.h"
 #import "TKRVerificationKey+Private.h"
 #import "TKRVerificationMethod+Private.h"
+#import "TKRLogEntry.h"
 
 #include <assert.h>
 #include <string.h>
@@ -20,6 +21,23 @@
 #include "ctanker/stream.h"
 
 #define TANKER_IOS_VERSION @"9999"
+
+TKRLogHandler globalLogHandler = ^(TKRLogEntry* _Nonnull entry){
+  switch (entry.level)
+  {
+  case TKRLogLevelDebug:
+    break;
+  case TKRLogLevelInfo:
+    break;
+  case TKRLogLevelWarning:
+      break;
+  case TKRLogLevelError:
+    NSLog(@"Tanker Error: [%@] %@", entry.category, entry.message);
+    break;
+  default:
+    NSLog(@"Unknown Tanker log level: %c: [%@] %@", (int)entry.level, entry.category, entry.message);
+  }
+};
 
 static void verificationToCVerification(TKRVerification* _Nonnull verification, tanker_verification_t* c_verification)
 {
@@ -39,7 +57,6 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
     break;
   case TKRVerificationMethodTypeOIDCIDToken:
     c_verification->oidc_id_token = [verification.oidcIDToken cStringUsingEncoding:NSUTF8StringEncoding];
-    ;
     break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
@@ -74,22 +91,15 @@ static void dispatchInBackground(id block)
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), block);
 }
 
-static void logHandler(tanker_log_record_t const* record)
+static void defaultLogHandler(tanker_log_record_t const* record)
 {
-  switch (record->level)
-  {
-  case TANKER_LOG_DEBUG:
-    break;
-  case TANKER_LOG_INFO:
-    break;
-  case TANKER_LOG_WARNING:
-    break;
-  case TANKER_LOG_ERROR:
-    NSLog(@"Tanker Error: [%s] %s", record->category, record->message);
-    break;
-  default:
-    NSLog(@"Unknown Tanker log level: %c: [%s] %s", record->level, record->category, record->message);
-  }
+  TKRLogEntry* entry = [[TKRLogEntry alloc] init];
+  entry.category = [NSString stringWithCString:record->category encoding:NSUTF8StringEncoding];
+  entry.file = [NSString stringWithCString:record->file encoding:NSUTF8StringEncoding];
+  entry.message = [NSString stringWithCString:record->message encoding:NSUTF8StringEncoding];
+  entry.level = (TKRLogLevel)record->level;
+  entry.line = record->line;
+  globalLogHandler(entry);
 }
 
 static void onDeviceRevoked(void* unused, void* extra_arg)
@@ -131,9 +141,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 + (nonnull TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options
 {
   __block TKRTanker* tanker = [[[self class] alloc] init];
+  tanker_set_log_handler(&defaultLogHandler);
   tanker.options = options;
   tanker.callbacks = [NSMutableDictionary dictionary];
-  tanker_set_log_handler(&logHandler);
 
   tanker_options_t cOptions = TANKER_OPTIONS_INIT;
   convertOptions(options, &cOptions);
@@ -172,6 +182,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSString* hashed = [NSString stringWithCString:c_hashed encoding:NSUTF8StringEncoding];
   return hashed;
 }
+
++ (void)connectLogHandler:(nonnull TKRLogHandler)handler
+{
+  globalLogHandler = handler;
+}
+
 // MARK: Instance methods
 
 - (void)startWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRStartHandler)handler
