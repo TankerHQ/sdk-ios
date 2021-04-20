@@ -1,5 +1,6 @@
 _OBJC_CLASS_$_TKREncryptionOptions
 _OBJC_CLASS_$_TKRTanker
+_OBJC_CLASS_$_TKRLogEntry
 _OBJC_CLASS_$_TKRTankerOptions
 _OBJC_CLASS_$_TKRVerificationKey
 _OBJC_CLASS_$_TKRVerification
