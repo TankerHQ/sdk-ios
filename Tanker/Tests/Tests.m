@@ -4,7 +4,7 @@
 #import "TKRError.h"
 #import "TKRInputStreamDataSource+Private.h"
 #import "TKRTanker.h"
-#import "TKRTankerOptions+Private.h"
+#import "TKRTankerOptions.h"
 #import "TKRVerification.h"
 #import "TKRVerificationKey.h"
 
@@ -100,7 +100,7 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   opts.url = url;
   opts.appID = appID;
   opts.writablePath = createStorageFullpath();
-  opts.sdkType = @"test";
+  opts.sdkType = @"sdk-ios-tests";
   return opts;
 }
 
