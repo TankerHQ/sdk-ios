@@ -28,6 +28,8 @@
  */
 @property NSString* writablePath;
 
+@property NSString* sdkType;
+
 /*!
   @brief Create and return an empty TKRTankerOptions.
  */
