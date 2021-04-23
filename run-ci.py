@@ -106,14 +106,8 @@ class Builder:
         deps_info = DepsConfig(self.get_build_path(first_profile))
         for include_dir in deps_info["tanker"].include_dirs:
             include_path = Path(include_dir)
-            for header in include_path.glob("**/*"):
-                if header.is_dir():
-                    continue
-                rel_dir = header.parent.relative_to(include_dir)
-                header_dest_dir = self.headers_path / rel_dir
-                header_dest_dir.mkdir(parents=True, exist_ok=True)
-                ui.info_2(header, "->", header_dest_dir)
-                shutil.copy(header, header_dest_dir)
+
+            _copy_folder_content(include_path, self.headers_path)
 
     def handle_sdk_deps(self, *, tanker_source: TankerSource) -> None:
         ui.info_1("copying sdk-native for profiles: ", self.profiles)
@@ -321,7 +315,7 @@ def main() -> None:
     build_and_test_parser.add_argument(
         "--use-tanker",
         type=tankerci.conan.TankerSource,
-        default=tankerci.conan.TankerSource.EDITABLE,
+        default=tankerci.conan.TankerSource.LOCAL,
         dest="tanker_source",
     )
     build_and_test_parser.add_argument("--tanker-ref")
@@ -330,7 +324,7 @@ def main() -> None:
     prepare_parser.add_argument(
         "--use-tanker",
         type=tankerci.conan.TankerSource,
-        default=tankerci.conan.TankerSource.EDITABLE,
+        default=tankerci.conan.TankerSource.LOCAL,
         dest="tanker_source",
     )
     prepare_parser.add_argument("--tanker-ref")
