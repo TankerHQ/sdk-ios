@@ -315,7 +315,7 @@ def main() -> None:
     build_and_test_parser.add_argument(
         "--use-tanker",
         type=tankerci.conan.TankerSource,
-        default=tankerci.conan.TankerSource.EDITABLE,
+        default=tankerci.conan.TankerSource.LOCAL,
         dest="tanker_source",
     )
     build_and_test_parser.add_argument("--tanker-ref")
@@ -324,7 +324,7 @@ def main() -> None:
     prepare_parser.add_argument(
         "--use-tanker",
         type=tankerci.conan.TankerSource,
-        default=tankerci.conan.TankerSource.EDITABLE,
+        default=tankerci.conan.TankerSource.LOCAL,
         dest="tanker_source",
     )
     prepare_parser.add_argument("--tanker-ref")
