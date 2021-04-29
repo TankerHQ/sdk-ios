@@ -95,7 +95,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "conan"
-version = "1.32.0"
+version = "1.35.2"
 description = "Conan C/C++ package manager"
 category = "main"
 optional = false
@@ -122,8 +122,8 @@ tqdm = ">=4.28.1,<5"
 urllib3 = "<1.25.4 || >1.25.4,<1.25.5 || >1.25.5,<1.26"
 
 [package.extras]
-dev = ["nose (>=1.3.7,<1.4.0)", "pytest-xdist", "parameterized (>=0.6.3)", "mock (>=1.3.0,<1.4.0)", "WebTest (>=2.0.18,<2.1.0)", "bottle", "pytest (>=4.6.11)", "pytest (>=6.1.1,<7.0.0)"]
-test = ["nose (>=1.3.7,<1.4.0)", "pytest-xdist", "parameterized (>=0.6.3)", "mock (>=1.3.0,<1.4.0)", "WebTest (>=2.0.18,<2.1.0)", "bottle", "pytest (>=4.6.11)", "pytest (>=6.1.1,<7.0.0)"]
+dev = ["pytest-xdist", "parameterized (>=0.6.3)", "mock (>=1.3.0,<1.4.0)", "WebTest (>=2.0.18,<2.1.0)", "bottle", "pytest (>=4.6.11)", "pytest (>=6.1.1,<7.0.0)"]
+test = ["pytest-xdist", "parameterized (>=0.6.3)", "mock (>=1.3.0,<1.4.0)", "WebTest (>=2.0.18,<2.1.0)", "bottle", "pytest (>=4.6.11)", "pytest (>=6.1.1,<7.0.0)"]
 
 [[package]]
 name = "contextlib2"
@@ -427,7 +427,7 @@ cli = ["click (>=5.0)"]
 
 [[package]]
 name = "python-gitlab"
-version = "2.6.0"
+version = "2.7.1"
 description = "Interact with GitLab API"
 category = "main"
 optional = false
@@ -568,7 +568,7 @@ widechars = ["wcwidth"]
 
 [[package]]
 name = "tankerci"
-version = "2021.4.3347"
+version = "2021.4.3354"
 description = "Tanker CI library"
 category = "main"
 optional = false
@@ -576,7 +576,7 @@ python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
-conan = "1.32.0"
+conan = "1.35.2"
 docker-custodian = ">=0.7.3,<0.8.0"
 psutil = ">=5.6.7,<6.0.0"
 python-dotenv = ">=0.13.0,<0.14.0"
@@ -738,7 +738,7 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 conan = [
-    {file = "conan-1.32.0.tar.gz", hash = "sha256:623e5bb0f844ae43b6be6770b5bc9605e466ae47e9b1c15a7756e545471f9fbd"},
+    {file = "conan-1.35.2.tar.gz", hash = "sha256:402e4de67219d2551e5282d8f23463af0f07c6c162648d851f3b0a7b7236dcf3"},
 ]
 contextlib2 = [
     {file = "contextlib2-0.6.0.post1-py2.py3-none-any.whl", hash = "sha256:3355078a159fbb44ee60ea80abd0d87b80b78c248643b49aa6d94673b413609b"},
@@ -940,8 +940,8 @@ python-dotenv = [
     {file = "python_dotenv-0.13.0-py2.py3-none-any.whl", hash = "sha256:25c0ff1a3e12f4bde8d592cc254ab075cfe734fc5dd989036716fd17ee7e5ec7"},
 ]
 python-gitlab = [
-    {file = "python-gitlab-2.6.0.tar.gz", hash = "sha256:a862c6874524ab585b725a17b2cd2950fc09d6d74205f40a11be2a4e8f2dcaa1"},
-    {file = "python_gitlab-2.6.0-py3-none-any.whl", hash = "sha256:8f6a62b2804021416f13e91f359085f1071fb7adedfb292ef0d0877df777a075"},
+    {file = "python-gitlab-2.7.1.tar.gz", hash = "sha256:e1f9234a3ee7fbcf9ab1a5cb8b935ae58fdab29af9832ae060bf74d88bac8a7c"},
+    {file = "python_gitlab-2.7.1-py3-none-any.whl", hash = "sha256:b1dbb66f53ad7cf33fbdce8e9e7e6a09b18c75a9c506b099af1f6f9191542cfb"},
 ]
 pytimeparse = [
     {file = "pytimeparse-1.1.8-py2.py3-none-any.whl", hash = "sha256:04b7be6cc8bd9f5647a6325444926c3ac34ee6bc7e69da4367ba282f076036bd"},
@@ -1097,8 +1097,8 @@ tabulate = [
     {file = "tabulate-0.8.9.tar.gz", hash = "sha256:eb1d13f25760052e8931f2ef80aaf6045a6cceb47514db8beab24cded16f13a7"},
 ]
 tankerci = [
-    {file = "tankerci-2021.4.3347-py3-none-any.whl", hash = "sha256:c5573e1d2511987bd60675ea3de570cdeeb9da0e4b9e6526c3ee88cdefc60eb4"},
-    {file = "tankerci-2021.4.3347.tar.gz", hash = "sha256:21faa2d7d9869e7badeae3330b29d9df2c8e3fd6856141652cdc2be2310b0f01"},
+    {file = "tankerci-2021.4.3354-py3-none-any.whl", hash = "sha256:b83e492d2bebb4ffd654b91bf86af3bd9d2de4be0812870b4a0f6df6c9f5c20a"},
+    {file = "tankerci-2021.4.3354.tar.gz", hash = "sha256:5f893b382f7917763826fe0e4e0138a9ce4851384057f282652199ac5a7eb0a0"},
 ]
 tbump = [
     {file = "tbump-6.3.1-py3-none-any.whl", hash = "sha256:60a8b0e36654c705a359b0a1af289eff2397d4482a348219e150ee1169d63c7f"},

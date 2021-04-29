@@ -56,18 +56,6 @@ class Builder:
         self.example_path = self.pod_path / "Example"
         self.profiles = profiles
 
-    def generate_podspec(self) -> None:
-        static_libs = self.get_static_libs()
-        in_path = self.src_path / "Tanker/Tanker.in.podspec"
-        contents = in_path.read_text()
-        link_flags = [
-            f"-l{x.name[3:-2]}" for x in static_libs
-        ]  # strip 'lib' prefix and '.a' suffix
-        contents = contents.replace("@static_libs_link_flags@", " ".join(link_flags))
-        out_path = self.pod_path / "Tanker.podspec"
-        out_path.write_text(contents)
-        ui.info_2("Generated", out_path)
-
     def get_static_libs(self) -> List[Path]:
         libs_path = self.libraries_path
         return libs_path.glob("*.a")  # type: ignore
@@ -82,23 +70,33 @@ class Builder:
                 all_libs.setdefault(lib.name, []).append(lib)
         return all_libs
 
-    def generate_fat_libraries(self) -> None:
-        ui.info_1("Generating fat libraries")
+    def merge_all_dependencies(self) -> None:
         if self.libraries_path.exists():
             shutil.rmtree(self.libraries_path)
         self.libraries_path.mkdir(parents=True, exist_ok=True)
-
-        for lib_name, libs in self.get_all_dependency_libs().items():
-            output = self.libraries_path / lib_name
-            lib_strings: List[str] = [str(x) for x in libs]
+        for profile in self.profiles:
+            specific_arch_path = self.libraries_path / profile
+            specific_arch_path.mkdir()
+            lib_paths = DepsConfig(self.get_build_path(profile)).all_lib_paths()
             tankerci.run(
-                "lipo",
-                "-create",
-                "-output",
-                str(output),
-                *lib_strings,
-                cwd=self.conan_path,
+                "armerge",
+                "--keep-symbols=_?tanker_.*",
+                f"--output={specific_arch_path / 'libtankerdeps.a'}",
+                *lib_paths,
             )
+
+    def generate_fat_libraries(self) -> None:
+        ui.info_1("Generating fat libraries")
+
+        armerged_libs = [self.libraries_path / p / "libtankerdeps.a" for p in self.profiles]
+        tankerci.run(
+            "lipo",
+            "-create",
+            "-output",
+            self.libraries_path / "libtankerdeps.a",
+            *armerged_libs,
+            cwd=self.conan_path,
+        )
 
     def copy_headers(self) -> None:
         first_profile = list(self.profiles)[0]
@@ -111,6 +109,7 @@ class Builder:
 
     def handle_sdk_deps(self, *, tanker_source: TankerSource) -> None:
         ui.info_1("copying sdk-native for profiles: ", self.profiles)
+        self.merge_all_dependencies()
         self.generate_fat_libraries()
         self.copy_headers()
 
@@ -151,12 +150,6 @@ class PodPublisher:
 
         ui.info_2(sources_path, "->", self.dest_path)
         shutil.copytree(sources_path, self.dest_path / "Sources")
-
-        export_list_src = self.src_path / "Tanker/export_symbols.list"
-        export_list_dest = self.dest_path / "export_symbols.list"
-
-        ui.info_2(export_list_src, "->", export_list_dest)
-        shutil.copy(export_list_src, export_list_dest)
 
     def copy_top_files(self) -> None:
         ui.info_1("Copying top files")
@@ -272,7 +265,6 @@ def prepare(
     )
     builder = Builder(src_path=Path.cwd(), profiles=profiles)
     builder.handle_sdk_deps(tanker_source=tanker_source)
-    builder.generate_podspec()
     builder.handle_ios_deps()
     return builder
 

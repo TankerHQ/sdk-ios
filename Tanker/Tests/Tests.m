@@ -11,16 +11,16 @@
 #import "TKRCustomDataSource.h"
 #import "TKRTestAsyncStreamReader.h"
 
-@import POSInputStreamLibrary;
-@import Expecta;
-@import Specta;
-@import PromiseKit;
+#import <POSInputStreamLibrary/POSInputStreamLibrary.h>
+#import <Expecta/Expecta.h>
+#import <Specta/Specta.h>
+#import <PromiseKit/PromiseKit.h>
 
 #include "ctanker.h"
 #include "ctanker/admin.h"
 #include "ctanker/identity.h"
 
-NSError* getOptionalFutureError(tanker_future_t* fut)
+static NSError* getOptionalFutureError(tanker_future_t* fut)
 {
   tanker_error_t* err = tanker_future_get_error(fut);
   if (!err)
@@ -34,7 +34,7 @@ NSError* getOptionalFutureError(tanker_future_t* fut)
   return error;
 }
 
-void* unwrapAndFreeExpected(tanker_expected_t* expected)
+static void* unwrapAndFreeExpected(tanker_expected_t* expected)
 {
   NSError* optErr = getOptionalFutureError(expected);
   if (optErr)
@@ -49,7 +49,7 @@ void* unwrapAndFreeExpected(tanker_expected_t* expected)
   return ptr;
 }
 
-NSString* createIdentity(NSString* userID, NSString* appID, NSString* appSecret)
+static NSString* createIdentity(NSString* userID, NSString* appID, NSString* appSecret)
 {
   char const* user_id = [userID cStringUsingEncoding:NSUTF8StringEncoding];
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
@@ -63,7 +63,7 @@ NSString* createIdentity(NSString* userID, NSString* appID, NSString* appSecret)
                                   freeWhenDone:YES];
 }
 
-NSString* getPublicIdentity(NSString* identity)
+static NSString* getPublicIdentity(NSString* identity)
 {
   tanker_expected_t* identity_expected =
       tanker_get_public_identity([identity cStringUsingEncoding:NSUTF8StringEncoding]);
@@ -76,12 +76,12 @@ NSString* getPublicIdentity(NSString* identity)
                                   freeWhenDone:YES];
 }
 
-NSString* createUUID()
+static NSString* createUUID()
 {
   return [[NSUUID UUID] UUIDString];
 }
 
-NSString* createStorageFullpath()
+static NSString* createStorageFullpath()
 {
   NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
   NSString* path = [[paths objectAtIndex:0] stringByAppendingPathComponent:createUUID()];
@@ -94,7 +94,7 @@ NSString* createStorageFullpath()
   return path;
 }
 
-TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
+static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
 {
   TKRTankerOptions* opts = [TKRTankerOptions options];
   opts.url = url;
@@ -104,7 +104,7 @@ TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   return opts;
 }
 
-void updateAdminApp(
+static void updateAdminApp(
     tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider, bool* enable2FA)
 {
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
@@ -119,7 +119,7 @@ void updateAdminApp(
   tanker_future_destroy(update_fut);
 }
 
-NSDictionary* sendOidcRequest(NSString* oidcClientId, NSString* oidcClientSecret, NSString* refreshToken)
+static NSDictionary* sendOidcRequest(NSString* oidcClientId, NSString* oidcClientSecret, NSString* refreshToken)
 {
   NSMutableURLRequest* req =
       [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://www.googleapis.com/oauth2/v4/token"]];
@@ -154,14 +154,14 @@ NSDictionary* sendOidcRequest(NSString* oidcClientId, NSString* oidcClientSecret
   return [PMKPromise hang:prom];
 }
 
-id hangWithAdapter(void (^handler)(PMKAdapter))
+static id hangWithAdapter(void (^handler)(PMKAdapter))
 {
   return [PMKPromise hang:[PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
                        handler(adapter);
                      }]];
 }
 
-id hangWithResolver(void (^handler)(PMKResolver))
+static id hangWithResolver(void (^handler)(PMKResolver))
 {
   return [PMKPromise hang:[PMKPromise promiseWithResolver:^(PMKResolver resolve) {
                        handler(resolve);
