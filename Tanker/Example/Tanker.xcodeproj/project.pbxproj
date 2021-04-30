@@ -22,8 +22,8 @@
 		6003F5B2195388D20070C39A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F591195388D20070C39A /* UIKit.framework */; };
 		6003F5BA195388D20070C39A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5B8195388D20070C39A /* InfoPlist.strings */; };
 		6003F5BC195388D20070C39A /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5BB195388D20070C39A /* Tests.m */; };
-		6E6D76E16D1D9B5C297B3D1F /* libPods-Tanker_Tests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E06362EFCC10F8922C2AA7BD /* libPods-Tanker_Tests.a */; };
-		904827E4A4C6C75513057230 /* libPods-Tanker_Example.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0103CB4F2392DB37C5640889 /* libPods-Tanker_Example.a */; };
+		A7435DE311C3E245175FD569 /* Pods_Tanker_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4EA37DA195707A0E28071794 /* Pods_Tanker_Tests.framework */; };
+		F26DF5D2ED14641EBD793132 /* Pods_Tanker_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C5B10D68352B723B5FF0F8C /* Pods_Tanker_Example.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,11 +37,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0103CB4F2392DB37C5640889 /* libPods-Tanker_Example.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Tanker_Example.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		02E5DC2DDAB5F93C7280ED1A /* Pods-Tanker_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tanker_Tests.debug.xcconfig"; path = "Target Support Files/Pods-Tanker_Tests/Pods-Tanker_Tests.debug.xcconfig"; sourceTree = "<group>"; };
 		0C75F15D2718BE70837D37F6 /* Tanker.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Tanker.podspec; path = ../Tanker.podspec; sourceTree = "<group>"; };
+		2C5B10D68352B723B5FF0F8C /* Pods_Tanker_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Tanker_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		484E3C8C20DA4ECC0046812D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		484E3C8F20DA4F7D0046812D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		4EA37DA195707A0E28071794 /* Pods_Tanker_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Tanker_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4EE464B34CCBE144EECE924F /* Pods-Tanker_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tanker_Example.debug.xcconfig"; path = "Target Support Files/Pods-Tanker_Example/Pods-Tanker_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		5D0B79D8FF9A957CF2C883A8 /* Pods-Tanker_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tanker_Tests.release.xcconfig"; path = "Target Support Files/Pods-Tanker_Tests/Pods-Tanker_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		6003F58A195388D20070C39A /* Tanker_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tanker_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -64,7 +65,6 @@
 		6003F5BB195388D20070C39A /* Tests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Tests.m; sourceTree = "<group>"; };
 		606FC2411953D9B200FFA9A0 /* Tests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tests-Prefix.pch"; sourceTree = "<group>"; };
 		DCD4CBC5F1C5BE694D81AD21 /* Pods-Tanker_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tanker_Example.release.xcconfig"; path = "Target Support Files/Pods-Tanker_Example/Pods-Tanker_Example.release.xcconfig"; sourceTree = "<group>"; };
-		E06362EFCC10F8922C2AA7BD /* libPods-Tanker_Tests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Tanker_Tests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E66D8A66BE6B693818E69BBF /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		FB6CAAE17FC374F9923EBEF3 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -77,7 +77,7 @@
 				6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */,
 				6003F592195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F58E195388D20070C39A /* Foundation.framework in Frameworks */,
-				904827E4A4C6C75513057230 /* libPods-Tanker_Example.a in Frameworks */,
+				F26DF5D2ED14641EBD793132 /* Pods_Tanker_Example.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,7 +88,7 @@
 				6003F5B0195388D20070C39A /* XCTest.framework in Frameworks */,
 				6003F5B2195388D20070C39A /* UIKit.framework in Frameworks */,
 				6003F5B1195388D20070C39A /* Foundation.framework in Frameworks */,
-				6E6D76E16D1D9B5C297B3D1F /* libPods-Tanker_Tests.a in Frameworks */,
+				A7435DE311C3E245175FD569 /* Pods_Tanker_Tests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,8 +123,8 @@
 				6003F58F195388D20070C39A /* CoreGraphics.framework */,
 				6003F591195388D20070C39A /* UIKit.framework */,
 				6003F5AF195388D20070C39A /* XCTest.framework */,
-				0103CB4F2392DB37C5640889 /* libPods-Tanker_Example.a */,
-				E06362EFCC10F8922C2AA7BD /* libPods-Tanker_Tests.a */,
+				2C5B10D68352B723B5FF0F8C /* Pods_Tanker_Example.framework */,
+				4EA37DA195707A0E28071794 /* Pods_Tanker_Tests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -207,6 +207,7 @@
 				6003F586195388D20070C39A /* Sources */,
 				6003F587195388D20070C39A /* Frameworks */,
 				6003F588195388D20070C39A /* Resources */,
+				60456B4924E850F98C10D877 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -339,6 +340,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		60456B4924E850F98C10D877 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Tanker_Example/Pods-Tanker_Example-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/POSInputStreamLibrary/POSInputStreamLibrary.framework",
+				"${BUILT_PRODUCTS_DIR}/Tanker/Tanker.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/POSInputStreamLibrary.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Tanker.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Tanker_Example/Pods-Tanker_Example-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

@@ -33,3 +33,4 @@ pod/
 
 .venv/
 .mypy_cache/
+Podfile.lock
