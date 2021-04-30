@@ -115,8 +115,7 @@ class Builder:
 
     def handle_ios_deps(self) -> None:
         ui.info_2("Installing Tanker pod dependencies")
-        tankerci.run("pod", "deintegrate", cwd=self.example_path)
-        tankerci.run("pod", "install", "--repo-update", cwd=self.example_path)
+        tankerci.run("pod", "install", "--repo-update", "--clean-install", cwd=self.example_path)
 
     def build_and_test_pod(self) -> None:
         ui.info_2("building pod and launching tests")
