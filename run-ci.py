@@ -74,6 +74,8 @@ class Builder:
         if self.libraries_path.exists():
             shutil.rmtree(self.libraries_path)
         self.libraries_path.mkdir(parents=True, exist_ok=True)
+        env = os.environ.copy()
+        env["ARMERGE_LDFLAGS"] = "-bitcode_bundle"
         for profile in self.profiles:
             specific_arch_path = self.libraries_path / profile
             specific_arch_path.mkdir()
@@ -83,6 +85,7 @@ class Builder:
                 "--keep-symbols=_?tanker_.*",
                 f"--output={specific_arch_path / 'libtankerdeps.a'}",
                 *lib_paths,
+                env=env,
             )
 
     def generate_fat_libraries(self) -> None:
