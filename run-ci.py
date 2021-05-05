@@ -110,7 +110,7 @@ class Builder:
 
             _copy_folder_content(include_path, self.headers_path)
 
-    def handle_sdk_deps(self, *, tanker_source: TankerSource) -> None:
+    def handle_sdk_deps(self) -> None:
         ui.info_1("copying sdk-native for profiles: ", self.profiles)
         self.merge_all_dependencies()
         self.generate_fat_libraries()
@@ -130,6 +130,11 @@ class Builder:
             "--allow-warnings",
             str(self.pod_path / "Tanker.podspec"),
         )
+
+
+def upload_archive(archive_path: Path) -> None:
+    tankerci.gcp.GcpProject("tanker-prod").auth()
+    tankerci.run("gsutil", "cp", str(archive_path), "gs://cocoapods.tanker.io/ios/")
 
 
 class PodPublisher:
@@ -195,10 +200,6 @@ class PodPublisher:
         ui.info_2("Generated", res)
         return res
 
-    def upload_archive(self, archive_path: Path) -> None:
-        tankerci.gcp.GcpProject("tanker-prod").auth()
-        tankerci.run("gsutil", "cp", str(archive_path), "gs://cocoapods.tanker.io/ios/")
-
     def build_pod(self) -> None:
         # fmt: off
         tankerci.run(
@@ -241,7 +242,7 @@ class PodPublisher:
             self.copy_headers()
             self.copy_test_sources()
             archive = self.generate_archive()
-            self.upload_archive(archive)
+            upload_archive(archive)
         self.build_pod()
         self.publish_pod()
 
@@ -266,7 +267,7 @@ def prepare(
         tanker_deployed_ref=tanker_deployed_ref,
     )
     builder = Builder(src_path=Path.cwd(), profiles=profiles)
-    builder.handle_sdk_deps(tanker_source=tanker_source)
+    builder.handle_sdk_deps()
     builder.handle_ios_deps()
     return builder
 
