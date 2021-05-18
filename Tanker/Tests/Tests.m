@@ -6,6 +6,7 @@
 #import "TKRTanker.h"
 #import "TKRTankerOptions.h"
 #import "TKRVerification.h"
+#import "TKRAttachResult.h"
 #import "TKRVerificationKey.h"
 
 #import "TKRCustomDataSource.h"
@@ -56,6 +57,19 @@ static NSString* createIdentity(NSString* userID, NSString* appID, NSString* app
   char const* app_secret = [appSecret cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* identity_expected = tanker_create_identity(app_id, app_secret, user_id);
   char* identity = unwrapAndFreeExpected(identity_expected);
+  assert(identity);
+  return [[NSString alloc] initWithBytesNoCopy:identity
+                                        length:strlen(identity)
+                                      encoding:NSUTF8StringEncoding
+                                  freeWhenDone:YES];
+}
+
+static NSString* createProvisionalIdentity(NSString* appID, NSString* email)
+{
+  char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* c_email = [email cStringUsingEncoding:NSUTF8StringEncoding];
+  tanker_expected_t* provisional_expected = tanker_create_provisional_identity(app_id, c_email);
+  char* identity = unwrapAndFreeExpected(provisional_expected);
   assert(identity);
   return [[NSString alloc] initWithBytesNoCopy:identity
                                         length:strlen(identity)
@@ -401,6 +415,76 @@ SpecBegin(TankerSpecs)
           expect(b64Data).toNot.beNil();
 
           stop(tanker);
+        });
+      });
+
+      describe(@"provisional identity", ^{
+        __block TKRTanker* aliceTanker;
+        __block NSString* aliceIdentity;
+        __block NSString* aliceEmail = @"alice@email.com";
+        __block TKRTanker* bobTanker;
+        __block NSString* bobIdentity;
+
+        beforeEach(^{
+          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(aliceTanker).toNot.beNil();
+          aliceIdentity = createIdentity(createUUID(), appID, appSecret);
+          bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(bobTanker).toNot.beNil();
+          bobIdentity = createIdentity(createUUID(), appID, appSecret);
+        });
+
+        afterEach(^{
+          stop(aliceTanker);
+          stop(bobTanker);
+        });
+
+        it(@"should attach and verify a provisional identity", ^{
+          startWithIdentityAndRegister(aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          __block NSString* provIdentity = createProvisionalIdentity(appID, aliceEmail);
+          TKRAttachResult* result = hangWithAdapter(^(PMKAdapter adapter) {
+              [aliceTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
+          });
+          expect(result.status).to.equal(TKRStatusIdentityVerificationNeeded);
+          expect(result.method.type).to.equal(TKRVerificationMethodTypeEmail);
+          expect(result.method.email).to.equal(aliceEmail);
+
+          TKRVerification* verif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getVerificationCode(aliceEmail)];
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [aliceTanker verifyProvisionalIdentityWithVerification:verif completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+
+          result = hangWithAdapter(^(PMKAdapter adapter) {
+              [aliceTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
+          });
+          expect(result.status).to.equal(TKRStatusReady);
+        });
+
+        it(@"should fail to attach an already attached identity", ^{
+          startWithIdentityAndRegister(aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          __block NSString* provIdentity = createProvisionalIdentity(appID, aliceEmail);
+          hangWithAdapter(^(PMKAdapter adapter) {
+              [aliceTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
+          });
+          TKRVerification* aliceVerif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getVerificationCode(aliceEmail)];
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [aliceTanker verifyProvisionalIdentityWithVerification:aliceVerif completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+
+          // try to attach/verify with Bob now
+          startWithIdentityAndRegister(bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          TKRVerification* bobVerif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getVerificationCode(aliceEmail)];
+          TKRAttachResult* result = hangWithAdapter(^(PMKAdapter adapter) {
+              [bobTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
+          });
+          expect(result.status).to.equal(TKRStatusIdentityVerificationNeeded);
+          err = hangWithResolver(^(PMKResolver resolver) {
+              [bobTanker verifyProvisionalIdentityWithVerification:bobVerif completionHandler:resolver];
+          });
+          expect(err).notTo.beNil();
+          expect(err.code).to.equal(TKRErrorIdentityAlreadyAttached);
         });
       });
 
