@@ -258,9 +258,10 @@ SpecBegin(TankerSpecs)
           };
 
       __block void (^stop)(TKRTanker*) = ^(TKRTanker* tanker) {
-        hangWithResolver(^(PMKResolver resolve) {
+        NSError* err = hangWithResolver(^(PMKResolver resolve) {
           [tanker stopWithCompletionHandler:resolve];
         });
+        expect(err).to.beNil();
         expect(tanker.status).to.equal(TKRStatusStopped);
       };
 
@@ -657,7 +658,7 @@ SpecBegin(TankerSpecs)
             [bobTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
           });
           NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
           });
           expect(decryptedString).to.equal(clearText);
         });
@@ -678,9 +679,10 @@ SpecBegin(TankerSpecs)
 
           TKRSharingOptions* opts = [TKRSharingOptions options];
           opts.shareWithGroups = @[ groupId ];
-          hangWithResolver(^(PMKResolver resolve) {
+          err = hangWithResolver(^(PMKResolver resolve) {
             [bobTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
           });
+          expect(err).to.beNil();
 
           NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
@@ -697,12 +699,13 @@ SpecBegin(TankerSpecs)
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
           encryptionOptions.shareWithGroups = @[ groupId ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
-            [bobTanker encryptString:clearText completionHandler:adapter];
+            [aliceTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
           });
 
-          hangWithResolver(^(PMKResolver resolve) {
-            [aliceTanker updateMembersOfGroup:groupId usersToAdd:@[ bobIdentity ] completionHandler:resolve];
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker updateMembersOfGroup:groupId usersToAdd:@[ bobPublicIdentity ] completionHandler:resolve];
           });
+          expect(err).to.beNil();
 
           NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
             [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
@@ -943,9 +946,10 @@ SpecBegin(TankerSpecs)
 
           TKRSharingOptions* opts = [TKRSharingOptions options];
           opts.shareWithUsers = @[ bobPublicIdentity ];
-          hangWithResolver(^(PMKResolver resolve) {
+          err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
           });
+          expect(err).to.beNil();
 
           NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
             [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
@@ -1021,9 +1025,10 @@ SpecBegin(TankerSpecs)
 
           TKRSharingOptions* opts = [TKRSharingOptions options];
           opts.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
-          hangWithResolver(^(PMKResolver resolve) {
+          err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:resourceIDs options:opts completionHandler:resolve];
           });
+          expect(err).to.beNil();
 
           NSArray* decryptPromises = @[
             [PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
@@ -1402,10 +1407,11 @@ SpecBegin(TankerSpecs)
           [tanker connectDeviceRevokedHandler:^(void) {
             revoked = true;
           }];
-          hangWithResolver(^(PMKResolver resolve) {
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [tanker revokeDevice:deviceID completionHandler:resolve];
           });
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+          expect(err).to.beNil();
+          err = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker encryptString:@"text" completionHandler:adapter];
           });
           expect(revoked).to.equal(true);
@@ -1421,10 +1427,11 @@ SpecBegin(TankerSpecs)
           [tanker connectDeviceRevokedHandler:^(void) {
             revoked = true;
           }];
-          hangWithResolver(^(PMKResolver resolve) {
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [secondDevice revokeDevice:deviceID completionHandler:resolve];
           });
-          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+          expect(err).to.beNil();
+          err = hangWithAdapter(^(PMKAdapter adapter) {
             [tanker encryptString:@"text" completionHandler:adapter];
           });
           expect(revoked).to.equal(true);
