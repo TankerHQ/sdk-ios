@@ -82,7 +82,7 @@ class Builder:
             lib_paths = DepsConfig(self.get_build_path(profile)).all_lib_paths()
             tankerci.run(
                 "armerge",
-                "--keep-symbols=_?tanker_.*",
+                "--keep-symbols=^_?tanker_.*",
                 f"--output={specific_arch_path / 'libtankerdeps.a'}",
                 *lib_paths,
                 env=env,
