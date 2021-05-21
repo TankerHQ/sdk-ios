@@ -7,6 +7,7 @@
 #import "TKREncryptionSession+Private.h"
 #import "TKRInputStreamDataSource+Private.h"
 #import "TKRTanker+Private.h"
+#import "TKRTanker+Network+Private.h"
 #import "TKRTankerOptions.h"
 #import "TKRUtils+Private.h"
 #import "TKRVerification+Private.h"
@@ -147,6 +148,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_options_t cOptions = TANKER_OPTIONS_INIT;
   convertOptions(options, &cOptions);
+  cOptions.http_send_request = httpSendRequestCallback;
+  cOptions.http_cancel_request = httpCancelRequestCallback;
 
   tanker_future_t* create_future = tanker_create(&cOptions);
   tanker_future_wait(create_future);
