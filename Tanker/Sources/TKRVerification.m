@@ -1,6 +1,6 @@
-#import "TKREmailVerification+Private.h"
-#import "TKRVerification+Private.h"
-#import "TKRVerificationMethodType.h"
+#import <Tanker/TKREmailVerification+Private.h>
+#import <Tanker/TKRVerification+Private.h>
+#import <Tanker/TKRVerificationMethodType.h>
 
 @implementation TKRVerification
 

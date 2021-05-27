@@ -1,4 +1,4 @@
-#import "TKRVerification+Private.h"
+#import <Tanker/TKRVerification+Private.h>
 
 #import <objc/runtime.h>
 

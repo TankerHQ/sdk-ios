@@ -1,4 +1,4 @@
-#import "TKRTankerOptions+Private.h"
+#import <Tanker/TKRTankerOptions+Private.h>
 
 @implementation TKRTankerOptions
 

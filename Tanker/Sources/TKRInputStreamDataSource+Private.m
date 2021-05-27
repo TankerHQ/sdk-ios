@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRInputStreamDataSource+Private.h"
-#import "TKRUtils+Private.h"
+#import <Tanker/TKRInputStreamDataSource+Private.h>
+#import <Tanker/TKRUtils+Private.h>
 
 @interface TKRInputStreamDataSource ()
 

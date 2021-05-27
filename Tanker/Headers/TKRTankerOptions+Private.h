@@ -1,5 +1,5 @@
 
-#import "TKRTankerOptions.h"
+#import <Tanker/TKRTankerOptions.h>
 #import <Foundation/Foundation.h>
 
 @interface TKRTankerOptions (Private)

@@ -1,13 +1,13 @@
 // https://github.com/Specta/Specta
 
-#import "TKREncryptionSession.h"
-#import "TKRError.h"
-#import "TKRInputStreamDataSource+Private.h"
-#import "TKRTanker.h"
-#import "TKRTankerOptions.h"
-#import "TKRVerification.h"
-#import "TKRAttachResult.h"
-#import "TKRVerificationKey.h"
+#import <Tanker/TKREncryptionSession.h>
+#import <Tanker/TKRError.h>
+#import <Tanker/TKRInputStreamDataSource+Private.h>
+#import <Tanker/TKRTanker.h>
+#import <Tanker/TKRTankerOptions.h>
+#import <Tanker/TKRVerification.h>
+#import <Tanker/TKRAttachResult.h>
+#import <Tanker/TKRVerificationKey.h>
 
 #import "TKRCustomDataSource.h"
 #import "TKRTestAsyncStreamReader.h"

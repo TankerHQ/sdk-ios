@@ -2,18 +2,18 @@
 
 #import <POSInputStreamLibrary/POSBlobInputStream.h>
 
-#import "TKRAsyncStreamReader+Private.h"
-#import "TKRAttachResult+Private.h"
-#import "TKREncryptionSession+Private.h"
-#import "TKRInputStreamDataSource+Private.h"
-#import "TKRTanker+Private.h"
-#import "TKRNetwork+Private.h"
-#import "TKRTankerOptions.h"
-#import "TKRUtils+Private.h"
-#import "TKRVerification+Private.h"
-#import "TKRVerificationKey+Private.h"
-#import "TKRVerificationMethod+Private.h"
-#import "TKRLogEntry.h"
+#import <Tanker/TKRAsyncStreamReader+Private.h>
+#import <Tanker/TKRAttachResult+Private.h>
+#import <Tanker/TKREncryptionSession+Private.h>
+#import <Tanker/TKRInputStreamDataSource+Private.h>
+#import <Tanker/TKRTanker+Private.h>
+#import <Tanker/TKRNetwork+Private.h>
+#import <Tanker/TKRTankerOptions.h>
+#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/TKRVerification+Private.h>
+#import <Tanker/TKRVerificationKey+Private.h>
+#import <Tanker/TKRVerificationMethod+Private.h>
+#import <Tanker/TKRLogEntry.h>
 
 #include <assert.h>
 #include <string.h>

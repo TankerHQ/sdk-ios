@@ -1,4 +1,4 @@
-#import "TKRCompletionHandlers.h"
+#import <Tanker/TKRCompletionHandlers.h>
 
 /*!
  @brief Tanker Encryption Session object

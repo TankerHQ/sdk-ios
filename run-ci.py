@@ -52,7 +52,7 @@ class Builder:
         self.pod_path = self.src_path / "Tanker"
         self.conan_path = self.pod_path / "conan"
         self.libraries_path = self.pod_path / "Libraries"
-        self.headers_path = self.pod_path / "Headers"
+        self.private_headers_path = self.pod_path / "PrivateHeaders"
         self.example_path = self.pod_path / "Example"
         self.profiles = profiles
 
@@ -88,18 +88,62 @@ class Builder:
                 env=env,
             )
 
-    def generate_fat_libraries(self) -> None:
-        ui.info_1("Generating fat libraries")
+    def generate_xcframework(self) -> None:
+        ui.info_1("Generating xcframework")
 
-        armerged_libs = [self.libraries_path / p / "libtankerdeps.a" for p in self.profiles]
-        tankerci.run(
-            "lipo",
-            "-create",
-            "-output",
-            self.libraries_path / "libtankerdeps.a",
-            *armerged_libs,
-            cwd=self.conan_path,
-        )
+        # We still have to use lipo to unify iphone libs and simulator libs
+        # Otherwise, xcodebuild -create-xcframework will complain about "equivalent library definitions"
+        all_libs = [str(self.libraries_path / p / "libtankerdeps.a") for p in self.profiles]
+        simulator_libs = [str(self.libraries_path / p / "libtankerdeps.a") for p in self.profiles if p.find("x86") != -1]
+        iphone_libs = list(set(simulator_libs) ^ set(all_libs))
+
+        simulator_dir = self.libraries_path / "simulator"
+        iphone_dir = self.libraries_path / "iphone"
+        simulator_dir.mkdir(parents=True, exist_ok=True)
+        iphone_dir.mkdir(parents=True, exist_ok=True)
+
+        # xcodebuild is bad, -headers must be given a single path, we have to ship ctanker/ and ctanker.h ...
+        # so create a ad-hoc folder for that
+        with tempfile.TemporaryDirectory() as f:
+            headers_temp_dir = Path(f)
+            ctanker_path = self.private_headers_path / "ctanker"
+            shutil.copytree(ctanker_path, headers_temp_dir / "ctanker")
+            ctanker_h = self.private_headers_path / "ctanker.h"
+            shutil.copy(ctanker_h, headers_temp_dir)
+
+            fat_simulator_lib = str(simulator_dir / "libtankerdeps.a")
+            fat_iphone_lib = str(iphone_dir/ "libtankerdeps.a")
+            xcframework_dir = self.src_path / "Tanker" / "Frameworks" / "TankerDeps.xcframework"
+            shutil.rmtree(xcframework_dir, ignore_errors=True)
+
+            tankerci.run(
+                "lipo",
+                "-create",
+                "-output",
+                fat_simulator_lib,
+                *simulator_libs,
+                cwd=self.conan_path,
+            )
+            tankerci.run(
+                "lipo",
+                "-create",
+                "-output",
+                fat_iphone_lib,
+                *iphone_libs,
+                cwd=self.conan_path,
+            )
+
+            tankerci.run(
+                "xcodebuild",
+                "-create-xcframework",
+                "-library", fat_simulator_lib,
+                "-headers", headers_temp_dir,
+                "-library", fat_iphone_lib,
+                "-headers", headers_temp_dir,
+                "-output",
+                xcframework_dir,
+                cwd=self.conan_path,
+            )
 
     def copy_headers(self) -> None:
         first_profile = list(self.profiles)[0]
@@ -108,13 +152,13 @@ class Builder:
         for include_dir in deps_info["tanker"].include_dirs:
             include_path = Path(include_dir)
 
-            _copy_folder_content(include_path, self.headers_path)
+            _copy_folder_content(include_path, self.private_headers_path)
 
     def handle_sdk_deps(self) -> None:
         ui.info_1("copying sdk-native for profiles: ", self.profiles)
         self.merge_all_dependencies()
-        self.generate_fat_libraries()
         self.copy_headers()
+        self.generate_xcframework()
 
     def handle_ios_deps(self) -> None:
         ui.info_2("Installing Tanker pod dependencies")
@@ -144,12 +188,12 @@ class PodPublisher:
         if self.dest_path.exists():
             shutil.rmtree(self.dest_path)
 
-    def copy_static_libs(self) -> None:
-        ui.info_1("Copying static libs")
-        libraries_path = self.src_path / "Tanker/Libraries"
-        dest_path = self.dest_path / "Libraries"
-        ui.info_2(libraries_path, "->", dest_path)
-        shutil.copytree(libraries_path, dest_path)
+    def copy_xcframework(self) -> None:
+        ui.info_1("Copying xcframework")
+        xcframework_path = self.src_path / "Tanker/Frameworks"
+        dest_path = self.dest_path / "Frameworks"
+        ui.info_2(xcframework_path, "->", dest_path)
+        shutil.copytree(xcframework_path, dest_path)
 
     def copy_sources(self) -> None:
         ui.info_1("Copying sources")
@@ -228,9 +272,9 @@ class PodPublisher:
         self.dest_path.mkdir(parents=True)
 
         self.copy_top_files()
-        self.copy_static_libs()
-        self.copy_sources()
         self.copy_headers()
+        self.copy_xcframework()
+        self.copy_sources()
         self.copy_test_sources()
 
     def publish(self) -> None:
@@ -239,7 +283,7 @@ class PodPublisher:
             self.copy_top_files()
             self.copy_static_libs()
             self.copy_sources()
-            self.copy_headers()
+            self.copy_xcframework()
             self.copy_test_sources()
             archive = self.generate_archive()
             upload_archive(archive)

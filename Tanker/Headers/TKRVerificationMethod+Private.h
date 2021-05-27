@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRVerificationMethod.h"
+#import <Tanker/TKRVerificationMethod.h>
 
 @interface TKRVerificationMethod ()
 

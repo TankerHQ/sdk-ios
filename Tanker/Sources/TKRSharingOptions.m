@@ -1,4 +1,4 @@
-#import "TKRSharingOptions.h"
+#import <Tanker/TKRSharingOptions.h>
 
 @implementation TKRSharingOptions
 

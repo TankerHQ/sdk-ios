@@ -1,4 +1,4 @@
-#import "TKRVerificationOptions.h"
+#import <Tanker/TKRVerificationOptions.h>
 
 @implementation TKRVerificationOptions
 

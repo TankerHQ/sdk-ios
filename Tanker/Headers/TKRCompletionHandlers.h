@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRStatus.h"
+#import <Tanker/TKRStatus.h>
 
 @class TKRVerificationKey;
 @class TKRVerificationMethod;

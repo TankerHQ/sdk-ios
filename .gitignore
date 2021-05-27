@@ -34,3 +34,6 @@ pod/
 .venv/
 .mypy_cache/
 Podfile.lock
+TankerDeps.xcframework
+Libraries/
+PrivateHeaders/

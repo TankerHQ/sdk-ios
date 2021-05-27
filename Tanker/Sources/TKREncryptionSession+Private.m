@@ -1,8 +1,8 @@
 
-#import "TKREncryptionSession+Private.h"
-#import "TKRUtils+Private.h"
+#import <Tanker/TKREncryptionSession+Private.h>
+#import <Tanker/TKRUtils+Private.h>
 
-#include "ctanker/encryptionsession.h"
+#include <ctanker/encryptionsession.h>
 
 #include <objc/runtime.h>
 
