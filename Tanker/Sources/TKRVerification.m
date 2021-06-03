@@ -1,4 +1,5 @@
 #import <Tanker/TKREmailVerification+Private.h>
+#import <Tanker/TKRPhoneNumberVerification+Private.h>
 #import <Tanker/TKRVerification+Private.h>
 #import <Tanker/TKRVerificationMethodType.h>
 
@@ -33,6 +34,14 @@
   TKRVerification* ret = [[TKRVerification alloc] init];
   ret.type = TKRVerificationMethodTypeOIDCIDToken;
   ret.oidcIDToken = oidcIDToken;
+  return ret;
+}
+
++ (nonnull TKRVerification*)verificationFromPhoneNumber:(NSString*)number verificationCode:(NSString*)code
+{
+  TKRVerification* ret = [[TKRVerification alloc] init];
+  ret.type = TKRVerificationMethodTypePhoneNumber;
+  ret.phoneNumber = [TKRPhoneNumberVerification phoneNumberVerificationFromPhoneNumber:number verificationCode:code];
   return ret;
 }
 

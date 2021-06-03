@@ -27,6 +27,16 @@
   self.valuePrivate = email;
 }
 
+- (nonnull TKRPhoneNumberVerification*)phoneNumber
+{
+  return self.valuePrivate;
+}
+
+- (void)setPhoneNumber:(nonnull TKRPhoneNumberVerification*)phoneNumber
+{
+  self.valuePrivate = phoneNumber;
+}
+
 - (nonnull TKRVerificationKey*)verificationKey
 {
   return self.valuePrivate;

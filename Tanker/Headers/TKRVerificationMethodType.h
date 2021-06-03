@@ -9,4 +9,5 @@ typedef NS_ENUM(NSUInteger, TKRVerificationMethodType) {
   TKRVerificationMethodTypePassphrase,
   TKRVerificationMethodTypeVerificationKey,
   TKRVerificationMethodTypeOIDCIDToken,
+  TKRVerificationMethodTypePhoneNumber,
 };

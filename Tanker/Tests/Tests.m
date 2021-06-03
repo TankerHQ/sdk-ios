@@ -279,11 +279,23 @@ SpecBegin(TankerSpecs)
         expect(tanker.status).to.equal(TKRStatusStopped);
       };
 
-      __block NSString* (^getVerificationCode)(NSString*) = ^(NSString* email) {
-        tanker_future_t* f = tanker_get_verification_code(ctrustchaindurl,
+      __block NSString* (^getEmailVerificationCode)(NSString*) = ^(NSString* email) {
+        tanker_future_t* f = tanker_get_email_verification_code(ctrustchaindurl,
                                                           [appID cStringUsingEncoding:NSUTF8StringEncoding],
                                                           [authToken cStringUsingEncoding:NSUTF8StringEncoding],
                                                           [email cStringUsingEncoding:NSUTF8StringEncoding]);
+        tanker_future_wait(f);
+        char* code = (char*)tanker_future_get_voidptr(f);
+        NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
+        free(code);
+        return ret;
+      };
+
+      __block NSString* (^getSMSVerificationCode)(NSString*) = ^(NSString* phoneNumber) {
+        tanker_future_t* f = tanker_get_sms_verification_code(ctrustchaindurl,
+                                                          [appID cStringUsingEncoding:NSUTF8StringEncoding],
+                                                          [authToken cStringUsingEncoding:NSUTF8StringEncoding],
+                                                          [phoneNumber cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(f);
         char* code = (char*)tanker_future_get_voidptr(f);
         NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
@@ -480,7 +492,7 @@ SpecBegin(TankerSpecs)
           expect(result.method.type).to.equal(TKRVerificationMethodTypeEmail);
           expect(result.method.email).to.equal(aliceEmail);
 
-          TKRVerification* verif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getVerificationCode(aliceEmail)];
+          TKRVerification* verif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getEmailVerificationCode(aliceEmail)];
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [aliceTanker verifyProvisionalIdentityWithVerification:verif completionHandler:resolver];
           });
@@ -498,7 +510,7 @@ SpecBegin(TankerSpecs)
           hangWithAdapter(^(PMKAdapter adapter) {
               [aliceTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
           });
-          TKRVerification* aliceVerif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getVerificationCode(aliceEmail)];
+          TKRVerification* aliceVerif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getEmailVerificationCode(aliceEmail)];
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [aliceTanker verifyProvisionalIdentityWithVerification:aliceVerif completionHandler:resolver];
           });
@@ -506,7 +518,7 @@ SpecBegin(TankerSpecs)
 
           // try to attach/verify with Bob now
           startWithIdentityAndRegister(bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          TKRVerification* bobVerif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getVerificationCode(aliceEmail)];
+          TKRVerification* bobVerif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getEmailVerificationCode(aliceEmail)];
           TKRAttachResult* result = hangWithAdapter(^(PMKAdapter adapter) {
               [bobTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
           });
@@ -1258,7 +1270,7 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice,
               identity,
-              [TKRVerification verificationFromEmail:email verificationCode:getVerificationCode(email)]);
+              [TKRVerification verificationFromEmail:email verificationCode:getEmailVerificationCode(email)]);
 
           NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice verificationMethodsWithCompletionHandler:adapter];
@@ -1266,6 +1278,21 @@ SpecBegin(TankerSpecs)
           expect(methods.count).to.equal(1);
           expect(methods[0].type).to.equal(TKRVerificationMethodTypeEmail);
           expect(methods[0].email).to.equal(email);
+        });
+
+        it(@"should setup verification with an SMS", ^{
+          NSString* phoneNumber = @"+33600001111";
+          startWithIdentityAndRegister(
+              firstDevice,
+              identity,
+              [TKRVerification verificationFromPhoneNumber:phoneNumber verificationCode:getSMSVerificationCode(phoneNumber)]);
+
+          NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice verificationMethodsWithCompletionHandler:adapter];
+          });
+          expect(methods.count).to.equal(1);
+          expect(methods[0].type).to.equal(TKRVerificationMethodTypePhoneNumber);
+          expect(methods[0].phoneNumber).to.equal(phoneNumber);
         });
 
         it(@"should setup verification with an OIDC ID Token", ^{

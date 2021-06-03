@@ -14,4 +14,11 @@
  */
 @property(nonnull, readonly) NSString* email;
 
+/*!
+ @brief phone number
+
+ @pre type == TKRVerificationMethodTypePhoneNumber
+ */
+@property(nonnull, readonly) NSString* phoneNumber;
+
 @end
