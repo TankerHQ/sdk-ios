@@ -294,7 +294,7 @@
                 completionHandler:(nonnull TKRGroupIDHandler)handler;
 
 /*!
- @brief Update a group to add the given user IDs.
+ @brief Update a group to add the given users.
 
  @param groupId the id of the group to update.
  @param userIdentities the users to add to the group.
@@ -302,6 +302,19 @@
  */
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
                   usersToAdd:(nonnull NSArray<NSString*>*)userIdentities
+           completionHandler:(nonnull TKRErrorHandler)handler;
+
+/*!
+ @brief Update a group to add and/or remove the given users.
+
+ @param groupId the id of the group to update.
+ @param usersToAdd the users to add to the group.
+ @param usersToRemove the users to remove from the group.
+ @param handler the block called with an NSError, or nil.
+ */
+- (void)updateMembersOfGroup:(nonnull NSString*)groupId
+                  usersToAdd:(nonnull NSArray<NSString*>*)usersToAdd
+               usersToRemove:(nonnull NSArray<NSString*>*)usersToRemove
            completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!

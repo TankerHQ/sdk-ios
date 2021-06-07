@@ -797,6 +797,82 @@ SpecBegin(TankerSpecs)
           expect(decryptedString).to.equal(clearText);
         });
 
+        it(@"should be able to remove bob from the group", ^{
+          NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createGroupWithIdentities:@[ alicePublicIdentity, bobPublicIdentity ] completionHandler:adapter];
+          });
+
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [aliceTanker updateMembersOfGroup:groupId usersToAdd:@[] usersToRemove:@[ bobPublicIdentity ] completionHandler:resolve];
+          });
+          expect(err).to.beNil();
+
+          NSString* clearText = @"Rosebud";
+          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          encryptionOptions.shareWithGroups = @[ groupId ];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
+          });
+
+          err = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
+
+        it(@"should be able to remove a provisional identity from the group", ^{
+          __block NSString* aliceEmail = @"alice@email.com";
+          __block NSString* provIdentity = createProvisionalIdentity(appID, aliceEmail);
+
+          NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker createGroupWithIdentities:@[ getPublicIdentity(provIdentity), bobPublicIdentity ] completionHandler:adapter];
+          });
+
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker updateMembersOfGroup:groupId usersToAdd:@[] usersToRemove:@[ getPublicIdentity(provIdentity) ] completionHandler:resolve];
+          });
+          expect(err).to.beNil();
+
+          NSString* clearText = @"Rosebud";
+          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          encryptionOptions.shareWithGroups = @[ groupId ];
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
+          });
+
+          TKRAttachResult* result = hangWithAdapter(^(PMKAdapter adapter) {
+              [aliceTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
+          });
+          expect(result.status).to.equal(TKRStatusIdentityVerificationNeeded);
+          expect(result.method.type).to.equal(TKRVerificationMethodTypeEmail);
+          expect(result.method.email).to.equal(aliceEmail);
+
+          TKRVerification* verif = [TKRVerification verificationFromEmail:aliceEmail verificationCode:getVerificationCode(aliceEmail)];
+          err = hangWithResolver(^(PMKResolver resolver) {
+              [aliceTanker verifyProvisionalIdentityWithVerification:verif completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+
+          err = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
+
+        it(@"should throw when updating a group without modification", ^{
+          NSString* groupId = hangWithAdapter(^(PMKAdapter adapter) {
+            [bobTanker createGroupWithIdentities:@[ bobPublicIdentity ] completionHandler:adapter];
+          });
+
+          NSError* err = hangWithResolver(^(PMKResolver resolve) {
+            [bobTanker updateMembersOfGroup:groupId usersToAdd:@[] usersToRemove:@[] completionHandler:resolve];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
+
         it(@"should error when creating an empty group", ^{
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createGroupWithIdentities:@[] completionHandler:adapter];
