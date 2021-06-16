@@ -1,6 +1,6 @@
 include:
   - project: TankerHQ/gitlab-ci-files
-    ref: 1620156356fee62041af4da68cc1c9e799fe9c30
+    ref: ecfaa4031b36380595405ca7078f73daf08c6b1b
     file: /ios.yml
 
 ###############
@@ -14,9 +14,11 @@ check/deployed-native:
     - .rules/deployed-native
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
+    - echo $CI_COMMIT_REF_NAME > branch_name.txt
   artifacts:
     paths:
       - pod
+      - branch_name.txt
 
 check/native-from-sources:
   extends:
@@ -25,9 +27,11 @@ check/native-from-sources:
     - .rules/native-from-sources
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
+    - echo $CI_COMMIT_REF_NAME > branch_name.txt
   artifacts:
     paths:
       - pod
+      - branch_name.txt
 
 check/downstream:
   extends:
@@ -37,9 +41,11 @@ check/downstream:
     - .rules/check/downstream
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=upstream
+    # branch_name.txt is already in sdk-native's artifacts
   artifacts:
     paths:
       - pod
+      - branch_name.txt
 
 ######################
 # bridge-check stage #
