@@ -417,6 +417,36 @@ SpecBegin(TankerSpecs)
 
           stop(tanker);
         });
+
+        it(@"should be able to stop tanker while a call is in flight", ^{
+          // This test tries to cancel an on-going HTTP request. There is no
+          // assertion, it's just a best effort to check that we won't crash
+          // because of some use-after-free.
+
+          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+
+          // trigger an encrypt and do not wait
+          [tanker encryptString:@"Rosebud" completionHandler:^(NSData* _Nullable encryptedData, NSError* _Nullable err) {}];
+
+          stop(tanker);
+        });
+      });
+
+      describe(@"http", ^{
+        it(@"reports http errors correctly", ^{
+          // This error should be reported before any network call
+          tankerOptions.url = @"this is not an url at all";
+          TKRTanker* tanker = [TKRTanker tankerWithOptions:tankerOptions];
+          NSString* identity = createIdentity(createUUID(), appID, appSecret);
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [tanker startWithIdentity:identity
+                          completionHandler:^(TKRStatus status, NSError* err) {
+                            resolver(err);
+                          }];
+          });
+          expect(err).notTo.beNil();
+          expect(err.code).to.equal(TKRErrorNetworkError);
+        });
       });
 
       describe(@"provisional identity", ^{
