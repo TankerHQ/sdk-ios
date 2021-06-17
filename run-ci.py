@@ -366,7 +366,7 @@ def main() -> None:
         ref = tankerci.git.find_ref(
             Path.cwd(), [f"origin/{args.branch}", f"origin/{fallback}"]
         )
-        tankerci.git.reset(Path.cwd(), ref)
+        tankerci.git.reset(Path.cwd(), ref, clean=False)
     elif command == "download-artifacts":
         tankerci.gitlab.download_artifacts(
             project_id=args.project_id,
