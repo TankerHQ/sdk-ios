@@ -333,7 +333,6 @@ def main() -> None:
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument("--version", required=True)
     deploy_parser.add_argument("--tanker-ref", required=True)
-    subparsers.add_parser("mirror")
 
     args = parser.parse_args()
     command = args.command
@@ -359,8 +358,6 @@ def main() -> None:
         prepare(args.tanker_source, args.update, args.tanker_ref)
     elif command == "deploy":
         deploy(version=args.version, tanker_ref=args.tanker_ref)
-    elif command == "mirror":
-        tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-ios")
     elif command == "reset-branch":
         fallback = os.environ["CI_COMMIT_REF_NAME"]
         ref = tankerci.git.find_ref(

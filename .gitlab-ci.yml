@@ -107,11 +107,3 @@ deploy:
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
     tag_name: v$SDK_IOS_RELEASE_VERSION
-
-mirror:
-  extends:
-    - .deploy
-    - .tags/macos
-    - .rules/mirror
-  script:
-    - poetry run python run-ci.py mirror
