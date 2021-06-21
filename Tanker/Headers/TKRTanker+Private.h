@@ -1,9 +1,9 @@
 
 #import <Foundation/Foundation.h>
 
-#import "TKRAsyncStreamReader+Private.h"
-#import "TKRTanker.h"
-#import "TKRUtils+Private.h"
+#import <Tanker/TKRAsyncStreamReader+Private.h>
+#import <Tanker/TKRTanker.h>
+#import <Tanker/TKRUtils+Private.h>
 
 typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
 

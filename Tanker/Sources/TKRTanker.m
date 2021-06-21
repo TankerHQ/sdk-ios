@@ -7,7 +7,7 @@
 #import "TKREncryptionSession+Private.h"
 #import "TKRInputStreamDataSource+Private.h"
 #import "TKRTanker+Private.h"
-#import "TKRTanker+Network+Private.h"
+#import "TKRNetwork+Private.h"
 #import "TKRTankerOptions.h"
 #import "TKRUtils+Private.h"
 #import "TKRVerification+Private.h"
