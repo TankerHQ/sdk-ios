@@ -1,6 +1,6 @@
 include:
   - project: TankerHQ/gitlab-ci-files
-    ref: ecfaa4031b36380595405ca7078f73daf08c6b1b
+    ref: a247a7f1fd9d33f89f95cce4f7c0105b1cc5d6b0
     file: /ios.yml
 
 ###############
@@ -103,6 +103,7 @@ deploy:
     - .tags/macos
     - .rules/deploy/ios
   script:
+    - poetry run python run-ci.py reset-branch $UPSTREAM_BRANCH_NAME
     - poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
