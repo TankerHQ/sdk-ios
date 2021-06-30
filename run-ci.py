@@ -282,6 +282,7 @@ class PodPublisher:
             self.dest_path = Path(tmpdir)
             self.copy_top_files()
             self.copy_sources()
+            self.copy_headers()
             self.copy_xcframework()
             self.copy_test_sources()
             archive = self.generate_archive()
