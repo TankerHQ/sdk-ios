@@ -1,4 +1,4 @@
-#import "TKRVerification+Private.h"
+#import <Tanker/TKRVerification+Private.h>
 
 #import <objc/runtime.h>
 
@@ -25,6 +25,16 @@
 - (void)setEmail:(nonnull TKREmailVerification*)email
 {
   self.valuePrivate = email;
+}
+
+- (nonnull TKRPhoneNumberVerification*)phoneNumber
+{
+  return self.valuePrivate;
+}
+
+- (void)setPhoneNumber:(nonnull TKRPhoneNumberVerification*)phoneNumber
+{
+  self.valuePrivate = phoneNumber;
 }
 
 - (nonnull TKRVerificationKey*)verificationKey

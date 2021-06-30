@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRStatus.h"
-#import "TKRVerificationMethod.h"
+#import <Tanker/TKRStatus.h>
+#import <Tanker/TKRVerificationMethod.h>
 
 @interface TKRAttachResult : NSObject
 

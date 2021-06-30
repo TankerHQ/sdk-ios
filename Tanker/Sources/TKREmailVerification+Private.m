@@ -1,4 +1,4 @@
-#import "TKREmailVerification+Private.h"
+#import <Tanker/TKREmailVerification+Private.h>
 
 @interface TKREmailVerification ()
 

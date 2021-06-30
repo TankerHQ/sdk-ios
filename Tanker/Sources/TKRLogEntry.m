@@ -1,4 +1,4 @@
-#import <TKRLogEntry.h>
+#import <Tanker/TKRLogEntry.h>
 
 @implementation TKRLogEntry
 

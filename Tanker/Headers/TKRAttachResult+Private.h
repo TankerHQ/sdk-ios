@@ -1,4 +1,4 @@
-#import "TKRAttachResult.h"
+#import <Tanker/TKRAttachResult.h>
 
 @interface TKRAttachResult ()
 

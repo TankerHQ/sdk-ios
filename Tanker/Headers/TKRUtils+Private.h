@@ -3,8 +3,8 @@
 
 #import <stdint.h>
 
-#import "TKRError.h"
-#import "TKRTanker.h"
+#import <Tanker/TKRError.h>
+#import <Tanker/TKRTanker.h>
 #include "ctanker/ctanker.h"
 
 // https://stackoverflow.com/a/15707096/4116453

@@ -1,9 +1,10 @@
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 
-#import "TKRTanker+Private.h"
-#import "TKRUtils+Private.h"
-#import "TKRVerificationKey+Private.h"
+#import <Tanker/TKRTanker+Private.h>
+#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/TKRVerificationKey+Private.h>
+
 @implementation TKRVerificationKey (Private)
 
 @dynamic valuePrivate;

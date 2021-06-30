@@ -2,18 +2,18 @@
 
 #import <POSInputStreamLibrary/POSBlobInputStream.h>
 
-#import "TKRAsyncStreamReader+Private.h"
-#import "TKRAttachResult+Private.h"
-#import "TKREncryptionSession+Private.h"
-#import "TKRInputStreamDataSource+Private.h"
-#import "TKRTanker+Private.h"
-#import "TKRTanker+Network+Private.h"
-#import "TKRTankerOptions.h"
-#import "TKRUtils+Private.h"
-#import "TKRVerification+Private.h"
-#import "TKRVerificationKey+Private.h"
-#import "TKRVerificationMethod+Private.h"
-#import "TKRLogEntry.h"
+#import <Tanker/TKRAsyncStreamReader+Private.h>
+#import <Tanker/TKRAttachResult+Private.h>
+#import <Tanker/TKREncryptionSession+Private.h>
+#import <Tanker/TKRInputStreamDataSource+Private.h>
+#import <Tanker/TKRTanker+Private.h>
+#import <Tanker/TKRNetwork+Private.h>
+#import <Tanker/TKRTankerOptions.h>
+#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/TKRVerification+Private.h>
+#import <Tanker/TKRVerificationKey+Private.h>
+#import <Tanker/TKRVerificationMethod+Private.h>
+#import <Tanker/TKRLogEntry.h>
 
 #include <assert.h>
 #include <string.h>
@@ -59,6 +59,11 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
   case TKRVerificationMethodTypeOIDCIDToken:
     c_verification->oidc_id_token = [verification.oidcIDToken cStringUsingEncoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypePhoneNumber:
+    c_verification->phone_number_verification.phone_number = [verification.phoneNumber.phoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
+    c_verification->phone_number_verification.verification_code =
+        [verification.phoneNumber.verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
+    break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -74,11 +79,14 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   switch (ret.type)
   {
   case TKRVerificationMethodTypeEmail:
-    ret.email = [NSString stringWithCString:c_verification->email encoding:NSUTF8StringEncoding];
+    ret.email = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
   case TKRVerificationMethodTypeOIDCIDToken:
+    break;
+  case TKRVerificationMethodTypePhoneNumber:
+    ret.phoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
     break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);

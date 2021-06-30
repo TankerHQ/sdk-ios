@@ -2,16 +2,16 @@
 #import <AvailabilityMacros.h>
 #import <Foundation/Foundation.h>
 
-#import "TKRCompletionHandlers.h"
-#import "TKREncryptionOptions.h"
-#import "TKREvents.h"
-#import "TKRSharingOptions.h"
-#import "TKRStatus.h"
-#import "TKRTankerOptions.h"
-#import "TKRVerification.h"
-#import "TKRVerificationKey.h"
-#import "TKRVerificationMethod.h"
-#import "TKRVerificationOptions.h"
+#import <Tanker/TKRCompletionHandlers.h>
+#import <Tanker/TKREncryptionOptions.h>
+#import <Tanker/TKREvents.h>
+#import <Tanker/TKRSharingOptions.h>
+#import <Tanker/TKRStatus.h>
+#import <Tanker/TKRTankerOptions.h>
+#import <Tanker/TKRVerification.h>
+#import <Tanker/TKRVerificationKey.h>
+#import <Tanker/TKRVerificationMethod.h>
+#import <Tanker/TKRVerificationOptions.h>
 
 #define TKRErrorDomain @"TKRErrorDomain"
 

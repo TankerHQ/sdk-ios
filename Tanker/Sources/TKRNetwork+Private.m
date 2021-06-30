@@ -1,5 +1,5 @@
-#include "TKRTanker+Network+Private.h"
-#import "TKRUtils+Private.h"
+#include <Tanker/TKRNetwork+Private.h>
+#import <Tanker/TKRUtils+Private.h>
 
 #include <libkern/OSAtomic.h>
 

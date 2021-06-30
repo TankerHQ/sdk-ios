@@ -1,4 +1,4 @@
-#import "TKRAttachResult+Private.h"
+#import <Tanker/TKRAttachResult+Private.h>
 
 @implementation TKRAttachResult
 

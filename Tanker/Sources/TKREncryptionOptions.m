@@ -1,4 +1,4 @@
-#import "TKREncryptionOptions.h"
+#import <Tanker/TKREncryptionOptions.h>
 
 @implementation TKREncryptionOptions
 

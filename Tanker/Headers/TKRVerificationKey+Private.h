@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-#import "TKRVerificationKey.h"
+#import <Tanker/TKRVerificationKey.h>
 
 @interface TKRVerificationKey (Private)
 
