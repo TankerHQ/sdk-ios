@@ -281,7 +281,6 @@ class PodPublisher:
         with tempfile.TemporaryDirectory() as tmpdir:
             self.dest_path = Path(tmpdir)
             self.copy_top_files()
-            self.copy_static_libs()
             self.copy_sources()
             self.copy_xcframework()
             self.copy_test_sources()
