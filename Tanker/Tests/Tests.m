@@ -1281,7 +1281,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should setup verification with an SMS", ^{
-          NSString* phoneNumber = @"+33600001111";
+          NSString* phoneNumber = @"+33639982233";
           startWithIdentityAndRegister(
               firstDevice,
               identity,
