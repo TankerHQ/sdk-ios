@@ -91,6 +91,7 @@ bridge/native-from-sources/x86_64:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    branch: theo/m1_support
 
 bridge/native-from-sources/arm:
   extends:
@@ -105,6 +106,7 @@ bridge/native-from-sources/arm:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    branch: theo/m1_support
 
 bridge/deployed-native/x86_64:
   extends:
@@ -119,6 +121,7 @@ bridge/deployed-native/x86_64:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    branch: theo/m1_support
 
 bridge/deployed-native/arm:
   extends:
@@ -133,6 +136,7 @@ bridge/deployed-native/arm:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    branch: theo/m1_support
 
 bridge/downstream/x86_64:
   extends:
@@ -147,6 +151,7 @@ bridge/downstream/x86_64:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    branch: theo/m1_support
 
 bridge/downstream/arm:
   extends:
@@ -161,6 +166,7 @@ bridge/downstream/arm:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    branch: theo/m1_support
 
 ################
 # deploy stage #
