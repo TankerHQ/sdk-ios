@@ -1,16 +1,11 @@
 include:
   - project: TankerHQ/gitlab-ci-files
-    ref: a247a7f1fd9d33f89f95cce4f7c0105b1cc5d6b0
+    ref: 2021-07-07-1
     file: /ios.yml
 
-###############
-# check stage #
-###############
-
-check/deployed-native:
+.check/deployed-native:
   extends:
     - .check
-    - .tags/macos
     - .rules/deployed-native
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
@@ -20,10 +15,9 @@ check/deployed-native:
       - pod
       - branch_name.txt
 
-check/native-from-sources:
+.check/native-from-sources:
   extends:
     - .check
-    - .tags/macos
     - .rules/native-from-sources
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
@@ -33,10 +27,9 @@ check/native-from-sources:
       - pod
       - branch_name.txt
 
-check/downstream:
+.check/downstream:
   extends:
     - .check
-    - .tags/macos
     - .before-script/download-artifacts
     - .rules/check/downstream
   script:
@@ -47,48 +40,124 @@ check/downstream:
       - pod
       - branch_name.txt
 
+###############
+# check stage #
+###############
+
+check/deployed-native/x86_64:
+  extends:
+    - .tags/macos/x86_64
+    - .check/deployed-native
+
+check/deployed-native/arm:
+  extends:
+    - .tags/macos/arm
+    - .check/deployed-native
+
+check/native-from-sources/x86_64:
+  extends:
+    - .tags/macos/x86_64
+    - .check/native-from-sources
+
+check/native-from-sources/arm:
+  extends:
+    - .tags/macos/arm
+    - .check/native-from-sources
+
+check/downstream/x86_64:
+  extends:
+    - .tags/macos/x86_64
+    - .check/downstream
+
+check/downstream/arm:
+  extends:
+    - .tags/macos/arm
+    - .check/downstream
+
 ######################
 # bridge-check stage #
 ######################
 
-bridge/native-from-sources:
+bridge/native-from-sources/x86_64:
   extends:
     - .bridge-check
     - .rules/native-from-sources
     - .variables/bridge-common
   needs:
-    - check/native-from-sources
+    - check/native-from-sources/x86_64
   variables:
-    UPSTREAM_JOB_NAME: check/native-from-sources
-    UPSTREAM_JOB_TARGET: ios
+    UPSTREAM_JOB_NAME: check/native-from-sources/x86_64
+    UPSTREAM_JOB_TARGET: ios-x86_64
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
-bridge/deployed-native:
+bridge/native-from-sources/arm:
+  extends:
+    - .bridge-check
+    - .rules/native-from-sources
+    - .variables/bridge-common
+  needs:
+    - check/native-from-sources/arm
+  variables:
+    UPSTREAM_JOB_NAME: check/native-from-sources/arm
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/sdk-react-native
+    strategy: depend
+
+bridge/deployed-native/x86_64:
   extends:
     - .bridge-check
     - .rules/deployed-native
     - .variables/bridge-common
   needs:
-    - check/deployed-native
+    - check/deployed-native/x86_64
   variables:
-    UPSTREAM_JOB_NAME: check/deployed-native
-    UPSTREAM_JOB_TARGET: ios
+    UPSTREAM_JOB_NAME: check/deployed-native/x86_64
+    UPSTREAM_JOB_TARGET: ios-x86_64
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
-bridge/downstream:
+bridge/deployed-native/arm:
+  extends:
+    - .bridge-check
+    - .rules/deployed-native
+    - .variables/bridge-common
+  needs:
+    - check/deployed-native/arm
+  variables:
+    UPSTREAM_JOB_NAME: check/deployed-native/arm
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/sdk-react-native
+    strategy: depend
+
+bridge/downstream/x86_64:
   extends:
     - .bridge-check
     - .rules/check/downstream
     - .variables/bridge-common
   needs:
-    - check/downstream
+    - check/downstream/x86_64
   variables:
-    UPSTREAM_JOB_NAME: check/downstream
-    UPSTREAM_JOB_TARGET: ios
+    UPSTREAM_JOB_NAME: check/downstream/x86_64
+    UPSTREAM_JOB_TARGET: ios-x86_64
+  trigger:
+    project: TankerHQ/sdk-react-native
+    strategy: depend
+
+bridge/downstream/arm:
+  extends:
+    - .bridge-check
+    - .rules/check/downstream
+    - .variables/bridge-common
+  needs:
+    - check/downstream/arm
+  variables:
+    UPSTREAM_JOB_NAME: check/downstream/arm
+    UPSTREAM_JOB_TARGET: ios-arm
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
@@ -100,7 +169,7 @@ bridge/downstream:
 deploy:
   extends:
     - .deploy
-    - .tags/macos
+    - .tags/macos/x86_64
     - .rules/deploy/ios
   script:
     - poetry run python run-ci.py reset-branch $UPSTREAM_BRANCH_NAME

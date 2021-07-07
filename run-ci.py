@@ -23,8 +23,9 @@ PROFILES = [
     "ios-armv7-release",
     "ios-armv7s-release",
     "ios-armv8-release",
-    "ios-x86-release",
-    "ios-x86_64-release",
+    "ios-simulator-x86-release",
+    "ios-simulator-x86_64-release",
+    "ios-simulator-armv8-release",
 ]
 
 
@@ -94,7 +95,7 @@ class Builder:
         # We still have to use lipo to unify iphone libs and simulator libs
         # Otherwise, xcodebuild -create-xcframework will complain about "equivalent library definitions"
         all_libs = [str(self.libraries_path / p / "libtankerdeps.a") for p in self.profiles]
-        simulator_libs = [str(self.libraries_path / p / "libtankerdeps.a") for p in self.profiles if p.find("x86") != -1]
+        simulator_libs = [str(self.libraries_path / p / "libtankerdeps.a") for p in self.profiles if p.find("simulator") != -1]
         iphone_libs = list(set(simulator_libs) ^ set(all_libs))
 
         simulator_dir = self.libraries_path / "simulator"
