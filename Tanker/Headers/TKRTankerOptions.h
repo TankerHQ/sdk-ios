@@ -17,7 +17,7 @@
 @property NSString* appID;
 
 /*!
- @brief Only for testing purposes. Do not use.
+ @brief Optional. Sets the dedicated environment to use.
  */
 @property NSString* url;
 
