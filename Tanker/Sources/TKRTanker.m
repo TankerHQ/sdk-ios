@@ -550,7 +550,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 }
 
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
-                  usersToAdd:(nonnull NSArray<NSString*>*)userIdentities
+                  usersToAdd:(nonnull NSArray<NSString*>*)usersToAdd
+               usersToRemove:(nonnull NSArray<NSString*>*)usersToRemove
            completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
@@ -559,7 +560,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
   NSError* err = nil;
-  char** identities_to_add = convertStringstoCStrings(userIdentities, &err);
+  char** identities_to_add = convertStringstoCStrings(usersToAdd, &err);
   if (err)
   {
     runOnMainQueue(^{
@@ -567,13 +568,31 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     });
     return;
   }
+  char** identities_to_remove = convertStringstoCStrings(usersToRemove, &err);
+  if (err)
+  {
+    runOnMainQueue(^{
+      handler(err);
+    });
+    freeCStringArray(identities_to_add, usersToAdd.count);
+    return;
+  }
   tanker_future_t* future = tanker_update_group_members(
-      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)identities_to_add, userIdentities.count);
+      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)identities_to_add, usersToAdd.count,
+      (char const* const*)identities_to_remove, usersToRemove.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(identities_to_add, userIdentities.count);
+  freeCStringArray(identities_to_add, usersToAdd.count);
+  freeCStringArray(identities_to_remove, usersToRemove.count);
+}
+
+- (void)updateMembersOfGroup:(nonnull NSString*)groupId
+                  usersToAdd:(nonnull NSArray<NSString*>*)userIdentities
+           completionHandler:(nonnull TKRErrorHandler)handler
+{
+  [self updateMembersOfGroup:groupId usersToAdd:userIdentities usersToRemove:@[] completionHandler:handler];
 }
 
 - (void)shareResourceIDs:(nonnull NSArray<NSString*>*)resourceIDs
