@@ -1,12 +1,17 @@
 include:
   - project: TankerHQ/gitlab-ci-files
-    ref: 2021-07-07-1
+    ref: 2021-10-04-177
     file: /ios.yml
+
+.rules/check/deployed-native:
+  rules:
+    - !reference [.rules/web/auto, rules]
+    - !reference [.rules/mr/manual, rules]
 
 .check/deployed-native:
   extends:
     - .check
-    - .rules/deployed-native
+    - .rules/check/deployed-native
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
     - echo $CI_COMMIT_REF_NAME > branch_name.txt
@@ -106,10 +111,13 @@ bridge/native-from-sources/arm:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
+.rules/bridge/deployed-native:
+  rules: !reference [.rules/check/deployed-native, rules]
+
 bridge/deployed-native/x86_64:
   extends:
     - .bridge-check
-    - .rules/deployed-native
+    - .rules/bridge/deployed-native
     - .variables/bridge-common
   needs:
     - check/deployed-native/x86_64
@@ -123,7 +131,7 @@ bridge/deployed-native/x86_64:
 bridge/deployed-native/arm:
   extends:
     - .bridge-check
-    - .rules/deployed-native
+    - .rules/bridge/deployed-native
     - .variables/bridge-common
   needs:
     - check/deployed-native/arm
