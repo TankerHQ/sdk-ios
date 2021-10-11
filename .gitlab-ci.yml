@@ -37,15 +37,6 @@ stages:
   - bridge-check
   - deploy
 
-.check:
-  stage: check
-
-.deploy:
-  stage: deploy
-
-.bridge-check:
-  stage: bridge-check
-
 #############################
 # Default settings override #
 #############################
@@ -64,8 +55,8 @@ stages:
     - !reference [.rules/mr/manual, rules]
 
 .check/deployed-native:
+  stage: check
   extends:
-    - .check
     - .rules/check/deployed-native
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
@@ -76,8 +67,8 @@ stages:
       - branch_name.txt
 
 .check/native-from-sources:
+  stage: check
   extends:
-    - .check
     - .rules/native-from-sources
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
@@ -88,8 +79,8 @@ stages:
       - branch_name.txt
 
 .check/downstream:
+  stage: check
   extends:
-    - .check
     - .before-script/download-artifacts
     - .rules/check/downstream
   script:
@@ -139,8 +130,8 @@ check/downstream/arm:
 ######################
 
 bridge/native-from-sources/x86_64:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/native-from-sources
     - .variables/bridge-common
   needs:
@@ -153,8 +144,8 @@ bridge/native-from-sources/x86_64:
     strategy: depend
 
 bridge/native-from-sources/arm:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/native-from-sources
     - .variables/bridge-common
   needs:
@@ -170,8 +161,8 @@ bridge/native-from-sources/arm:
   rules: !reference [.rules/check/deployed-native, rules]
 
 bridge/deployed-native/x86_64:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/bridge/deployed-native
     - .variables/bridge-common
   needs:
@@ -184,8 +175,8 @@ bridge/deployed-native/x86_64:
     strategy: depend
 
 bridge/deployed-native/arm:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/bridge/deployed-native
     - .variables/bridge-common
   needs:
@@ -198,8 +189,8 @@ bridge/deployed-native/arm:
     strategy: depend
 
 bridge/downstream/x86_64:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/check/downstream
     - .variables/bridge-common
   needs:
@@ -212,8 +203,8 @@ bridge/downstream/x86_64:
     strategy: depend
 
 bridge/downstream/arm:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/check/downstream
     - .variables/bridge-common
   needs:
@@ -230,8 +221,8 @@ bridge/downstream/arm:
 ################
 
 deploy:
+  stage: deploy
   extends:
-    - .deploy
     - .tags/macos/x86_64
     - .rules/deploy/ios
   script:
