@@ -1,7 +1,53 @@
 include:
   - project: TankerHQ/gitlab-ci-files
     ref: 2021-10-04-177
-    file: /ios.yml
+    file: /common.yml
+
+
+############
+# Workflow #
+############
+
+workflow:
+  rules:
+    # web pipelines for releases only
+    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_IOS_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/
+      when: never
+    - if: !reference [.if-invalid-native-conan-reference, if]
+      when: never
+    # allow everything else
+    - when: always
+
+###########
+# Default #
+###########
+
+default:
+  before_script: &global_before_script
+    - security unlock-keychain -p ${DEFAULT_KEYCHAIN_PASSWORD} ~/Library/Keychains/login.keychain-db
+    - poetry run python -m pip install --upgrade pip
+    - poetry install
+
+##########
+# Stages #
+##########
+
+stages:
+  - check
+  - bridge-check
+  - deploy
+
+#############################
+# Default settings override #
+#############################
+
+.before-script/download-artifacts:
+  before_script:
+    - *global_before_script
+    - poetry run python run-ci.py download-artifacts --project-id=$UPSTREAM_PROJECT_ID --pipeline-id=$UPSTREAM_PIPELINE_ID --job-name=$UPSTREAM_JOB_NAME
+    - poetry run python run-ci.py reset-branch $(cat branch_name.txt)
+    - poetry run python -m pip install --upgrade pip
+    - poetry install
 
 .rules/check/deployed-native:
   rules:
@@ -9,8 +55,8 @@ include:
     - !reference [.rules/mr/manual, rules]
 
 .check/deployed-native:
+  stage: check
   extends:
-    - .check
     - .rules/check/deployed-native
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
@@ -21,8 +67,8 @@ include:
       - branch_name.txt
 
 .check/native-from-sources:
+  stage: check
   extends:
-    - .check
     - .rules/native-from-sources
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
@@ -33,8 +79,8 @@ include:
       - branch_name.txt
 
 .check/downstream:
+  stage: check
   extends:
-    - .check
     - .before-script/download-artifacts
     - .rules/check/downstream
   script:
@@ -84,8 +130,8 @@ check/downstream/arm:
 ######################
 
 bridge/native-from-sources/x86_64:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/native-from-sources
     - .variables/bridge-common
   needs:
@@ -98,8 +144,8 @@ bridge/native-from-sources/x86_64:
     strategy: depend
 
 bridge/native-from-sources/arm:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/native-from-sources
     - .variables/bridge-common
   needs:
@@ -115,8 +161,8 @@ bridge/native-from-sources/arm:
   rules: !reference [.rules/check/deployed-native, rules]
 
 bridge/deployed-native/x86_64:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/bridge/deployed-native
     - .variables/bridge-common
   needs:
@@ -129,8 +175,8 @@ bridge/deployed-native/x86_64:
     strategy: depend
 
 bridge/deployed-native/arm:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/bridge/deployed-native
     - .variables/bridge-common
   needs:
@@ -143,8 +189,8 @@ bridge/deployed-native/arm:
     strategy: depend
 
 bridge/downstream/x86_64:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/check/downstream
     - .variables/bridge-common
   needs:
@@ -157,8 +203,8 @@ bridge/downstream/x86_64:
     strategy: depend
 
 bridge/downstream/arm:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/check/downstream
     - .variables/bridge-common
   needs:
@@ -175,8 +221,8 @@ bridge/downstream/arm:
 ################
 
 deploy:
+  stage: deploy
   extends:
-    - .deploy
     - .tags/macos/x86_64
     - .rules/deploy/ios
   script:
