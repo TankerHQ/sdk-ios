@@ -161,9 +161,9 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   uint64_t encrypted_size = encryptedData.length;
 
   __block uint8_t* decrypted_buffer = nil;
-  __block uint64_t decrypted_size = 0;
+  uint64_t decrypted_size = 0;
 
-  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+  TKRAdapter adapter = ^(NSNumber* clearSize, NSError* err) {
     TKRAntiARCRelease(encryptedData);
     if (err)
     {
@@ -173,7 +173,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
     }
     TKRPtrAndSizePair* hack = [[TKRPtrAndSizePair alloc] init];
     hack.ptrValue = (uintptr_t)decrypted_buffer;
-    hack.ptrSize = (NSUInteger)decrypted_size;
+    hack.ptrSize = clearSize.unsignedLongValue;
     handler(hack, nil);
   };
 
