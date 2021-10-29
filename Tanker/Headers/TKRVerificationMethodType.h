@@ -10,4 +10,6 @@ typedef NS_ENUM(NSUInteger, TKRVerificationMethodType) {
   TKRVerificationMethodTypeVerificationKey,
   TKRVerificationMethodTypeOIDCIDToken,
   TKRVerificationMethodTypePhoneNumber,
+  TKRVerificationMethodTypePreverifiedEmail,
+  TKRVerificationMethodTypePreverifiedPhoneNumber,
 };

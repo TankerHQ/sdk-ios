@@ -64,6 +64,12 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
     c_verification->phone_number_verification.verification_code =
         [verification.phoneNumber.verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypePreverifiedEmail:
+    c_verification->preverified_email = [verification.preverifiedEmail cStringUsingEncoding:NSUTF8StringEncoding];
+      break;
+  case TKRVerificationMethodTypePreverifiedPhoneNumber:
+    c_verification->preverified_phone_number = [verification.preverifiedPhoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
+      break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -81,12 +87,14 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   case TKRVerificationMethodTypeEmail:
     ret.email = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypePhoneNumber:
+    ret.phoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    break;
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
   case TKRVerificationMethodTypeOIDCIDToken:
-    break;
-  case TKRVerificationMethodTypePhoneNumber:
-    ret.phoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+  case TKRVerificationMethodTypePreverifiedEmail:
+  case TKRVerificationMethodTypePreverifiedPhoneNumber:
     break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);

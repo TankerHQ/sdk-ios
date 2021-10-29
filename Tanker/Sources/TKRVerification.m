@@ -45,4 +45,20 @@
   return ret;
 }
 
++ (nonnull TKRVerification*)verificationFromPreverifiedEmail:(NSString*)preverifiedEmail
+{
+  TKRVerification* ret = [[TKRVerification alloc] init];
+  ret.type = TKRVerificationMethodTypePreverifiedEmail;
+  ret.preverifiedEmail = preverifiedEmail;
+  return ret;
+}
+
++ (nonnull TKRVerification*)verificationFromPreverifiedPhoneNumber:(NSString*)preverifiedPhoneNumber
+{
+  TKRVerification* ret = [[TKRVerification alloc] init];
+  ret.type = TKRVerificationMethodTypePreverifiedPhoneNumber;
+  ret.preverifiedPhoneNumber = preverifiedPhoneNumber;
+  return ret;
+}
+
 @end

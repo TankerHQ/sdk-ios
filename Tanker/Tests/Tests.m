@@ -119,11 +119,12 @@ static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
 }
 
 static void updateAdminApp(
-    tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider, bool* enable2FA)
+    tanker_admin_t* admin, NSString* appID, NSString* oidcClientID, NSString* oidcClientProvider, bool* enable2FA, bool* enablePreverifiedVerification)
 {
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_app_update_options_t options = TANKER_APP_UPDATE_OPTIONS_INIT;
   options.session_certificates = enable2FA;
+  options.preverified_verification = enablePreverifiedVerification;
   if (oidcClientID)
     options.oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
   if (oidcClientProvider)
@@ -1340,7 +1341,7 @@ SpecBegin(TankerSpecs)
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
           NSString* refreshToken = oidcTestConfig[@"users"][userName][@"refreshToken"];
 
-          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, nil);
+          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, nil, nil);
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           NSString* userIdentity = createIdentity(email, appID, appSecret);
 
@@ -1485,8 +1486,123 @@ SpecBegin(TankerSpecs)
           });
           expect(decryptedText).to.equal(clearText);
         });
-      });
+        
+        describe(@"Preverified verification methods", ^{
+          beforeAll(^{
+            bool enablePreverified = true;
+            updateAdminApp(admin, appID, nil, nil, nil, &enablePreverified);
+          });
+          afterAll(^{
+            bool enablePreverified = false;
+            updateAdminApp(admin, appID, nil, nil, nil, &enablePreverified);
+          });
 
+        it(@"should fail to register with a preverified email", ^{
+          NSString* email = @"bob.alice@tanker.io";
+          TKRVerification* verification = [TKRVerification verificationFromPreverifiedEmail:email];
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [firstDevice startWithIdentity:identity
+                    completionHandler:^(TKRStatus status, NSError* err) {
+                      if (err)
+                        resolver(err);
+                      else
+                      {
+                        [firstDevice registerIdentityWithVerification:verification completionHandler:resolver];
+                      }
+                    }];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
+        
+        it(@"should fail to register with a preverified phone number", ^{
+          NSString* phoneNumber = @"+33639982233";
+          TKRVerification* verification = [TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber];
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [firstDevice startWithIdentity:identity
+                    completionHandler:^(TKRStatus status, NSError* err) {
+                      if (err)
+                        resolver(err);
+                      else
+                      {
+                        [firstDevice registerIdentityWithVerification:verification completionHandler:resolver];
+                      }
+                    }];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
+      
+      it(@"should register with an email and fail to verify a preverified email", ^{
+        NSString* email = @"bob.alice@tanker.io";
+        startWithIdentityAndRegister(
+            firstDevice, identity, [TKRVerification verificationFromEmail:email verificationCode:getEmailVerificationCode(email)]);
+        hangWithResolver(^(PMKResolver resolver) {
+          [secondDevice startWithIdentity:identity
+                        completionHandler:^(TKRStatus status, NSError* err){resolver(nil);}];
+        });
+        NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          [secondDevice
+              verifyIdentityWithVerification:
+                  [TKRVerification verificationFromPreverifiedEmail:email]
+                           completionHandler:resolver];
+          });
+        expect(err).toNot.beNil();
+        expect(err.code).to.equal(TKRErrorInvalidArgument);
+      });
+      
+      it(@"should register with a phone number and fail to verify a preverified phone number", ^{
+        NSString* phoneNumber = @"+33639982233";
+        startWithIdentityAndRegister(
+            firstDevice, identity, [TKRVerification verificationFromPhoneNumber:phoneNumber verificationCode:getSMSVerificationCode(phoneNumber)]);
+        hangWithResolver(^(PMKResolver resolver) {
+          [secondDevice startWithIdentity:identity
+                        completionHandler:^(TKRStatus status, NSError* err){resolver(nil);}];
+        });
+        NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          [secondDevice
+              verifyIdentityWithVerification:
+                  [TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber]
+                           completionHandler:resolver];
+          });
+        expect(err).toNot.beNil();
+        expect(err.code).to.equal(TKRErrorInvalidArgument);
+      });
+      
+      it(@"should register with a passphrase and set a preverified email method", ^{
+        NSString* email = @"bob.alice@tanker.io";
+        startWithIdentityAndRegister(
+                                     firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+        NSError* err = hangWithResolver(^(PMKResolver resolver) {
+          [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedEmail:email] completionHandler:resolver];
+        });
+        expect(err).to.beNil();
+        NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+          [firstDevice verificationMethodsWithCompletionHandler:adapter];
+        });
+        expect(methods.count).to.equal(2);
+        
+        startWithIdentityAndVerify(secondDevice, identity, [TKRVerification verificationFromEmail:email verificationCode:getEmailVerificationCode(email)]);
+        });
+        
+       it(@"should register with a passphrase and set a preverified phone number method", ^{
+          NSString* phoneNumber = @"+33639982233";
+          startWithIdentityAndRegister(
+                                       firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber] completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+          NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice verificationMethodsWithCompletionHandler:adapter];
+          });
+          expect(methods.count).to.equal(2);
+          
+          startWithIdentityAndVerify(secondDevice, identity, [TKRVerification verificationFromPhoneNumber:phoneNumber verificationCode:getSMSVerificationCode(phoneNumber)]);
+        });
+        });
+      });
+      
       describe(@"session tokens (2FA)", ^{
         __block int expectedTokenLength;
         __block TKRTanker* tanker;
@@ -1500,12 +1616,12 @@ SpecBegin(TankerSpecs)
           identity = createIdentity(createUUID(), appID, appSecret);
           verification = [TKRVerification verificationFromPassphrase:@"passphrase"];
           bool enable2FA = true;
-          updateAdminApp(admin, appID, nil, nil, &enable2FA);
+          updateAdminApp(admin, appID, nil, nil, &enable2FA, nil);
         });
 
         afterEach(^{
           bool enable2FA = false;
-          updateAdminApp(admin, appID, nil, nil, &enable2FA);
+          updateAdminApp(admin, appID, nil, nil, &enable2FA, nil);
           stop(tanker);
         });
 

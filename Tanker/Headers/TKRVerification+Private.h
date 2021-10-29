@@ -12,6 +12,8 @@
 @property TKREmailVerification* email;
 @property NSString* oidcIDToken;
 @property TKRPhoneNumberVerification* phoneNumber;
+@property NSString* preverifiedEmail;
+@property NSString* preverifiedPhoneNumber;
 
 @property id valuePrivate;
 
