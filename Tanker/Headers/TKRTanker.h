@@ -77,8 +77,7 @@
  @param verification the verification.
  @param handler the block called with an NSError*, or nil.
  */
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification
-            completionHandler:(nonnull TKRErrorHandler)handler;
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Register or update a verification method.

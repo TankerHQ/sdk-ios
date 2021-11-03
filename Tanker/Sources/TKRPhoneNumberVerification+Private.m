@@ -9,7 +9,8 @@
 
 @implementation TKRPhoneNumberVerification
 
-+ (nonnull TKRPhoneNumberVerification*)phoneNumberVerificationFromPhoneNumber:(nonnull NSString*)number verificationCode:(nonnull NSString*)code
++ (nonnull TKRPhoneNumberVerification*)phoneNumberVerificationFromPhoneNumber:(nonnull NSString*)number
+                                                             verificationCode:(nonnull NSString*)code
 {
   TKRPhoneNumberVerification* ret = [[TKRPhoneNumberVerification alloc] init];
   ret.phoneNumber = number;

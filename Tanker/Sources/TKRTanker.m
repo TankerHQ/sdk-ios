@@ -6,14 +6,14 @@
 #import <Tanker/TKRAttachResult+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
-#import <Tanker/TKRTanker+Private.h>
+#import <Tanker/TKRLogEntry.h>
 #import <Tanker/TKRNetwork+Private.h>
+#import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRUtils+Private.h>
 #import <Tanker/TKRVerification+Private.h>
 #import <Tanker/TKRVerificationKey+Private.h>
 #import <Tanker/TKRVerificationMethod+Private.h>
-#import <Tanker/TKRLogEntry.h>
 
 #include <assert.h>
 #include <string.h>
@@ -23,7 +23,7 @@
 
 #define TANKER_IOS_VERSION @"9999"
 
-TKRLogHandler globalLogHandler = ^(TKRLogEntry* _Nonnull entry){
+TKRLogHandler globalLogHandler = ^(TKRLogEntry* _Nonnull entry) {
   switch (entry.level)
   {
   case TKRLogLevelDebug:
@@ -31,7 +31,7 @@ TKRLogHandler globalLogHandler = ^(TKRLogEntry* _Nonnull entry){
   case TKRLogLevelInfo:
     break;
   case TKRLogLevelWarning:
-      break;
+    break;
   case TKRLogLevelError:
     NSLog(@"Tanker Error: [%@] %@", entry.category, entry.message);
     break;
@@ -60,16 +60,18 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
     c_verification->oidc_id_token = [verification.oidcIDToken cStringUsingEncoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePhoneNumber:
-    c_verification->phone_number_verification.phone_number = [verification.phoneNumber.phoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
+    c_verification->phone_number_verification.phone_number =
+        [verification.phoneNumber.phoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
     c_verification->phone_number_verification.verification_code =
         [verification.phoneNumber.verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePreverifiedEmail:
     c_verification->preverified_email = [verification.preverifiedEmail cStringUsingEncoding:NSUTF8StringEncoding];
-      break;
+    break;
   case TKRVerificationMethodTypePreverifiedPhoneNumber:
-    c_verification->preverified_phone_number = [verification.preverifiedPhoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
-      break;
+    c_verification->preverified_phone_number =
+        [verification.preverifiedPhoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
+    break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -232,9 +234,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(err);
   };
 
-  [self registerIdentityWithVerification:verification
-                                 options:[TKRVerificationOptions options]
-                       completionHandler:thunk];
+  [self registerIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:thunk];
 }
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
@@ -289,8 +289,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification
-            completionHandler:(nonnull TKRErrorHandler)handler
+- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRIdentityVerificationHandler thunk = ^(NSString* _token, NSError* err) {
     handler(err);
@@ -585,9 +584,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     freeCStringArray(identities_to_add, usersToAdd.count);
     return;
   }
-  tanker_future_t* future = tanker_update_group_members(
-      (tanker_t*)self.cTanker, utf8_groupid, (char const* const*)identities_to_add, usersToAdd.count,
-      (char const* const*)identities_to_remove, usersToRemove.count);
+  tanker_future_t* future = tanker_update_group_members((tanker_t*)self.cTanker,
+                                                        utf8_groupid,
+                                                        (char const* const*)identities_to_add,
+                                                        usersToAdd.count,
+                                                        (char const* const*)identities_to_remove,
+                                                        usersToRemove.count);
   tanker_future_t* resolve_future =
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
@@ -821,8 +823,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       return;
     }
     tanker_stream_t* stream = numberToPtr(ptrValue);
-    TKRInputStreamDataSource* dataSource =
-        [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream asyncReader:reader];
+    TKRInputStreamDataSource* dataSource = [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream
+                                                                                          asyncReader:reader];
     POSBlobInputStream* decryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
     handler(decryptionStream, nil);
   };

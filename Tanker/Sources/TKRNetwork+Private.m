@@ -8,11 +8,10 @@
 @property int32_t _lastId;
 @property NSMutableDictionary* _requests;
 
-+(instancetype) sharedInstance;
--(instancetype) init;
--(tanker_http_request_handle_t*) sendRequest:(tanker_http_request_t*)crequest
-                                    withData:(void*)data;
--(void) cancelRequest:(tanker_http_request_t*)request
++ (instancetype)sharedInstance;
+- (instancetype)init;
+- (tanker_http_request_handle_t*)sendRequest:(tanker_http_request_t*)crequest withData:(void*)data;
+- (void)cancelRequest:(tanker_http_request_t*)request
            withHandle:(tanker_http_request_handle_t*)request_handle
              withData:(void*)data;
 
@@ -23,8 +22,9 @@
 @synthesize _lastId;
 @synthesize _requests;
 
-+ (instancetype) sharedInstance {
-  static HTTPClient *sharedInstance = nil;
++ (instancetype)sharedInstance
+{
+  static HTTPClient* sharedInstance = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     sharedInstance = [[self alloc] init];
@@ -32,7 +32,8 @@
   return sharedInstance;
 }
 
--(instancetype) init {
+- (instancetype)init
+{
   self = [super init];
   if (self != nil)
   {
@@ -42,12 +43,11 @@
   return self;
 }
 
--(tanker_http_request_handle_t*) sendRequest:(tanker_http_request_t*)crequest
-                                    withData:(void*)data
+- (tanker_http_request_handle_t*)sendRequest:(tanker_http_request_t*)crequest withData:(void*)data
 {
-  NSURL* url = [NSURL URLWithString:[NSString stringWithUTF8String: crequest->url]];
+  NSURL* url = [NSURL URLWithString:[NSString stringWithUTF8String:crequest->url]];
   NSMutableURLRequest* req = [NSMutableURLRequest requestWithURL:url];
-  req.HTTPMethod = [NSString stringWithUTF8String: crequest->method];
+  req.HTTPMethod = [NSString stringWithUTF8String:crequest->method];
   // Cast to void* to discard the constness
   req.HTTPBody = [NSData dataWithBytesNoCopy:(void*)crequest->body length:crequest->body_size freeWhenDone:false];
   [req addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
@@ -57,37 +57,39 @@
     [req addValue:[NSString stringWithUTF8String:crequest->instance_id] forHTTPHeaderField:@"X-Tanker-Instanceid"];
 
   NSNumber* requestId = [NSNumber numberWithInteger:OSAtomicIncrement32(&_lastId)];
-  NSURLSessionDataTask* task = [[NSURLSession sharedSession] dataTaskWithRequest:req completionHandler:
-    ^(NSData* data, NSURLResponse* baseResponse, NSError* error) {
-      NSHTTPURLResponse* response = (NSHTTPURLResponse*)baseResponse;
+  NSURLSessionDataTask* task =
+      [[NSURLSession sharedSession] dataTaskWithRequest:req
+                                      completionHandler:^(NSData* data, NSURLResponse* baseResponse, NSError* error) {
+                                        NSHTTPURLResponse* response = (NSHTTPURLResponse*)baseResponse;
 
-      tanker_http_response_t cresponse;
+                                        tanker_http_response_t cresponse;
 
-      if (error)
-      {
-        cresponse.error_msg = error.localizedDescription.UTF8String;
-      }
-      else
-      {
-        cresponse.error_msg = NULL;
-        cresponse.status_code = (int32_t)response.statusCode;
-        cresponse.content_type = response.MIMEType.UTF8String;
-        cresponse.body = data.bytes;
-        cresponse.body_size = data.length;
-      }
+                                        if (error)
+                                        {
+                                          cresponse.error_msg = error.localizedDescription.UTF8String;
+                                        }
+                                        else
+                                        {
+                                          cresponse.error_msg = NULL;
+                                          cresponse.status_code = (int32_t)response.statusCode;
+                                          cresponse.content_type = response.MIMEType.UTF8String;
+                                          cresponse.body = data.bytes;
+                                          cresponse.body_size = data.length;
+                                        }
 
-      @synchronized(self) {
-        NSURLSessionDataTask* task = [self->_requests objectForKey:requestId];
-        if (task)
-        {
-          tanker_http_handle_response(crequest, &cresponse);
-          [self->_requests removeObjectForKey:requestId];
-        }
-      }
-    }
-  ];
+                                        @synchronized(self)
+                                        {
+                                          NSURLSessionDataTask* task = [self->_requests objectForKey:requestId];
+                                          if (task)
+                                          {
+                                            tanker_http_handle_response(crequest, &cresponse);
+                                            [self->_requests removeObjectForKey:requestId];
+                                          }
+                                        }
+                                      }];
 
-  @synchronized(self) {
+  @synchronized(self)
+  {
     [self->_requests setObject:task forKey:requestId];
   }
 
@@ -96,12 +98,13 @@
   return (tanker_http_request_handle_t*)numberToPtr(requestId);
 }
 
--(void) cancelRequest:(tanker_http_request_t*)request
+- (void)cancelRequest:(tanker_http_request_t*)request
            withHandle:(tanker_http_request_handle_t*)request_handle
              withData:(void*)data;
 {
   NSNumber* requestId = ptrToNumber(request_handle);
-  @synchronized(self) {
+  @synchronized(self)
+  {
     NSURLSessionDataTask* task = [self->_requests objectForKey:requestId];
     if (task)
     {
@@ -113,16 +116,12 @@
 
 @end
 
-tanker_http_request_handle_t* httpSendRequestCallback(
-    tanker_http_request_t* request, void* data)
+tanker_http_request_handle_t* httpSendRequestCallback(tanker_http_request_t* request, void* data)
 {
   return [[HTTPClient sharedInstance] sendRequest:request withData:data];
 }
 
-void httpCancelRequestCallback(
-    tanker_http_request_t* request,
-    tanker_http_request_handle_t* request_handle,
-    void* data)
+void httpCancelRequestCallback(tanker_http_request_t* request, tanker_http_request_handle_t* request_handle, void* data)
 {
   [[HTTPClient sharedInstance] cancelRequest:request withHandle:request_handle withData:data];
 }

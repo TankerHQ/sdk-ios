@@ -14,12 +14,12 @@
 
 NSError* createNSError(char const* message, TKRError code)
 {
-  return [NSError
-      errorWithDomain:TKRErrorDomain
-                 code:code
-             userInfo:@{
-               NSLocalizedDescriptionKey : [NSString stringWithCString:message encoding:NSUTF8StringEncoding]
-             }];
+  return [NSError errorWithDomain:TKRErrorDomain
+                             code:code
+                         userInfo:@{
+                           NSLocalizedDescriptionKey : [NSString stringWithCString:message
+                                                                          encoding:NSUTF8StringEncoding]
+                         }];
 }
 
 NSNumber* ptrToNumber(void* ptr)
@@ -39,12 +39,12 @@ NSError* getOptionalFutureError(void* future)
   tanker_error_t* err = tanker_future_get_error(fut);
   if (!err)
     return nil;
-  NSError* error = [NSError
-      errorWithDomain:TKRErrorDomain
-                 code:err->code
-             userInfo:@{
-               NSLocalizedDescriptionKey : [NSString stringWithCString:err->message encoding:NSUTF8StringEncoding]
-             }];
+  NSError* error = [NSError errorWithDomain:TKRErrorDomain
+                                       code:err->code
+                                   userInfo:@{
+                                     NSLocalizedDescriptionKey : [NSString stringWithCString:err->message
+                                                                                    encoding:NSUTF8StringEncoding]
+                                   }];
   return error;
 }
 
