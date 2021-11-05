@@ -92,11 +92,15 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   case TKRVerificationMethodTypePhoneNumber:
     ret.phoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypePreverifiedEmail:
+    ret.preverifiedEmail = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    break;
+  case TKRVerificationMethodTypePreverifiedPhoneNumber:
+    ret.preverifiedPhoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    break;
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
   case TKRVerificationMethodTypeOIDCIDToken:
-  case TKRVerificationMethodTypePreverifiedEmail:
-  case TKRVerificationMethodTypePreverifiedPhoneNumber:
     break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);
