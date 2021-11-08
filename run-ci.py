@@ -16,6 +16,7 @@ import tankerci.cpp
 import tankerci.gcp
 import tankerci.git
 import tankerci.gitlab
+import tankerci.ios
 from tankerci.build_info import DepsConfig
 import cli_ui as ui
 
@@ -56,6 +57,7 @@ class Builder:
         self.private_headers_path = self.pod_path / "PrivateHeaders"
         self.example_path = self.pod_path / "Example"
         self.profiles = profiles
+        self.builder = tankerci.ios.Builder()
 
     def get_static_libs(self) -> List[Path]:
         libs_path = self.libraries_path
@@ -71,81 +73,6 @@ class Builder:
                 all_libs.setdefault(lib.name, []).append(lib)
         return all_libs
 
-    def merge_all_dependencies(self) -> None:
-        if self.libraries_path.exists():
-            shutil.rmtree(self.libraries_path)
-        self.libraries_path.mkdir(parents=True, exist_ok=True)
-        env = os.environ.copy()
-        env["ARMERGE_LDFLAGS"] = "-bitcode_bundle"
-        for profile in self.profiles:
-            specific_arch_path = self.libraries_path / profile
-            specific_arch_path.mkdir()
-            lib_paths = DepsConfig(self.get_build_path(profile)).all_lib_paths()
-            tankerci.run(
-                "armerge",
-                "--keep-symbols=^_?tanker_.*",
-                f"--output={specific_arch_path / 'libtankerdeps.a'}",
-                *lib_paths,
-                env=env,
-            )
-
-    def generate_xcframework(self) -> None:
-        ui.info_1("Generating xcframework")
-
-        # We still have to use lipo to unify iphone libs and simulator libs
-        # Otherwise, xcodebuild -create-xcframework will complain about "equivalent library definitions"
-        all_libs = [str(self.libraries_path / p / "libtankerdeps.a") for p in self.profiles]
-        simulator_libs = [str(self.libraries_path / p / "libtankerdeps.a") for p in self.profiles if p.find("simulator") != -1]
-        iphone_libs = list(set(simulator_libs) ^ set(all_libs))
-
-        simulator_dir = self.libraries_path / "simulator"
-        iphone_dir = self.libraries_path / "iphone"
-        simulator_dir.mkdir(parents=True, exist_ok=True)
-        iphone_dir.mkdir(parents=True, exist_ok=True)
-
-        # xcodebuild is bad, -headers must be given a single path, we have to ship ctanker/ and ctanker.h ...
-        # so create a ad-hoc folder for that
-        with tempfile.TemporaryDirectory() as f:
-            headers_temp_dir = Path(f)
-            ctanker_path = self.private_headers_path / "ctanker"
-            shutil.copytree(ctanker_path, headers_temp_dir / "ctanker")
-            ctanker_h = self.private_headers_path / "ctanker.h"
-            shutil.copy(ctanker_h, headers_temp_dir)
-
-            fat_simulator_lib = str(simulator_dir / "libtankerdeps.a")
-            fat_iphone_lib = str(iphone_dir/ "libtankerdeps.a")
-            xcframework_dir = self.src_path / "Tanker" / "Frameworks" / "TankerDeps.xcframework"
-            shutil.rmtree(xcframework_dir, ignore_errors=True)
-
-            tankerci.run(
-                "lipo",
-                "-create",
-                "-output",
-                fat_simulator_lib,
-                *simulator_libs,
-                cwd=self.conan_path,
-            )
-            tankerci.run(
-                "lipo",
-                "-create",
-                "-output",
-                fat_iphone_lib,
-                *iphone_libs,
-                cwd=self.conan_path,
-            )
-
-            tankerci.run(
-                "xcodebuild",
-                "-create-xcframework",
-                "-library", fat_simulator_lib,
-                "-headers", headers_temp_dir,
-                "-library", fat_iphone_lib,
-                "-headers", headers_temp_dir,
-                "-output",
-                xcframework_dir,
-                cwd=self.conan_path,
-            )
-
     def copy_headers(self) -> None:
         first_profile = list(self.profiles)[0]
         # we assume that all profiles have the same includes
@@ -157,13 +84,34 @@ class Builder:
 
     def handle_sdk_deps(self) -> None:
         ui.info_1("copying sdk-native for profiles: ", self.profiles)
-        self.merge_all_dependencies()
+
+        for profile in self.profiles:
+            specific_arch_path = self.libraries_path / profile
+            specific_arch_path.mkdir(parents=True, exist_ok=True)
+            libs_path = DepsConfig(self.get_build_path(profile)).all_lib_paths()
+            self.builder.merge_libraries(
+                libs=libs_path,
+                keep_symbols_regex="^_?tanker_.*",
+                output_path=specific_arch_path / "libtankerdeps.a",
+            )
         self.copy_headers()
-        self.generate_xcframework()
+
+        libs = [self.libraries_path / p / "libtankerdeps.a" for p in self.profiles]
+        xcframework_path = (
+            self.src_path / "Tanker" / "Frameworks" / "TankerDeps.xcframework"
+        )
+        self.builder.generate_xcframework(
+            xcframework_path=xcframework_path,
+            libs=libs,
+            include_path=self.private_headers_path,
+            output_lib_filename="libtankerdeps.a",
+        )
 
     def handle_ios_deps(self) -> None:
         ui.info_2("Installing Tanker pod dependencies")
-        tankerci.run("pod", "install", "--repo-update", "--clean-install", cwd=self.example_path)
+        tankerci.run(
+            "pod", "install", "--repo-update", "--clean-install", cwd=self.example_path
+        )
 
     def build_and_test_pod(self) -> None:
         ui.info_2("building pod and launching tests")
