@@ -108,12 +108,26 @@ static NSString* createStorageFullpath()
   return path;
 }
 
+static NSString* createCacheFullpath()
+{
+  NSArray* paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+  NSString* path = [[paths objectAtIndex:0] stringByAppendingPathComponent:createUUID()];
+  NSError* err;
+  BOOL success = [[NSFileManager defaultManager] createDirectoryAtPath:path
+                                           withIntermediateDirectories:YES
+                                                            attributes:nil
+                                                                 error:&err];
+  assert(success);
+  return path;
+}
+
 static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
 {
   TKRTankerOptions* opts = [TKRTankerOptions options];
   opts.url = url;
   opts.appID = appID;
   opts.writablePath = createStorageFullpath();
+  opts.cachePath = createCacheFullpath();
   opts.sdkType = @"sdk-ios-tests";
   return opts;
 }

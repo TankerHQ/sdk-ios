@@ -22,11 +22,18 @@
 @property NSString* url;
 
 /*!
- @brief Path to which Tanker will write its internal files.
+ @brief Path to which Tanker will write its internal persistent files.
 
  @discussion The path must point to an existing folder.
  */
 @property NSString* writablePath;
+
+/*!
+ @brief Path to which Tanker will write its internal temporary files.
+
+ @discussion The path must point to an existing folder.
+ */
+@property NSString* cachePath;
 
 @property NSString* sdkType;
 
