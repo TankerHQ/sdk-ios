@@ -15,4 +15,5 @@
                                        verificationCode:(nonnull NSString*)code;
 + (nonnull TKRVerification*)verificationFromPreverifiedEmail:(nonnull NSString*)preverifiedEmail;
 + (nonnull TKRVerification*)verificationFromPreverifiedPhoneNumber:(nonnull NSString*)preverifiedPhoneNumber;
+
 @end
