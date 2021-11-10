@@ -88,7 +88,7 @@ void* TKR_unwrapAndFreeExpected(void* expected)
   return ptr;
 }
 
-char* copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err)
+char* TKR_copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err)
 {
   size_t const length = strlen(str.UTF8String);
   char* utf8_cstr = (char*)malloc(length + 1);
@@ -107,7 +107,7 @@ char* copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err)
 
 NSData* convertStringToData(NSString* clearText, NSError* _Nullable* _Nonnull err)
 {
-  char* clear_text = copyUTF8CString(clearText, err);
+  char* clear_text = TKR_copyUTF8CString(clearText, err);
   if (*err)
     return nil;
   return [NSData dataWithBytesNoCopy:clear_text length:strlen(clear_text) freeWhenDone:YES];
@@ -129,7 +129,7 @@ char** convertStringstoCStrings(NSArray<NSString*>* strings, NSError* _Nullable*
 
   __block NSError* err2 = nil;
   [strings enumerateObjectsUsingBlock:^(NSString* str, NSUInteger idx, BOOL* stop) {
-    c_strs[idx] = copyUTF8CString(str, &err2);
+    c_strs[idx] = TKR_copyUTF8CString(str, &err2);
     if (err2)
     {
       for (; idx != 0; --idx)
