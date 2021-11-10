@@ -119,7 +119,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   }
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    AntiARCRelease(clearData);
+    TKRAntiARCRelease(clearData);
     if (err)
     {
       free(encrypted_buffer);
@@ -161,7 +161,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
   // Force clearData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
-  AntiARCRetain(clearData);
+  TKRAntiARCRetain(clearData);
 }
 
 - (void)decryptDataImpl:(NSData*)encryptedData
@@ -174,7 +174,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   __block uint64_t decrypted_size = 0;
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    AntiARCRelease(encryptedData);
+    TKRAntiARCRelease(encryptedData);
     if (err)
     {
       free(decrypted_buffer);
@@ -205,7 +205,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   tanker_future_destroy(resolve_future);
   // Force encryptedData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
-  AntiARCRetain(encryptedData);
+  TKRAntiARCRetain(encryptedData);
 }
 
 - (void)setEvent:(NSUInteger)event

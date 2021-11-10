@@ -28,7 +28,7 @@
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    AntiARCRelease(clearData);
+    TKRAntiARCRelease(clearData);
     if (err)
     {
       free(encrypted_buffer);
@@ -63,7 +63,7 @@
   tanker_future_destroy(resolve_future);
   // Force clearData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
-  AntiARCRetain(clearData);
+  TKRAntiARCRetain(clearData);
 }
 
 @end

@@ -4,11 +4,11 @@
 #import <stdint.h>
 
 // https://stackoverflow.com/a/15707096/4116453
-#define AntiARCRetain(value)                               \
+#define TKRAntiARCRetain(value)                            \
   void* retained_##value = (__bridge_retained void*)value; \
   (void)retained_##value
 
-#define AntiARCRelease(value)                                     \
+#define TKRAntiARCRelease(value)                                  \
   void* retained_##value = (__bridge void*)value;                 \
   id unretained_##value = (__bridge_transfer id)retained_##value; \
   unretained_##value = nil
