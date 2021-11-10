@@ -61,9 +61,9 @@
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(
-        nil,
-        TKR_createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil,
+            TKR_createNSError(
+                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 

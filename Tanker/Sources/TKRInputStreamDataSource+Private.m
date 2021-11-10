@@ -84,7 +84,8 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
 
   if (maxLength > NSIntegerMax)
   {
-    self.error = TKR_createNSError(TKRErrorDomain, @"Attempting to read more than NSIntegerMax", TKRErrorInvalidArgument);
+    self.error =
+        TKR_createNSError(TKRErrorDomain, @"Attempting to read more than NSIntegerMax", TKRErrorInvalidArgument);
     return -1;
   }
   assert(self.bytes_available_fut);

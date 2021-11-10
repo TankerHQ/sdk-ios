@@ -35,4 +35,4 @@ void* _Nonnull TKR_unwrapAndFreeExpected(void* _Nonnull expected);
 char* _Nullable TKR_copyUTF8CString(NSString* _Nonnull str, NSError* _Nullable* _Nonnull err);
 NSData* _Nullable TKR_convertStringToData(NSString* _Nonnull clearText, NSError* _Nullable* _Nonnull err);
 char* _Nonnull* _Nullable TKR_convertStringstoCStrings(NSArray<NSString*>* _Nonnull strings,
-                                                   NSError* _Nullable* _Nonnull err);
+                                                       NSError* _Nullable* _Nonnull err);

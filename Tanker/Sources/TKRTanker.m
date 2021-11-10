@@ -738,8 +738,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
 
   tanker_expected_t* verification_key_fut = tanker_generate_verification_key((tanker_t*)self.cTanker);
-  tanker_future_t* resolve_future =
-      tanker_future_then(verification_key_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_t* resolve_future = tanker_future_then(
+      verification_key_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(verification_key_fut);
   tanker_future_destroy(resolve_future);
@@ -781,9 +781,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(
-        nil,
-        TKR_createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil,
+            TKR_createNSError(
+                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
@@ -815,9 +815,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (encryptedStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(
-        nil,
-        TKR_createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil,
+            TKR_createNSError(
+                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
