@@ -87,7 +87,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 
 - (void)setCTanker:(void*)value
 {
-  objc_setAssociatedObject(self, @selector(cTanker), ptrToNumber(value), OBJC_ASSOCIATION_RETAIN);
+  objc_setAssociatedObject(self, @selector(cTanker), TKR_ptrToNumber(value), OBJC_ASSOCIATION_RETAIN);
 }
 
 - (void*)cTanker
@@ -226,7 +226,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
     return;
   }
 
-  self.callbacks[[NSNumber numberWithUnsignedInteger:event]] = ptrToNumber(handler_ptr);
+  self.callbacks[[NSNumber numberWithUnsignedInteger:event]] = TKR_ptrToNumber(handler_ptr);
 }
 
 - (void)disconnectEvent:(NSUInteger)event

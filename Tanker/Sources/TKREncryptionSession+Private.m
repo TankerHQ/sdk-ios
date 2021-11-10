@@ -13,7 +13,7 @@
 
 - (void)setCSession:(void*)value
 {
-  objc_setAssociatedObject(self, @selector(cSession), ptrToNumber(value), OBJC_ASSOCIATION_RETAIN);
+  objc_setAssociatedObject(self, @selector(cSession), TKR_ptrToNumber(value), OBJC_ASSOCIATION_RETAIN);
 }
 
 - (void*)cSession

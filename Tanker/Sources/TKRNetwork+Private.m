@@ -102,7 +102,7 @@
            withHandle:(tanker_http_request_handle_t*)request_handle
              withData:(void*)data;
 {
-  NSNumber* requestId = ptrToNumber(request_handle);
+  NSNumber* requestId = TKR_ptrToNumber(request_handle);
   @synchronized(self)
   {
     NSURLSessionDataTask* task = [self->_requests objectForKey:requestId];

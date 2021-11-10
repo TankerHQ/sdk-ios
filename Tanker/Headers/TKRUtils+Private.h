@@ -27,7 +27,7 @@ typedef void (^TKRAdapter)(NSNumber* _Nullable ptrValue, NSError* _Nullable err)
 void TKR_runOnMainQueue(void (^_Nonnull block)(void));
 void TKR_freeCStringArray(char* _Nonnull* _Nonnull toFree, NSUInteger nbElems);
 NSError* _Nonnull TKR_createNSError(NSString* _Nonnull domain, NSString* _Nonnull message, NSUInteger code);
-NSNumber* _Nonnull ptrToNumber(void* _Nonnull ptr);
+NSNumber* _Nonnull TKR_ptrToNumber(void* _Nonnull ptr);
 void* _Nonnull numberToPtr(NSNumber* _Nonnull nb);
 NSError* _Nullable getOptionalFutureError(void* _Nonnull future);
 void* _Nullable resolvePromise(void* _Nonnull future, void* _Nullable arg);

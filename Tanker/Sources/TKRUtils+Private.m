@@ -16,7 +16,7 @@ NSError* TKR_createNSError(NSString* _Nonnull domain, NSString* _Nonnull message
   return [NSError errorWithDomain:domain code:code userInfo:@{NSLocalizedDescriptionKey : message}];
 }
 
-NSNumber* ptrToNumber(void* ptr)
+NSNumber* TKR_ptrToNumber(void* ptr)
 {
   return [NSNumber numberWithUnsignedLong:(uintptr_t)ptr];
 }
