@@ -18,7 +18,7 @@
 
 - (void*)cSession
 {
-  return numberToPtr(objc_getAssociatedObject(self, @selector(cSession)));
+  return TKR_numberToPtr(objc_getAssociatedObject(self, @selector(cSession)));
 }
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData

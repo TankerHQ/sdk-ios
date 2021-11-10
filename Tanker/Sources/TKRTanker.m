@@ -249,7 +249,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                        completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
     if (err || !session_token)
       handler(nil, err);
     else
@@ -281,7 +281,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     {
       NSMutableArray<TKRVerificationMethod*>* ret = [NSMutableArray array];
 
-      tanker_verification_method_list_t* methods = numberToPtr(ptrValue);
+      tanker_verification_method_list_t* methods = TKR_numberToPtr(ptrValue);
       for (NSUInteger i = 0; i < methods->count; ++i)
         [ret addObject:cVerificationMethodToVerificationMethod(methods->methods + i)];
       tanker_free_verification_method_list(methods);
@@ -310,7 +310,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
             completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
     if (err || !session_token)
       handler(nil, err);
     else
@@ -348,7 +348,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                      completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
     if (err || !session_token)
       handler(nil, err);
     else
@@ -379,7 +379,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
     else
     {
-      tanker_attach_result_t* c_result = numberToPtr(ptrValue);
+      tanker_attach_result_t* c_result = TKR_numberToPtr(ptrValue);
       TKRAttachResult* ret = [[TKRAttachResult alloc] init];
       ret.status = c_result->status;
       if (ret.status == TKRStatusIdentityVerificationNeeded)
@@ -423,7 +423,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    char* device_id = (char*)numberToPtr(ptrValue);
+    char* device_id = (char*)TKR_numberToPtr(ptrValue);
     NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
     tanker_free_buffer(device_id);
     handler(ret, nil);
@@ -540,7 +540,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    char* group_id = (char*)numberToPtr(ptrValue);
+    char* group_id = (char*)TKR_numberToPtr(ptrValue);
     NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
     tanker_free_buffer(group_id);
     handler(groupId, nil);
@@ -669,7 +669,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       return;
     }
     TKREncryptionSession* encSess = [[TKREncryptionSession alloc] init];
-    encSess.cSession = numberToPtr(ptrValue);
+    encSess.cSession = TKR_numberToPtr(ptrValue);
     handler(encSess, nil);
   };
 
@@ -729,7 +729,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    char* verification_key = (char*)numberToPtr(ptrValue);
+    char* verification_key = (char*)TKR_numberToPtr(ptrValue);
     NSString* verificationKey = [NSString stringWithCString:verification_key encoding:NSUTF8StringEncoding];
 
     TKRVerificationKey* ret = [TKRVerificationKey verificationKeyFromValue:verificationKey];
@@ -833,7 +833,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    tanker_stream_t* stream = numberToPtr(ptrValue);
+    tanker_stream_t* stream = TKR_numberToPtr(ptrValue);
     TKRInputStreamDataSource* dataSource = [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream
                                                                                           asyncReader:reader];
     POSBlobInputStream* decryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];

@@ -95,7 +95,7 @@
 
   [task resume];
 
-  return (tanker_http_request_handle_t*)numberToPtr(requestId);
+  return (tanker_http_request_handle_t*)TKR_numberToPtr(requestId);
 }
 
 - (void)cancelRequest:(tanker_http_request_t*)request

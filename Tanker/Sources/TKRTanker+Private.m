@@ -68,7 +68,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
       handler(nil, err);
       return;
     }
-    tanker_stream_t* stream = numberToPtr(ptrValue);
+    tanker_stream_t* stream = TKR_numberToPtr(ptrValue);
     TKRInputStreamDataSource* dataSource = [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream
                                                                                           asyncReader:reader];
     POSBlobInputStream* encryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
@@ -92,7 +92,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 
 - (void*)cTanker
 {
-  return numberToPtr(objc_getAssociatedObject(self, @selector(cTanker)));
+  return TKR_numberToPtr(objc_getAssociatedObject(self, @selector(cTanker)));
 }
 
 - (void)setCallbacks:(NSMutableArray*)callbacks
@@ -216,7 +216,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   void* handler_ptr = (__bridge_retained void*)handler;
   tanker_expected_t* connect_expected = tanker_event_connect((tanker_t*)self.cTanker,
                                                              (enum tanker_event)event,
-                                                             (tanker_event_callback_t)numberToPtr(callbackPtr),
+                                                             (tanker_event_callback_t)TKR_numberToPtr(callbackPtr),
                                                              handler_ptr);
 
   *error = getOptionalFutureError(connect_expected);
@@ -232,7 +232,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 - (void)disconnectEvent:(NSUInteger)event
 {
   NSNumber* key = [NSNumber numberWithUnsignedInteger:event];
-  releaseCPointer(numberToPtr(self.callbacks[key]));
+  releaseCPointer(TKR_numberToPtr(self.callbacks[key]));
   [self.callbacks removeObjectForKey:key];
   tanker_event_disconnect((tanker_t*)self.cTanker, (enum tanker_event)event);
 }
@@ -240,7 +240,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 - (void)disconnectEvents
 {
   for (NSNumber* key in self.callbacks)
-    releaseCPointer(numberToPtr(self.callbacks[key]));
+    releaseCPointer(TKR_numberToPtr(self.callbacks[key]));
   [self.callbacks removeAllObjects];
 }
 

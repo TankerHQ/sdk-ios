@@ -21,7 +21,7 @@ NSNumber* TKR_ptrToNumber(void* ptr)
   return [NSNumber numberWithUnsignedLong:(uintptr_t)ptr];
 }
 
-void* numberToPtr(NSNumber* nb)
+void* TKR_numberToPtr(NSNumber* nb)
 {
   return (void*)((uintptr_t)nb.unsignedLongValue);
 }
