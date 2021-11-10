@@ -11,7 +11,7 @@
 #import <Tanker/TKRNetwork+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 #import <Tanker/TKRVerification+Private.h>
 #import <Tanker/TKRVerificationKey+Private.h>
 #import <Tanker/TKRVerificationMethod+Private.h>

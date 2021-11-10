@@ -16,7 +16,7 @@ It's available for browsers, desktop, iOS and Android.
 
   s.ios.deployment_target = '9.0'
 
-  s.source_files = 'Sources/*', 'Headers/TKR*'
+  s.source_files = 'Sources/TKR*', 'Headers/TKR*'
   s.private_header_files = 'Headers/*+Private.h'
   s.pod_target_xcconfig = {
     'USE_HEADERMAP' => "NO",
@@ -27,6 +27,11 @@ It's available for browsers, desktop, iOS and Android.
   s.vendored_framework = 'Frameworks/TankerDeps.xcframework'
   s.preserve_paths = 'Tests/Dummy.m'
   s.dependency 'POSInputStreamLibrary'
+
+  s.subspec 'Utils' do |utils_spec|
+    utils_spec.source_files = 'Sources/Utils/*', 'Headers/Utils/*'
+    utils_spec.vendored_framework = 'Frameworks/TankerDeps.xcframework'
+  end
 
   s.test_spec 'Tests' do |test_spec|
     test_spec.source_files = 'Tests/*.{h,m}'

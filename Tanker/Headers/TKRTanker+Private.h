@@ -3,7 +3,7 @@
 
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKRTanker.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
 

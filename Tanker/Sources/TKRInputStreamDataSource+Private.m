@@ -2,7 +2,7 @@
 
 #import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 @interface TKRInputStreamDataSource ()
 

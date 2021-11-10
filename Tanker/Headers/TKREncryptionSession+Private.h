@@ -1,6 +1,6 @@
 
 #import <Tanker/TKREncryptionSession.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 @interface TKREncryptionSession (Private)
 

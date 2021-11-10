@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 #include "ctanker.h"
 

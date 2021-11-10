@@ -1,6 +1,6 @@
 
 #import <Tanker/TKRAsyncStreamReader+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 void readInput(uint8_t* _Nonnull out,
                int64_t n,
