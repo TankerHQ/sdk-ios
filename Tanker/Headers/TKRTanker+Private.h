@@ -11,6 +11,9 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
                            tanker_future_t* _Nonnull streamFut,
                            TKRInputStreamHandler _Nonnull handler);
 
+NSError* _Nullable convertSharingOptions(TKRSharingOptions* _Nonnull opts, void* _Nonnull c_opts);
+NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts, void* _Nonnull c_opts);
+
 @interface TKRTanker (Private)
 
 @property(nonnull) void* cTanker;

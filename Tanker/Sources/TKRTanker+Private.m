@@ -16,6 +16,47 @@ static void releaseCPointer(void* ptr)
   (void)((__bridge_transfer id)ptr);
 }
 
+NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts, void* _Nonnull c_opts_ptr)
+{
+  NSError* err = nil;
+  char** recipient_public_identities = convertStringstoCStrings(opts.shareWithUsers, &err);
+  if (err)
+    return err;
+  char** group_ids = convertStringstoCStrings(opts.shareWithGroups, &err);
+  if (err)
+  {
+    freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);
+    return err;
+  }
+  tanker_encrypt_options_t* c_opts = (tanker_encrypt_options_t*)c_opts_ptr;
+  c_opts->share_with_users = (char const* const*)recipient_public_identities;
+  c_opts->nb_users = (uint32_t)opts.shareWithUsers.count;
+  c_opts->share_with_groups = (char const* const*)group_ids;
+  c_opts->nb_groups = (uint32_t)opts.shareWithGroups.count;
+  c_opts->share_with_self = opts.shareWithSelf;
+  return nil;
+}
+
+NSError* _Nullable convertSharingOptions(TKRSharingOptions* _Nonnull opts, void* _Nonnull c_opts_ptr)
+{
+  NSError* err = nil;
+  char** recipient_public_identities = convertStringstoCStrings(opts.shareWithUsers, &err);
+  if (err)
+    return err;
+  char** group_ids = convertStringstoCStrings(opts.shareWithGroups, &err);
+  if (err)
+  {
+    freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);
+    return err;
+  }
+  tanker_sharing_options_t* c_opts = (tanker_sharing_options_t*)c_opts_ptr;
+  c_opts->share_with_users = (char const* const*)recipient_public_identities;
+  c_opts->nb_users = (uint32_t)opts.shareWithUsers.count;
+  c_opts->share_with_groups = (char const* const*)group_ids;
+  c_opts->nb_groups = (uint32_t)opts.shareWithGroups.count;
+  return nil;
+}
+
 void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
                            tanker_future_t* _Nonnull streamFut,
                            TKRInputStreamHandler _Nonnull handler)
