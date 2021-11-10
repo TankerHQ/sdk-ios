@@ -206,7 +206,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   char const* c_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* expected_chashed = tanker_prehash_password(c_password);
-  char* c_hashed = (char*)unwrapAndFreeExpected(expected_chashed);
+  char* c_hashed = (char*)TKR_unwrapAndFreeExpected(expected_chashed);
   NSString* hashed = [NSString stringWithCString:c_hashed encoding:NSUTF8StringEncoding];
   return hashed;
 }
@@ -525,7 +525,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     tanker_future_destroy(resource_id_expected);
     return nil;
   }
-  char* resource_id = unwrapAndFreeExpected(resource_id_expected);
+  char* resource_id = TKR_unwrapAndFreeExpected(resource_id_expected);
   NSString* ret = [NSString stringWithCString:resource_id encoding:NSUTF8StringEncoding];
   tanker_free_buffer(resource_id);
   return ret;

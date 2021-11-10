@@ -188,7 +188,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   };
 
   tanker_expected_t* expected_decrypted_size = tanker_decrypted_size(encrypted_buffer, encrypted_size);
-  decrypted_size = (uint64_t)unwrapAndFreeExpected(expected_decrypted_size);
+  decrypted_size = (uint64_t)TKR_unwrapAndFreeExpected(expected_decrypted_size);
 
   decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)

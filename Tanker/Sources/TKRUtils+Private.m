@@ -73,7 +73,7 @@ void TKR_freeCStringArray(char** toFree, NSUInteger nbElems)
   free(toFree);
 }
 
-void* unwrapAndFreeExpected(void* expected)
+void* TKR_unwrapAndFreeExpected(void* expected)
 {
   NSError* optErr = TKR_getOptionalFutureError(expected);
   if (optErr)

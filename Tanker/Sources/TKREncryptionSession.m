@@ -15,7 +15,7 @@
 {
   tanker_expected_t* resource_id_expected =
       tanker_encryption_session_get_resource_id((tanker_encryption_session_t*)self.cSession);
-  char* resource_id = unwrapAndFreeExpected(resource_id_expected);
+  char* resource_id = TKR_unwrapAndFreeExpected(resource_id_expected);
   NSString* ret = [NSString stringWithCString:resource_id encoding:NSUTF8StringEncoding];
   tanker_free_buffer(resource_id);
   return ret;
