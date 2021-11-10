@@ -21,10 +21,10 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData
                 options:(nonnull TKREncryptionOptions*)options
-      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
+      completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
 
 - (void)decryptDataImpl:(nonnull NSData*)encryptedData
-      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
+      completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
 
 - (void)setEvent:(NSUInteger)event
      callbackPtr:(nonnull NSNumber*)callbackPtr

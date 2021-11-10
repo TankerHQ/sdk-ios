@@ -36,7 +36,7 @@
 
 - (void)encryptData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);

@@ -14,7 +14,7 @@
   unretained_##value = nil
 
 // contains a NSUInteger constructed from a uintptr_t, and the size of the buffer
-@interface PtrAndSizePair : NSObject
+@interface TKRPtrAndSizePair : NSObject
 
 @property NSUInteger ptrValue;
 @property NSUInteger ptrSize;

@@ -107,7 +107,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData
                 options:(nonnull TKREncryptionOptions*)options
-      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
+      completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
   uint64_t encrypted_size = tanker_encrypted_size(clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
@@ -134,7 +134,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
     // pointer and tell NSMutableData to not free it anymore.
     //
     // So let's return a uintptr_t...
-    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    TKRPtrAndSizePair* hack = [[TKRPtrAndSizePair alloc] init];
     hack.ptrValue = (uintptr_t)encrypted_buffer;
     hack.ptrSize = (NSUInteger)encrypted_size;
     handler(hack, nil);
@@ -165,7 +165,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 }
 
 - (void)decryptDataImpl:(NSData*)encryptedData
-      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
+      completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
   uint8_t const* encrypted_buffer = (uint8_t const*)encryptedData.bytes;
   uint64_t encrypted_size = encryptedData.length;
@@ -181,7 +181,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
       handler(nil, err);
       return;
     }
-    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    TKRPtrAndSizePair* hack = [[TKRPtrAndSizePair alloc] init];
     hack.ptrValue = (uintptr_t)decrypted_buffer;
     hack.ptrSize = (NSUInteger)decrypted_size;
     handler(hack, nil);

@@ -22,7 +22,7 @@
 }
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData
-      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
+      completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
   uint64_t encrypted_size = tanker_encryption_session_encrypted_size(clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
@@ -43,7 +43,7 @@
     // pointer and tell NSMutableData to not free it anymore.
     //
     // So let's return a uintptr_t...
-    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    TKRPtrAndSizePair* hack = [[TKRPtrAndSizePair alloc] init];
     hack.ptrValue = (uintptr_t)encrypted_buffer;
     hack.ptrSize = (NSUInteger)encrypted_size;
     handler(hack, nil);

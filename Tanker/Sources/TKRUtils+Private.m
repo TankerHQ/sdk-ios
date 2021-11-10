@@ -4,7 +4,7 @@
 
 #include "ctanker.h"
 
-@implementation PtrAndSizePair
+@implementation TKRPtrAndSizePair
 
 @synthesize ptrValue;
 @synthesize ptrSize;

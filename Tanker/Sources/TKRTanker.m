@@ -458,7 +458,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 - (void)decryptStringFromData:(nonnull NSData*)encryptedData
             completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);
@@ -485,7 +485,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
               options:(nonnull TKREncryptionOptions*)options
     completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);
@@ -501,7 +501,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)decryptData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);
