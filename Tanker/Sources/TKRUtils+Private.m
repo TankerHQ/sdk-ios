@@ -105,7 +105,7 @@ char* TKR_copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err)
   return utf8_cstr;
 }
 
-NSData* convertStringToData(NSString* clearText, NSError* _Nullable* _Nonnull err)
+NSData* TKR_convertStringToData(NSString* clearText, NSError* _Nullable* _Nonnull err)
 {
   char* clear_text = TKR_copyUTF8CString(clearText, err);
   if (*err)

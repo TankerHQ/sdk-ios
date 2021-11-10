@@ -24,7 +24,7 @@
 - (void)encryptString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
   NSError* err = nil;
-  NSData* data = convertStringToData(clearText, &err);
+  NSData* data = TKR_convertStringToData(clearText, &err);
 
   if (err)
     TKR_runOnMainQueue(^{

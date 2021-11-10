@@ -33,6 +33,6 @@ NSError* _Nullable TKR_getOptionalFutureError(void* _Nonnull future);
 void* _Nullable TKR_resolvePromise(void* _Nonnull future, void* _Nullable arg);
 void* _Nonnull TKR_unwrapAndFreeExpected(void* _Nonnull expected);
 char* _Nullable TKR_copyUTF8CString(NSString* _Nonnull str, NSError* _Nullable* _Nonnull err);
-NSData* _Nullable convertStringToData(NSString* _Nonnull clearText, NSError* _Nullable* _Nonnull err);
+NSData* _Nullable TKR_convertStringToData(NSString* _Nonnull clearText, NSError* _Nullable* _Nonnull err);
 char* _Nonnull* _Nullable convertStringstoCStrings(NSArray<NSString*>* _Nonnull strings,
                                                    NSError* _Nullable* _Nonnull err);

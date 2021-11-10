@@ -445,7 +445,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
   NSError* err = nil;
-  NSData* data = convertStringToData(clearText, &err);
+  NSData* data = TKR_convertStringToData(clearText, &err);
 
   if (err)
     TKR_runOnMainQueue(^{
