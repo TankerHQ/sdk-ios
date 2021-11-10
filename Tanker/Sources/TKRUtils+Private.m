@@ -11,7 +11,7 @@
 
 @end
 
-NSError* createNSError(NSString* _Nonnull domain, NSString* _Nonnull message, NSUInteger code)
+NSError* TKR_createNSError(NSString* _Nonnull domain, NSString* _Nonnull message, NSUInteger code)
 {
   return [NSError errorWithDomain:domain code:code userInfo:@{NSLocalizedDescriptionKey : message}];
 }
@@ -33,7 +33,7 @@ NSError* getOptionalFutureError(void* future)
   tanker_error_t* err = tanker_future_get_error(fut);
   if (!err)
     return nil;
-  return createNSError(
+  return TKR_createNSError(
       @"TKRErrorDomain", [NSString stringWithCString:err->message encoding:NSUTF8StringEncoding], err -> code);
 }
 

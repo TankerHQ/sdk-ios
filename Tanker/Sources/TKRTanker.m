@@ -783,7 +783,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   {
     handler(
         nil,
-        createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+        TKR_createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
@@ -817,7 +817,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   {
     handler(
         nil,
-        createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+        TKR_createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 

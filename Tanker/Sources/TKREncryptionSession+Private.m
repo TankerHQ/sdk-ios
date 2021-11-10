@@ -51,7 +51,7 @@
 
   if (!encrypted_buffer)
   {
-    handler(nil, createNSError(NSPOSIXErrorDomain, @"could not allocate encrypted buffer", ENOMEM));
+    handler(nil, TKR_createNSError(NSPOSIXErrorDomain, @"could not allocate encrypted buffer", ENOMEM));
     return;
   }
 
