@@ -448,7 +448,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSData* data = convertStringToData(clearText, &err);
 
   if (err)
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
   else
@@ -549,7 +549,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char** c_identities = convertStringstoCStrings(identities, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
     return;
@@ -577,7 +577,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char** identities_to_add = convertStringstoCStrings(usersToAdd, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
     return;
@@ -585,7 +585,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char** identities_to_remove = convertStringstoCStrings(usersToRemove, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
     freeCStringArray(identities_to_add, usersToAdd.count);
@@ -624,7 +624,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char** resource_ids = convertStringstoCStrings(resourceIDs, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
     return;
@@ -634,7 +634,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   err = convertSharingOptions(options, &sharing_options);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
     return;
@@ -677,7 +677,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSError* err = convertEncryptionOptions(encryptionOptions, &encryption_options);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
     return;

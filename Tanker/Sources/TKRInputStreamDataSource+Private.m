@@ -21,7 +21,7 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
 {
   TKRInputStreamDataSource* source = (__bridge_transfer TKRInputStreamDataSource*)data;
 
-  runOnMainQueue(^{
+  TKR_runOnMainQueue(^{
     if (!source.atEnd)
       source.hasBytesAvailable = YES;
   });

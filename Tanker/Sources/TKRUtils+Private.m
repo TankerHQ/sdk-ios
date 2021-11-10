@@ -37,7 +37,7 @@ NSError* getOptionalFutureError(void* future)
       @"TKRErrorDomain", [NSString stringWithCString:err->message encoding:NSUTF8StringEncoding], err -> code);
 }
 
-void runOnMainQueue(void (^block)(void))
+void TKR_runOnMainQueue(void (^block)(void))
 {
   dispatch_async(dispatch_get_main_queue(), ^{
     block();

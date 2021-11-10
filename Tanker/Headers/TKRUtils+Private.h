@@ -24,7 +24,7 @@
 // Internal block used to wrap C futures
 typedef void (^TKRAdapter)(NSNumber* _Nullable ptrValue, NSError* _Nullable err);
 
-void runOnMainQueue(void (^_Nonnull block)(void));
+void TKR_runOnMainQueue(void (^_Nonnull block)(void));
 void freeCStringArray(char* _Nonnull* _Nonnull toFree, NSUInteger nbElems);
 NSError* _Nonnull createNSError(NSString* _Nonnull domain, NSString* _Nonnull message, NSUInteger code);
 NSNumber* _Nonnull ptrToNumber(void* _Nonnull ptr);

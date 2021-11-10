@@ -27,7 +27,7 @@
   NSData* data = convertStringToData(clearText, &err);
 
   if (err)
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
   else
