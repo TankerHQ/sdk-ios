@@ -66,7 +66,7 @@ void* resolvePromise(void* future, void* arg)
   return nil;
 }
 
-void freeCStringArray(char** toFree, NSUInteger nbElems)
+void TKR_freeCStringArray(char** toFree, NSUInteger nbElems)
 {
   for (int i = 0; i < nbElems; ++i)
     free(toFree[i]);

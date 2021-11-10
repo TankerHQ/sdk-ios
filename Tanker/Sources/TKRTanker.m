@@ -560,7 +560,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(c_identities, identities.count);
+  TKR_freeCStringArray(c_identities, identities.count);
 }
 
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
@@ -588,7 +588,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     TKR_runOnMainQueue(^{
       handler(err);
     });
-    freeCStringArray(identities_to_add, usersToAdd.count);
+    TKR_freeCStringArray(identities_to_add, usersToAdd.count);
     return;
   }
   tanker_future_t* future = tanker_update_group_members((tanker_t*)self.cTanker,
@@ -601,8 +601,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(identities_to_add, usersToAdd.count);
-  freeCStringArray(identities_to_remove, usersToRemove.count);
+  TKR_freeCStringArray(identities_to_add, usersToAdd.count);
+  TKR_freeCStringArray(identities_to_remove, usersToRemove.count);
 }
 
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
@@ -649,9 +649,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(share_future);
   tanker_future_destroy(resolve_future);
 
-  freeCStringArray(resource_ids, resourceIDs.count);
-  freeCStringArray((char**)sharing_options.share_with_users, sharing_options.nb_users);
-  freeCStringArray((char**)sharing_options.share_with_groups, sharing_options.nb_groups);
+  TKR_freeCStringArray(resource_ids, resourceIDs.count);
+  TKR_freeCStringArray((char**)sharing_options.share_with_users, sharing_options.nb_users);
+  TKR_freeCStringArray((char**)sharing_options.share_with_groups, sharing_options.nb_groups);
 }
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
@@ -691,8 +691,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(sess_future);
   tanker_future_destroy(resolve_future);
 
-  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
-  freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
+  TKR_freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
+  TKR_freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
 }
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
@@ -807,8 +807,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                                                       &encryption_options);
   completeStreamEncrypt(reader, stream_fut, handler);
   tanker_future_destroy(stream_fut);
-  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
-  freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
+  TKR_freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
+  TKR_freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
 }
 
 - (void)decryptStream:(nonnull NSInputStream*)encryptedStream completionHandler:(nonnull TKRInputStreamHandler)handler

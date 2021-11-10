@@ -26,7 +26,7 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
   char** group_ids = convertStringstoCStrings(opts.shareWithGroups, &err);
   if (err)
   {
-    freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);
+    TKR_freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);
     return err;
   }
   tanker_encrypt_options_t* c_opts = (tanker_encrypt_options_t*)c_opts_ptr;
@@ -47,7 +47,7 @@ NSError* _Nullable convertSharingOptions(TKRSharingOptions* _Nonnull opts, void*
   char** group_ids = convertStringstoCStrings(opts.shareWithGroups, &err);
   if (err)
   {
-    freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);
+    TKR_freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);
     return err;
   }
   tanker_sharing_options_t* c_opts = (tanker_sharing_options_t*)c_opts_ptr;
@@ -157,8 +157,8 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
       tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
-  freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
+  TKR_freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
+  TKR_freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
   // Force clearData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
   TKRAntiARCRetain(clearData);
