@@ -58,7 +58,7 @@
   tanker_future_t* encrypt_future = tanker_encryption_session_encrypt(
       (tanker_encryption_session_t*)self.cSession, encrypted_buffer, (uint8_t const*)clearData.bytes, clearData.length);
   tanker_future_t* resolve_future =
-      tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(encrypt_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
   // Force clearData to be retained until the tanker_future is done

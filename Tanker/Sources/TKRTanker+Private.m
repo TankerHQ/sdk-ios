@@ -76,7 +76,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   };
 
   tanker_future_t* resolve_fut =
-      tanker_future_then(streamFut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(streamFut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(resolve_fut);
 }
 
@@ -154,7 +154,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
                                                    clearData.length,
                                                    &encryption_options);
   tanker_future_t* resolve_future =
-      tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(encrypt_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
   TKR_freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
@@ -200,7 +200,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
       tanker_decrypt((tanker_t*)self.cTanker, decrypted_buffer, encrypted_buffer, encrypted_size);
   // ensures encryptedData lives while the promise does by telling ARC to retain it
   tanker_future_t* resolve_future =
-      tanker_future_then(decrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(decrypt_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(decrypt_future);
   tanker_future_destroy(resolve_future);
   // Force encryptedData to be retained until the tanker_future is done

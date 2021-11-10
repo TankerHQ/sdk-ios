@@ -229,7 +229,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char const* c_identity = [identity cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_future_t* start_future = tanker_start((tanker_t*)self.cTanker, c_identity);
   tanker_future_t* resolve_future =
-      tanker_future_then(start_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(start_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(start_future);
   tanker_future_destroy(resolve_future);
 }
@@ -267,7 +267,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   verificationToCVerification(verification, &c_verification);
   tanker_future_t* register_future = tanker_register_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
-      tanker_future_then(register_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(register_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(register_future);
   tanker_future_destroy(resolve_future);
 }
@@ -291,7 +291,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* methods_future = tanker_get_verification_methods((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(methods_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(methods_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(methods_future);
   tanker_future_destroy(resolve_future);
 }
@@ -328,7 +328,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* set_future = tanker_set_verification_method((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
-      tanker_future_then(set_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(set_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(set_future);
   tanker_future_destroy(resolve_future);
 }
@@ -366,7 +366,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* verify_future = tanker_verify_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
-      tanker_future_then(verify_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(verify_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(verify_future);
   tanker_future_destroy(resolve_future);
 }
@@ -394,7 +394,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* attach_future = tanker_attach_provisional_identity((tanker_t*)self.cTanker, c_provisional_identity);
   tanker_future_t* resolve_future =
-      tanker_future_then(attach_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(attach_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(attach_future);
   tanker_future_destroy(resolve_future);
 }
@@ -410,7 +410,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* verify_future = tanker_verify_provisional_identity((tanker_t*)self.cTanker, &c_verification);
   tanker_future_t* resolve_future =
-      tanker_future_then(verify_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(verify_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(verify_future);
   tanker_future_destroy(resolve_future);
 }
@@ -430,7 +430,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
   tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(device_id_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(device_id_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(device_id_future);
   tanker_future_destroy(resolve_future);
 }
@@ -557,7 +557,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* future =
       tanker_create_group((tanker_t*)self.cTanker, (char const* const*)c_identities, identities.count);
   tanker_future_t* resolve_future =
-      tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
   TKR_freeCStringArray(c_identities, identities.count);
@@ -598,7 +598,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                                                         (char const* const*)identities_to_remove,
                                                         usersToRemove.count);
   tanker_future_t* resolve_future =
-      tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
   TKR_freeCStringArray(identities_to_add, usersToAdd.count);
@@ -644,7 +644,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       tanker_share((tanker_t*)self.cTanker, (char const* const*)resource_ids, resourceIDs.count, &sharing_options);
 
   tanker_future_t* resolve_future =
-      tanker_future_then(share_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(share_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(share_future);
   tanker_future_destroy(resolve_future);
@@ -686,7 +686,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* sess_future = tanker_encryption_session_open((tanker_t*)self.cTanker, &encryption_options);
 
   tanker_future_t* resolve_future =
-      tanker_future_then(sess_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(sess_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(sess_future);
   tanker_future_destroy(resolve_future);
@@ -739,7 +739,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_expected_t* verification_key_fut = tanker_generate_verification_key((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(verification_key_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(verification_key_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(verification_key_fut);
   tanker_future_destroy(resolve_future);
@@ -753,7 +753,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char const* device_id = [deviceId cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_future_t* revoke_future = tanker_revoke_device((tanker_t*)self.cTanker, device_id);
   tanker_future_t* resolve_future =
-      tanker_future_then(revoke_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(revoke_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(revoke_future);
   tanker_future_destroy(resolve_future);
 }
@@ -765,7 +765,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
   tanker_future_t* stop_future = tanker_stop((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(stop_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(stop_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(stop_future);
   tanker_future_destroy(resolve_future);
 }
@@ -843,7 +843,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* create_fut = tanker_stream_decrypt(
       (tanker_t*)self.cTanker, (tanker_stream_input_source_t)&readInput, (__bridge_retained void*)reader);
   tanker_future_t* resolve_fut =
-      tanker_future_then(create_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(create_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(resolve_fut);
   tanker_future_destroy(create_fut);
 }
