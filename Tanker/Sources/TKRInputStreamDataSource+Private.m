@@ -93,7 +93,7 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
   tanker_future_wait(self.bytes_available_fut);
   tanker_future_t* read_future = tanker_stream_read(self.stream, buffer, (int64_t)maxLength);
   tanker_future_wait(read_future);
-  NSError* err = getOptionalFutureError(read_future);
+  NSError* err = TKR_getOptionalFutureError(read_future);
   if (err)
   {
     // Was it caused by the underlying input stream? If so, just keep the original error

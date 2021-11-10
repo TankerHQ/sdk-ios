@@ -219,7 +219,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
                                                              (tanker_event_callback_t)TKR_numberToPtr(callbackPtr),
                                                              handler_ptr);
 
-  *error = getOptionalFutureError(connect_expected);
+  *error = TKR_getOptionalFutureError(connect_expected);
   if (*error)
   {
     releaseCPointer(handler_ptr);

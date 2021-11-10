@@ -178,7 +178,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* create_future = tanker_create(&cOptions);
   tanker_future_wait(create_future);
-  NSError* error = getOptionalFutureError(create_future);
+  NSError* error = TKR_getOptionalFutureError(create_future);
   if (error)
   {
     tanker_future_destroy(create_future);
@@ -519,7 +519,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   tanker_expected_t* resource_id_expected =
       tanker_get_resource_id((uint8_t const*)encryptedData.bytes, encryptedData.length);
-  *error = getOptionalFutureError(resource_id_expected);
+  *error = TKR_getOptionalFutureError(resource_id_expected);
   if (*error)
   {
     tanker_future_destroy(resource_id_expected);

@@ -21,7 +21,7 @@
 #include "ctanker/admin.h"
 #include "ctanker/identity.h"
 
-static NSError* getOptionalFutureError(tanker_future_t* fut)
+static NSError* TKR_getOptionalFutureError(tanker_future_t* fut)
 {
   tanker_error_t* err = tanker_future_get_error(fut);
   if (!err)
@@ -37,7 +37,7 @@ static NSError* getOptionalFutureError(tanker_future_t* fut)
 
 static void* unwrapAndFreeExpected(tanker_expected_t* expected)
 {
-  NSError* optErr = getOptionalFutureError(expected);
+  NSError* optErr = TKR_getOptionalFutureError(expected);
   if (optErr)
   {
     tanker_future_destroy(expected);
@@ -337,13 +337,13 @@ SpecBegin(TankerSpecs)
         char const* id_token = [idToken cStringUsingEncoding:NSUTF8StringEncoding];
         tanker_future_t* connect_fut = tanker_admin_connect(cadminUrl, id_token);
         tanker_future_wait(connect_fut);
-        NSError* connectError = getOptionalFutureError(connect_fut);
+        NSError* connectError = TKR_getOptionalFutureError(connect_fut);
         expect(connectError).to.beNil();
         admin = (tanker_admin_t*)tanker_future_get_voidptr(connect_fut);
         tanker_future_destroy(connect_fut);
         tanker_future_t* app_fut = tanker_admin_create_app(admin, "ios-test");
         tanker_future_wait(app_fut);
-        NSError* createError = getOptionalFutureError(app_fut);
+        NSError* createError = TKR_getOptionalFutureError(app_fut);
         expect(createError).to.beNil();
         tanker_app_descriptor_t* app = (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
         appID = [NSString stringWithCString:app->id encoding:NSUTF8StringEncoding];
@@ -356,12 +356,12 @@ SpecBegin(TankerSpecs)
       afterAll(^{
         tanker_future_t* delete_fut = tanker_admin_delete_app(admin, [appID cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(delete_fut);
-        NSError* error = getOptionalFutureError(delete_fut);
+        NSError* error = TKR_getOptionalFutureError(delete_fut);
         expect(error).to.beNil();
 
         tanker_future_t* admin_destroy_fut = tanker_admin_destroy(admin);
         tanker_future_wait(admin_destroy_fut);
-        error = getOptionalFutureError(admin_destroy_fut);
+        error = TKR_getOptionalFutureError(admin_destroy_fut);
         expect(error).to.beNil();
       });
 

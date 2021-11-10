@@ -27,7 +27,7 @@ void* TKR_numberToPtr(NSNumber* nb)
 }
 
 // returns nil if no error
-NSError* getOptionalFutureError(void* future)
+NSError* TKR_getOptionalFutureError(void* future)
 {
   tanker_future_t* fut = (tanker_future_t*)future;
   tanker_error_t* err = tanker_future_get_error(fut);
@@ -48,7 +48,7 @@ void TKR_runOnMainQueue(void (^block)(void))
 // and https://stackoverflow.com/a/14207961/4116453
 void* resolvePromise(void* future, void* arg)
 {
-  NSError* optErr = getOptionalFutureError(future);
+  NSError* optErr = TKR_getOptionalFutureError(future);
   NSNumber* ptrValue = nil;
 
   if (!optErr)
@@ -75,7 +75,7 @@ void TKR_freeCStringArray(char** toFree, NSUInteger nbElems)
 
 void* unwrapAndFreeExpected(void* expected)
 {
-  NSError* optErr = getOptionalFutureError(expected);
+  NSError* optErr = TKR_getOptionalFutureError(expected);
   if (optErr)
   {
     tanker_future_destroy((tanker_future_t*)expected);
