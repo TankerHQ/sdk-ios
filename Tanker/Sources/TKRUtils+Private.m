@@ -113,7 +113,7 @@ NSData* TKR_convertStringToData(NSString* clearText, NSError* _Nullable* _Nonnul
   return [NSData dataWithBytesNoCopy:clear_text length:strlen(clear_text) freeWhenDone:YES];
 }
 
-char** convertStringstoCStrings(NSArray<NSString*>* strings, NSError* _Nullable* _Nonnull err)
+char** TKR_convertStringstoCStrings(NSArray<NSString*>* strings, NSError* _Nullable* _Nonnull err)
 {
   if (!strings || strings.count == 0)
     return nil;

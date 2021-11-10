@@ -20,10 +20,10 @@ static void releaseCPointer(void* ptr)
 NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts, void* _Nonnull c_opts_ptr)
 {
   NSError* err = nil;
-  char** recipient_public_identities = convertStringstoCStrings(opts.shareWithUsers, &err);
+  char** recipient_public_identities = TKR_convertStringstoCStrings(opts.shareWithUsers, &err);
   if (err)
     return err;
-  char** group_ids = convertStringstoCStrings(opts.shareWithGroups, &err);
+  char** group_ids = TKR_convertStringstoCStrings(opts.shareWithGroups, &err);
   if (err)
   {
     TKR_freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);
@@ -41,10 +41,10 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
 NSError* _Nullable convertSharingOptions(TKRSharingOptions* _Nonnull opts, void* _Nonnull c_opts_ptr)
 {
   NSError* err = nil;
-  char** recipient_public_identities = convertStringstoCStrings(opts.shareWithUsers, &err);
+  char** recipient_public_identities = TKR_convertStringstoCStrings(opts.shareWithUsers, &err);
   if (err)
     return err;
-  char** group_ids = convertStringstoCStrings(opts.shareWithGroups, &err);
+  char** group_ids = TKR_convertStringstoCStrings(opts.shareWithGroups, &err);
   if (err)
   {
     TKR_freeCStringArray(recipient_public_identities, opts.shareWithUsers.count);

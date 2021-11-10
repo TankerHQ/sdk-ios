@@ -546,7 +546,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     handler(groupId, nil);
   };
   NSError* err = nil;
-  char** c_identities = convertStringstoCStrings(identities, &err);
+  char** c_identities = TKR_convertStringstoCStrings(identities, &err);
   if (err)
   {
     TKR_runOnMainQueue(^{
@@ -574,7 +574,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
   NSError* err = nil;
-  char** identities_to_add = convertStringstoCStrings(usersToAdd, &err);
+  char** identities_to_add = TKR_convertStringstoCStrings(usersToAdd, &err);
   if (err)
   {
     TKR_runOnMainQueue(^{
@@ -582,7 +582,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     });
     return;
   }
-  char** identities_to_remove = convertStringstoCStrings(usersToRemove, &err);
+  char** identities_to_remove = TKR_convertStringstoCStrings(usersToRemove, &err);
   if (err)
   {
     TKR_runOnMainQueue(^{
@@ -621,7 +621,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
 
   NSError* err = nil;
-  char** resource_ids = convertStringstoCStrings(resourceIDs, &err);
+  char** resource_ids = TKR_convertStringstoCStrings(resourceIDs, &err);
   if (err)
   {
     TKR_runOnMainQueue(^{
