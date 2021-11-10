@@ -3,6 +3,7 @@
 
 #import <POSInputStreamLibrary/POSBlobInputStream.h>
 
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRUtils+Private.h>
@@ -111,6 +112,12 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   uint64_t encrypted_size = tanker_encrypted_size(clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
+  if (!encrypted_buffer)
+  {
+    handler(nil, createNSError(NSPOSIXErrorDomain, @"could not allocate encrypted buffer", ENOMEM));
+    return;
+  }
+
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
     AntiARCRelease(clearData);
     if (err)
@@ -133,11 +140,6 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
     handler(hack, nil);
   };
 
-  if (!encrypted_buffer)
-  {
-    handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorInternalError));
-    return;
-  }
   tanker_encrypt_options_t encryption_options = TANKER_ENCRYPT_OPTIONS_INIT;
 
   NSError* err = convertEncryptionOptions(options, &encryption_options);
@@ -191,7 +193,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)
   {
-    handler(nil, createNSError("could not allocate decrypted buffer", TKRErrorInternalError));
+    handler(nil, createNSError(NSPOSIXErrorDomain, @"could not allocate decrypted buffer", ENOMEM));
     return;
   }
   tanker_future_t* decrypt_future =

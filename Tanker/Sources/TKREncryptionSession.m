@@ -1,5 +1,6 @@
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRUtils+Private.h>
@@ -60,7 +61,9 @@
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(
+        nil,
+        createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 

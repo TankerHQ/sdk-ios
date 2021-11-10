@@ -5,6 +5,7 @@
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKRAttachResult+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRLogEntry.h>
 #import <Tanker/TKRNetwork+Private.h>
@@ -20,6 +21,8 @@
 
 #include "ctanker.h"
 #include "ctanker/stream.h"
+
+NSString* const TKRErrorDomain = @"TKRErrorDomain";
 
 #define TANKER_IOS_VERSION @"9999"
 
@@ -778,7 +781,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(
+        nil,
+        createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
@@ -810,7 +815,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (encryptedStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(
+        nil,
+        createNSError(TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 

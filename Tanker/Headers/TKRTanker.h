@@ -13,8 +13,6 @@
 #import <Tanker/TKRVerificationMethod.h>
 #import <Tanker/TKRVerificationOptions.h>
 
-#define TKRErrorDomain @"TKRErrorDomain"
-
 /*!
  @brief Tanker object
  */

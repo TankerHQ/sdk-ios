@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
 
-#import <Tanker/TKRTanker.h>
 #import <Tanker/TKRUtils+Private.h>
 
 #include "ctanker.h"
@@ -12,14 +11,9 @@
 
 @end
 
-NSError* createNSError(char const* message, TKRError code)
+NSError* createNSError(NSString* _Nonnull domain, NSString* _Nonnull message, NSUInteger code)
 {
-  return [NSError errorWithDomain:TKRErrorDomain
-                             code:code
-                         userInfo:@{
-                           NSLocalizedDescriptionKey : [NSString stringWithCString:message
-                                                                          encoding:NSUTF8StringEncoding]
-                         }];
+  return [NSError errorWithDomain:domain code:code userInfo:@{NSLocalizedDescriptionKey : message}];
 }
 
 NSNumber* ptrToNumber(void* ptr)
@@ -39,13 +33,8 @@ NSError* getOptionalFutureError(void* future)
   tanker_error_t* err = tanker_future_get_error(fut);
   if (!err)
     return nil;
-  NSError* error = [NSError errorWithDomain:TKRErrorDomain
-                                       code:err->code
-                                   userInfo:@{
-                                     NSLocalizedDescriptionKey : [NSString stringWithCString:err->message
-                                                                                    encoding:NSUTF8StringEncoding]
-                                   }];
-  return error;
+  return createNSError(
+      @"TKRErrorDomain", [NSString stringWithCString:err->message encoding:NSUTF8StringEncoding], err -> code);
 }
 
 void runOnMainQueue(void (^block)(void))
@@ -105,7 +94,9 @@ char* copyUTF8CString(NSString* str, NSError* _Nullable* _Nonnull err)
   char* utf8_cstr = (char*)malloc(length + 1);
   if (!utf8_cstr)
   {
-    *err = createNSError("could not allocate UTF-8 C string buffer", TKRErrorInternalError);
+    *err = [NSError errorWithDomain:NSPOSIXErrorDomain
+                               code:ENOMEM
+                           userInfo:@{NSLocalizedDescriptionKey : @"could not allocate UTF-8 C string buffer"}];
     return nil;
   }
   memcpy(utf8_cstr, str.UTF8String, length);
@@ -130,7 +121,9 @@ char** convertStringstoCStrings(NSArray<NSString*>* strings, NSError* _Nullable*
   __block char** c_strs = (char**)malloc(size_to_allocate);
   if (!c_strs)
   {
-    *err = createNSError("could not allocate array of UTF-8 C strings", TKRErrorInternalError);
+    *err = [NSError errorWithDomain:NSPOSIXErrorDomain
+                               code:ENOMEM
+                           userInfo:@{NSLocalizedDescriptionKey : @"could not allocate array UTF-8 C strings"}];
     return nil;
   }
 

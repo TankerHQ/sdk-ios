@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRUtils+Private.h>
 
@@ -83,7 +84,7 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
 
   if (maxLength > NSIntegerMax)
   {
-    self.error = createNSError("Attempting to read more than NSIntegerMax", TKRErrorInvalidArgument);
+    self.error = createNSError(TKRErrorDomain, @"Attempting to read more than NSIntegerMax", TKRErrorInvalidArgument);
     return -1;
   }
   assert(self.bytes_available_fut);

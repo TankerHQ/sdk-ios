@@ -3,9 +3,6 @@
 
 #import <stdint.h>
 
-#import <Tanker/TKRError.h>
-#import <Tanker/TKRTanker.h>
-
 // https://stackoverflow.com/a/15707096/4116453
 #define AntiARCRetain(value)                               \
   void* retained_##value = (__bridge_retained void*)value; \
@@ -29,7 +26,7 @@ typedef void (^TKRAdapter)(NSNumber* _Nullable ptrValue, NSError* _Nullable err)
 
 void runOnMainQueue(void (^_Nonnull block)(void));
 void freeCStringArray(char* _Nonnull* _Nonnull toFree, NSUInteger nbElems);
-NSError* _Nonnull createNSError(char const* _Nonnull message, TKRError code);
+NSError* _Nonnull createNSError(NSString* _Nonnull domain, NSString* _Nonnull message, NSUInteger code);
 NSNumber* _Nonnull ptrToNumber(void* _Nonnull ptr);
 void* _Nonnull numberToPtr(NSNumber* _Nonnull nb);
 NSError* _Nullable getOptionalFutureError(void* _Nonnull future);
