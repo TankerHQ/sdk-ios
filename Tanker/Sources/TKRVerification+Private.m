@@ -57,6 +57,26 @@
   self.valuePrivate = token;
 }
 
+- (nonnull NSString*)preverifiedEmail
+{
+  return self.valuePrivate;
+}
+
+- (void)setPreverifiedEmail:(nonnull NSString*)preverifiedEmail
+{
+  self.valuePrivate = preverifiedEmail;
+}
+
+- (nonnull NSString*)preverifiedPhoneNumber
+{
+  return self.valuePrivate;
+}
+
+- (void)setPreverifiedPhoneNumber:(nonnull NSString*)preverifiedPhoneNumber
+{
+  self.valuePrivate = preverifiedPhoneNumber;
+}
+
 - (void)setValuePrivate:(id)value
 {
   objc_setAssociatedObject(self, @selector(valuePrivate), value, OBJC_ASSOCIATION_RETAIN);

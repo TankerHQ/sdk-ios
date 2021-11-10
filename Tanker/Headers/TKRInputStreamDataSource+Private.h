@@ -1,8 +1,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <POSInputStreamLibrary/POSBlobInputStreamDataSource.h>
+#import <Tanker/TKRAsyncStreamReader+Private.h>
 
 #include "ctanker/stream.h"
 

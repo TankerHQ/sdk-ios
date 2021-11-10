@@ -3,9 +3,9 @@
 
 #import <stdint.h>
 
+#include "ctanker/ctanker.h"
 #import <Tanker/TKRError.h>
 #import <Tanker/TKRTanker.h>
-#include "ctanker/ctanker.h"
 
 // https://stackoverflow.com/a/15707096/4116453
 #define AntiARCRetain(value)                               \

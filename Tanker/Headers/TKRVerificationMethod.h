@@ -21,4 +21,18 @@
  */
 @property(nonnull, readonly) NSString* phoneNumber;
 
+/*!
+ @brief preverified email address
+
+ @pre type == TKRVerificationMethodTypePreverifiedEmail
+ */
+@property(nonnull, readonly) NSString* preverifiedEmail;
+
+/*!
+ @brief preverified phone number
+
+ @pre type == TKRVerificationMethodTypePreverifiedPhoneNumber
+ */
+@property(nonnull, readonly) NSString* preverifiedPhoneNumber;
+
 @end

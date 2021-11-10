@@ -27,8 +27,8 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
       return;
     }
     tanker_stream_t* stream = numberToPtr(ptrValue);
-    TKRInputStreamDataSource* dataSource =
-        [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream asyncReader:reader];
+    TKRInputStreamDataSource* dataSource = [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream
+                                                                                          asyncReader:reader];
     POSBlobInputStream* encryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
     handler(encryptionStream, nil);
   };
@@ -114,8 +114,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
       tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray((char**)encryption_options.share_with_users,
-                   encryption_options.nb_users);
+  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
   freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
   // Force clearData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer

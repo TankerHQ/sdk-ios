@@ -24,8 +24,7 @@ typedef void (^TKRStartHandler)(TKRStatus status, NSError* _Nullable err);
  @param encryptedData the encrypted data, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKREncryptedDataHandler)(NSData* _Nullable encryptedData,
-                                        NSError* _Nullable err);
+typedef void (^TKREncryptedDataHandler)(NSData* _Nullable encryptedData, NSError* _Nullable err);
 
 /*!
  @typedef TKRDecryptedDataHandler
@@ -34,8 +33,7 @@ typedef void (^TKREncryptedDataHandler)(NSData* _Nullable encryptedData,
  @param decryptedData the decrypted data, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRDecryptedDataHandler)(NSData* _Nullable decryptedData,
-                                        NSError* _Nullable err);
+typedef void (^TKRDecryptedDataHandler)(NSData* _Nullable decryptedData, NSError* _Nullable err);
 
 /*!
  @typedef TKRDecryptedStringHandler
@@ -44,8 +42,7 @@ typedef void (^TKRDecryptedDataHandler)(NSData* _Nullable decryptedData,
  @param decryptedString the string data, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRDecryptedStringHandler)(NSString* _Nullable decryptedString,
-                                          NSError* _Nullable err);
+typedef void (^TKRDecryptedStringHandler)(NSString* _Nullable decryptedString, NSError* _Nullable err);
 
 /*!
  @typedef TKRErrorHandler
@@ -62,8 +59,7 @@ typedef void (^TKRErrorHandler)(NSError* _Nullable err);
  @param deviceID the deviceID, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRDeviceIDHandler)(NSString* _Nullable deviceID,
-                                   NSError* _Nullable err);
+typedef void (^TKRDeviceIDHandler)(NSString* _Nullable deviceID, NSError* _Nullable err);
 
 /*!
  @typedef TKRGroupIDHandler
@@ -72,8 +68,7 @@ typedef void (^TKRDeviceIDHandler)(NSString* _Nullable deviceID,
  @param groupID the group ID, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRGroupIDHandler)(NSString* _Nullable groupID,
-                                  NSError* _Nullable err);
+typedef void (^TKRGroupIDHandler)(NSString* _Nullable groupID, NSError* _Nullable err);
 
 /*!
  @typedef TKRIdentityVerificationHandler
@@ -82,8 +77,7 @@ typedef void (^TKRGroupIDHandler)(NSString* _Nullable groupID,
  @param sessionToken the token, or nil if none was requested or if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRIdentityVerificationHandler)(NSString* _Nullable sessionToken,
-                                               NSError* _Nullable err);
+typedef void (^TKRIdentityVerificationHandler)(NSString* _Nullable sessionToken, NSError* _Nullable err);
 
 /*!
  @typedef TKRVerificationKeyHandler
@@ -92,8 +86,7 @@ typedef void (^TKRIdentityVerificationHandler)(NSString* _Nullable sessionToken,
  @param key the unlock key, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRVerificationKeyHandler)(TKRVerificationKey* _Nullable key,
-                                          NSError* _Nullable err);
+typedef void (^TKRVerificationKeyHandler)(TKRVerificationKey* _Nullable key, NSError* _Nullable err);
 
 /*!
  @typedef TKRVerificationMethodsHandler
@@ -102,8 +95,8 @@ typedef void (^TKRVerificationKeyHandler)(TKRVerificationKey* _Nullable key,
  @param methods a list of verification methods, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRVerificationMethodsHandler)(
-    NSArray<TKRVerificationMethod*>* _Nullable methods, NSError* _Nullable err);
+typedef void (^TKRVerificationMethodsHandler)(NSArray<TKRVerificationMethod*>* _Nullable methods,
+                                              NSError* _Nullable err);
 
 /*!
  @typedef TKRAttachResultHandler
@@ -112,8 +105,7 @@ typedef void (^TKRVerificationMethodsHandler)(
  @param result the result of attachProvisionalIdentity, or nil.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKRAttachResultHandler)(TKRAttachResult* _Nullable result,
-                                       NSError* _Nullable err);
+typedef void (^TKRAttachResultHandler)(TKRAttachResult* _Nullable result, NSError* _Nullable err);
 
 /*!
  @typedef TKRInputStreamHandler
@@ -122,8 +114,7 @@ typedef void (^TKRAttachResultHandler)(TKRAttachResult* _Nullable result,
  @param stream the stream, or nil
  @param err the error which occurred, or nil
  */
-typedef void (^TKRInputStreamHandler)(NSInputStream* _Nullable stream,
-                                      NSError* _Nullable err);
+typedef void (^TKRInputStreamHandler)(NSInputStream* _Nullable stream, NSError* _Nullable err);
 
 /*!
  @typedef TKREncryptionSessionHandler
@@ -132,7 +123,6 @@ typedef void (^TKRInputStreamHandler)(NSInputStream* _Nullable stream,
  @param session the encryption session, or nil if an error occurred.
  @param err the error which occurred, or nil.
  */
-typedef void (^TKREncryptionSessionHandler)(
-    TKREncryptionSession* _Nullable session, NSError* _Nullable err);
+typedef void (^TKREncryptionSessionHandler)(TKREncryptionSession* _Nullable session, NSError* _Nullable err);
 
 typedef void (^TKRLogHandler)(TKRLogEntry* _Nonnull entry);
