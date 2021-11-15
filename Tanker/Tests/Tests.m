@@ -21,7 +21,7 @@
 #include "ctanker/admin.h"
 #include "ctanker/identity.h"
 
-static NSError* getOptionalFutureError(tanker_future_t* fut)
+static NSError* TKR_getOptionalFutureError(tanker_future_t* fut)
 {
   tanker_error_t* err = tanker_future_get_error(fut);
   if (!err)
@@ -35,9 +35,9 @@ static NSError* getOptionalFutureError(tanker_future_t* fut)
   return error;
 }
 
-static void* unwrapAndFreeExpected(tanker_expected_t* expected)
+static void* TKR_unwrapAndFreeExpected(tanker_expected_t* expected)
 {
-  NSError* optErr = getOptionalFutureError(expected);
+  NSError* optErr = TKR_getOptionalFutureError(expected);
   if (optErr)
   {
     tanker_future_destroy(expected);
@@ -56,7 +56,7 @@ static NSString* createIdentity(NSString* userID, NSString* appID, NSString* app
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
   char const* app_secret = [appSecret cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* identity_expected = tanker_create_identity(app_id, app_secret, user_id);
-  char* identity = unwrapAndFreeExpected(identity_expected);
+  char* identity = TKR_unwrapAndFreeExpected(identity_expected);
   assert(identity);
   return [[NSString alloc] initWithBytesNoCopy:identity
                                         length:strlen(identity)
@@ -69,7 +69,7 @@ static NSString* createProvisionalIdentity(NSString* appID, NSString* email)
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
   char const* c_email = [email cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* provisional_expected = tanker_create_provisional_identity(app_id, c_email);
-  char* identity = unwrapAndFreeExpected(provisional_expected);
+  char* identity = TKR_unwrapAndFreeExpected(provisional_expected);
   assert(identity);
   return [[NSString alloc] initWithBytesNoCopy:identity
                                         length:strlen(identity)
@@ -82,7 +82,7 @@ static NSString* getPublicIdentity(NSString* identity)
   tanker_expected_t* identity_expected =
       tanker_get_public_identity([identity cStringUsingEncoding:NSUTF8StringEncoding]);
 
-  char* public_identity = unwrapAndFreeExpected(identity_expected);
+  char* public_identity = TKR_unwrapAndFreeExpected(identity_expected);
   assert(public_identity);
   return [[NSString alloc] initWithBytesNoCopy:public_identity
                                         length:strlen(public_identity)
@@ -337,13 +337,13 @@ SpecBegin(TankerSpecs)
         char const* id_token = [idToken cStringUsingEncoding:NSUTF8StringEncoding];
         tanker_future_t* connect_fut = tanker_admin_connect(cadminUrl, id_token);
         tanker_future_wait(connect_fut);
-        NSError* connectError = getOptionalFutureError(connect_fut);
+        NSError* connectError = TKR_getOptionalFutureError(connect_fut);
         expect(connectError).to.beNil();
         admin = (tanker_admin_t*)tanker_future_get_voidptr(connect_fut);
         tanker_future_destroy(connect_fut);
         tanker_future_t* app_fut = tanker_admin_create_app(admin, "ios-test");
         tanker_future_wait(app_fut);
-        NSError* createError = getOptionalFutureError(app_fut);
+        NSError* createError = TKR_getOptionalFutureError(app_fut);
         expect(createError).to.beNil();
         tanker_app_descriptor_t* app = (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
         appID = [NSString stringWithCString:app->id encoding:NSUTF8StringEncoding];
@@ -356,12 +356,12 @@ SpecBegin(TankerSpecs)
       afterAll(^{
         tanker_future_t* delete_fut = tanker_admin_delete_app(admin, [appID cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(delete_fut);
-        NSError* error = getOptionalFutureError(delete_fut);
+        NSError* error = TKR_getOptionalFutureError(delete_fut);
         expect(error).to.beNil();
 
         tanker_future_t* admin_destroy_fut = tanker_admin_destroy(admin);
         tanker_future_wait(admin_destroy_fut);
-        error = getOptionalFutureError(admin_destroy_fut);
+        error = TKR_getOptionalFutureError(admin_destroy_fut);
         expect(error).to.beNil();
       });
 

@@ -1,5 +1,5 @@
 #include <Tanker/TKRNetwork+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 #include <libkern/OSAtomic.h>
 
@@ -95,14 +95,14 @@
 
   [task resume];
 
-  return (tanker_http_request_handle_t*)numberToPtr(requestId);
+  return (tanker_http_request_handle_t*)TKR_numberToPtr(requestId);
 }
 
 - (void)cancelRequest:(tanker_http_request_t*)request
            withHandle:(tanker_http_request_handle_t*)request_handle
              withData:(void*)data;
 {
-  NSNumber* requestId = ptrToNumber(request_handle);
+  NSNumber* requestId = TKR_ptrToNumber(request_handle);
   @synchronized(self)
   {
     NSURLSessionDataTask* task = [self->_requests objectForKey:requestId];

@@ -5,12 +5,13 @@
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKRAttachResult+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRLogEntry.h>
 #import <Tanker/TKRNetwork+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 #import <Tanker/TKRVerification+Private.h>
 #import <Tanker/TKRVerificationKey+Private.h>
 #import <Tanker/TKRVerificationMethod+Private.h>
@@ -20,6 +21,8 @@
 
 #include "ctanker.h"
 #include "ctanker/stream.h"
+
+NSString* const TKRErrorDomain = @"TKRErrorDomain";
 
 #define TANKER_IOS_VERSION @"9999"
 
@@ -175,7 +178,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* create_future = tanker_create(&cOptions);
   tanker_future_wait(create_future);
-  NSError* error = getOptionalFutureError(create_future);
+  NSError* error = TKR_getOptionalFutureError(create_future);
   if (error)
   {
     tanker_future_destroy(create_future);
@@ -203,7 +206,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   char const* c_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* expected_chashed = tanker_prehash_password(c_password);
-  char* c_hashed = (char*)unwrapAndFreeExpected(expected_chashed);
+  char* c_hashed = (char*)TKR_unwrapAndFreeExpected(expected_chashed);
   NSString* hashed = [NSString stringWithCString:c_hashed encoding:NSUTF8StringEncoding];
   return hashed;
 }
@@ -226,7 +229,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char const* c_identity = [identity cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_future_t* start_future = tanker_start((tanker_t*)self.cTanker, c_identity);
   tanker_future_t* resolve_future =
-      tanker_future_then(start_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(start_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(start_future);
   tanker_future_destroy(resolve_future);
 }
@@ -246,7 +249,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                        completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
     if (err || !session_token)
       handler(nil, err);
     else
@@ -264,7 +267,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   verificationToCVerification(verification, &c_verification);
   tanker_future_t* register_future = tanker_register_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
-      tanker_future_then(register_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(register_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(register_future);
   tanker_future_destroy(resolve_future);
 }
@@ -278,7 +281,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     {
       NSMutableArray<TKRVerificationMethod*>* ret = [NSMutableArray array];
 
-      tanker_verification_method_list_t* methods = numberToPtr(ptrValue);
+      tanker_verification_method_list_t* methods = TKR_numberToPtr(ptrValue);
       for (NSUInteger i = 0; i < methods->count; ++i)
         [ret addObject:cVerificationMethodToVerificationMethod(methods->methods + i)];
       tanker_free_verification_method_list(methods);
@@ -288,7 +291,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* methods_future = tanker_get_verification_methods((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(methods_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(methods_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(methods_future);
   tanker_future_destroy(resolve_future);
 }
@@ -307,7 +310,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
             completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
     if (err || !session_token)
       handler(nil, err);
     else
@@ -325,7 +328,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* set_future = tanker_set_verification_method((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
-      tanker_future_then(set_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(set_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(set_future);
   tanker_future_destroy(resolve_future);
 }
@@ -345,7 +348,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                      completionHandler:(nonnull TKRIdentityVerificationHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)numberToPtr(maybeTokenPtr);
+    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
     if (err || !session_token)
       handler(nil, err);
     else
@@ -363,7 +366,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* verify_future = tanker_verify_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
-      tanker_future_then(verify_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(verify_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(verify_future);
   tanker_future_destroy(resolve_future);
 }
@@ -376,7 +379,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
     else
     {
-      tanker_attach_result_t* c_result = numberToPtr(ptrValue);
+      tanker_attach_result_t* c_result = TKR_numberToPtr(ptrValue);
       TKRAttachResult* ret = [[TKRAttachResult alloc] init];
       ret.status = c_result->status;
       if (ret.status == TKRStatusIdentityVerificationNeeded)
@@ -391,7 +394,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* attach_future = tanker_attach_provisional_identity((tanker_t*)self.cTanker, c_provisional_identity);
   tanker_future_t* resolve_future =
-      tanker_future_then(attach_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(attach_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(attach_future);
   tanker_future_destroy(resolve_future);
 }
@@ -407,7 +410,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_future_t* verify_future = tanker_verify_provisional_identity((tanker_t*)self.cTanker, &c_verification);
   tanker_future_t* resolve_future =
-      tanker_future_then(verify_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(verify_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(verify_future);
   tanker_future_destroy(resolve_future);
 }
@@ -420,14 +423,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    char* device_id = (char*)numberToPtr(ptrValue);
+    char* device_id = (char*)TKR_numberToPtr(ptrValue);
     NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
     tanker_free_buffer(device_id);
     handler(ret, nil);
   };
   tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(device_id_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(device_id_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(device_id_future);
   tanker_future_destroy(resolve_future);
 }
@@ -442,10 +445,10 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
   NSError* err = nil;
-  NSData* data = convertStringToData(clearText, &err);
+  NSData* data = TKR_convertStringToData(clearText, &err);
 
   if (err)
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
   else
@@ -455,7 +458,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 - (void)decryptStringFromData:(nonnull NSData*)encryptedData
             completionHandler:(nonnull TKRDecryptedStringHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);
@@ -482,7 +485,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
               options:(nonnull TKREncryptionOptions*)options
     completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);
@@ -498,7 +501,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)decryptData:(nonnull NSData*)encryptedData completionHandler:(nonnull TKRDecryptedDataHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);
@@ -516,13 +519,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   tanker_expected_t* resource_id_expected =
       tanker_get_resource_id((uint8_t const*)encryptedData.bytes, encryptedData.length);
-  *error = getOptionalFutureError(resource_id_expected);
+  *error = TKR_getOptionalFutureError(resource_id_expected);
   if (*error)
   {
     tanker_future_destroy(resource_id_expected);
     return nil;
   }
-  char* resource_id = unwrapAndFreeExpected(resource_id_expected);
+  char* resource_id = TKR_unwrapAndFreeExpected(resource_id_expected);
   NSString* ret = [NSString stringWithCString:resource_id encoding:NSUTF8StringEncoding];
   tanker_free_buffer(resource_id);
   return ret;
@@ -537,16 +540,16 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    char* group_id = (char*)numberToPtr(ptrValue);
+    char* group_id = (char*)TKR_numberToPtr(ptrValue);
     NSString* groupId = [NSString stringWithCString:group_id encoding:NSUTF8StringEncoding];
     tanker_free_buffer(group_id);
     handler(groupId, nil);
   };
   NSError* err = nil;
-  char** c_identities = convertStringstoCStrings(identities, &err);
+  char** c_identities = TKR_convertStringstoCStrings(identities, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
     return;
@@ -554,10 +557,10 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* future =
       tanker_create_group((tanker_t*)self.cTanker, (char const* const*)c_identities, identities.count);
   tanker_future_t* resolve_future =
-      tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(c_identities, identities.count);
+  TKR_freeCStringArray(c_identities, identities.count);
 }
 
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
@@ -571,21 +574,21 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   char const* utf8_groupid = [groupId cStringUsingEncoding:NSUTF8StringEncoding];
   NSError* err = nil;
-  char** identities_to_add = convertStringstoCStrings(usersToAdd, &err);
+  char** identities_to_add = TKR_convertStringstoCStrings(usersToAdd, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
     return;
   }
-  char** identities_to_remove = convertStringstoCStrings(usersToRemove, &err);
+  char** identities_to_remove = TKR_convertStringstoCStrings(usersToRemove, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
-    freeCStringArray(identities_to_add, usersToAdd.count);
+    TKR_freeCStringArray(identities_to_add, usersToAdd.count);
     return;
   }
   tanker_future_t* future = tanker_update_group_members((tanker_t*)self.cTanker,
@@ -595,11 +598,11 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                                                         (char const* const*)identities_to_remove,
                                                         usersToRemove.count);
   tanker_future_t* resolve_future =
-      tanker_future_then(future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(future);
   tanker_future_destroy(resolve_future);
-  freeCStringArray(identities_to_add, usersToAdd.count);
-  freeCStringArray(identities_to_remove, usersToRemove.count);
+  TKR_freeCStringArray(identities_to_add, usersToAdd.count);
+  TKR_freeCStringArray(identities_to_remove, usersToRemove.count);
 }
 
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
@@ -618,10 +621,10 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
 
   NSError* err = nil;
-  char** resource_ids = convertStringstoCStrings(resourceIDs, &err);
+  char** resource_ids = TKR_convertStringstoCStrings(resourceIDs, &err);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
     return;
@@ -631,7 +634,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   err = convertSharingOptions(options, &sharing_options);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(err);
     });
     return;
@@ -641,14 +644,14 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       tanker_share((tanker_t*)self.cTanker, (char const* const*)resource_ids, resourceIDs.count, &sharing_options);
 
   tanker_future_t* resolve_future =
-      tanker_future_then(share_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(share_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(share_future);
   tanker_future_destroy(resolve_future);
 
-  freeCStringArray(resource_ids, resourceIDs.count);
-  freeCStringArray((char**)sharing_options.share_with_users, sharing_options.nb_users);
-  freeCStringArray((char**)sharing_options.share_with_groups, sharing_options.nb_groups);
+  TKR_freeCStringArray(resource_ids, resourceIDs.count);
+  TKR_freeCStringArray((char**)sharing_options.share_with_users, sharing_options.nb_users);
+  TKR_freeCStringArray((char**)sharing_options.share_with_groups, sharing_options.nb_groups);
 }
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
@@ -666,7 +669,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       return;
     }
     TKREncryptionSession* encSess = [[TKREncryptionSession alloc] init];
-    encSess.cSession = numberToPtr(ptrValue);
+    encSess.cSession = TKR_numberToPtr(ptrValue);
     handler(encSess, nil);
   };
 
@@ -674,7 +677,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   NSError* err = convertEncryptionOptions(encryptionOptions, &encryption_options);
   if (err)
   {
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
     return;
@@ -683,13 +686,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* sess_future = tanker_encryption_session_open((tanker_t*)self.cTanker, &encryption_options);
 
   tanker_future_t* resolve_future =
-      tanker_future_then(sess_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(sess_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(sess_future);
   tanker_future_destroy(resolve_future);
 
-  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
-  freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
+  TKR_freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
+  TKR_freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
 }
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
@@ -726,7 +729,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    char* verification_key = (char*)numberToPtr(ptrValue);
+    char* verification_key = (char*)TKR_numberToPtr(ptrValue);
     NSString* verificationKey = [NSString stringWithCString:verification_key encoding:NSUTF8StringEncoding];
 
     TKRVerificationKey* ret = [TKRVerificationKey verificationKeyFromValue:verificationKey];
@@ -735,8 +738,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
 
   tanker_expected_t* verification_key_fut = tanker_generate_verification_key((tanker_t*)self.cTanker);
-  tanker_future_t* resolve_future =
-      tanker_future_then(verification_key_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_t* resolve_future = tanker_future_then(
+      verification_key_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(verification_key_fut);
   tanker_future_destroy(resolve_future);
@@ -750,7 +753,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   char const* device_id = [deviceId cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_future_t* revoke_future = tanker_revoke_device((tanker_t*)self.cTanker, device_id);
   tanker_future_t* resolve_future =
-      tanker_future_then(revoke_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(revoke_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(revoke_future);
   tanker_future_destroy(resolve_future);
 }
@@ -762,7 +765,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   };
   tanker_future_t* stop_future = tanker_stop((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
-      tanker_future_then(stop_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(stop_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(stop_future);
   tanker_future_destroy(resolve_future);
 }
@@ -778,7 +781,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil,
+            TKR_createNSError(
+                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
@@ -802,15 +807,17 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
                                                       &encryption_options);
   completeStreamEncrypt(reader, stream_fut, handler);
   tanker_future_destroy(stream_fut);
-  freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
-  freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
+  TKR_freeCStringArray((char**)encryption_options.share_with_users, encryption_options.nb_users);
+  TKR_freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
 }
 
 - (void)decryptStream:(nonnull NSInputStream*)encryptedStream completionHandler:(nonnull TKRInputStreamHandler)handler
 {
   if (encryptedStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil,
+            TKR_createNSError(
+                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 
@@ -826,7 +833,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       handler(nil, err);
       return;
     }
-    tanker_stream_t* stream = numberToPtr(ptrValue);
+    tanker_stream_t* stream = TKR_numberToPtr(ptrValue);
     TKRInputStreamDataSource* dataSource = [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream
                                                                                           asyncReader:reader];
     POSBlobInputStream* decryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
@@ -836,7 +843,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* create_fut = tanker_stream_decrypt(
       (tanker_t*)self.cTanker, (tanker_stream_input_source_t)&readInput, (__bridge_retained void*)reader);
   tanker_future_t* resolve_fut =
-      tanker_future_then(create_fut, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(create_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(resolve_fut);
   tanker_future_destroy(create_fut);
 }

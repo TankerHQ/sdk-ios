@@ -1,6 +1,6 @@
 
 #import <Tanker/TKREncryptionSession+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 #include <ctanker/encryptionsession.h>
 
@@ -13,22 +13,22 @@
 
 - (void)setCSession:(void*)value
 {
-  objc_setAssociatedObject(self, @selector(cSession), ptrToNumber(value), OBJC_ASSOCIATION_RETAIN);
+  objc_setAssociatedObject(self, @selector(cSession), TKR_ptrToNumber(value), OBJC_ASSOCIATION_RETAIN);
 }
 
 - (void*)cSession
 {
-  return numberToPtr(objc_getAssociatedObject(self, @selector(cSession)));
+  return TKR_numberToPtr(objc_getAssociatedObject(self, @selector(cSession)));
 }
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData
-      completionHandler:(nonnull void (^)(PtrAndSizePair* _Nullable, NSError* _Nullable))handler
+      completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
   uint64_t encrypted_size = tanker_encryption_session_encrypted_size(clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    AntiARCRelease(clearData);
+    TKRAntiARCRelease(clearData);
     if (err)
     {
       free(encrypted_buffer);
@@ -43,7 +43,7 @@
     // pointer and tell NSMutableData to not free it anymore.
     //
     // So let's return a uintptr_t...
-    PtrAndSizePair* hack = [[PtrAndSizePair alloc] init];
+    TKRPtrAndSizePair* hack = [[TKRPtrAndSizePair alloc] init];
     hack.ptrValue = (uintptr_t)encrypted_buffer;
     hack.ptrSize = (NSUInteger)encrypted_size;
     handler(hack, nil);
@@ -51,19 +51,19 @@
 
   if (!encrypted_buffer)
   {
-    handler(nil, createNSError("could not allocate encrypted buffer", TKRErrorInternalError));
+    handler(nil, TKR_createNSError(NSPOSIXErrorDomain, @"could not allocate encrypted buffer", ENOMEM));
     return;
   }
 
   tanker_future_t* encrypt_future = tanker_encryption_session_encrypt(
       (tanker_encryption_session_t*)self.cSession, encrypted_buffer, (uint8_t const*)clearData.bytes, clearData.length);
   tanker_future_t* resolve_future =
-      tanker_future_then(encrypt_future, (tanker_future_then_t)&resolvePromise, (__bridge_retained void*)adapter);
+      tanker_future_then(encrypt_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(encrypt_future);
   tanker_future_destroy(resolve_future);
   // Force clearData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
-  AntiARCRetain(clearData);
+  TKRAntiARCRetain(clearData);
 }
 
 @end

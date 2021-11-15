@@ -1,7 +1,8 @@
 #import <Foundation/Foundation.h>
 
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 @interface TKRInputStreamDataSource ()
 
@@ -20,7 +21,7 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
 {
   TKRInputStreamDataSource* source = (__bridge_transfer TKRInputStreamDataSource*)data;
 
-  runOnMainQueue(^{
+  TKR_runOnMainQueue(^{
     if (!source.atEnd)
       source.hasBytesAvailable = YES;
   });
@@ -83,7 +84,8 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
 
   if (maxLength > NSIntegerMax)
   {
-    self.error = createNSError("Attempting to read more than NSIntegerMax", TKRErrorInvalidArgument);
+    self.error =
+        TKR_createNSError(TKRErrorDomain, @"Attempting to read more than NSIntegerMax", TKRErrorInvalidArgument);
     return -1;
   }
   assert(self.bytes_available_fut);
@@ -92,7 +94,7 @@ static void* signalBytesAvailable(tanker_future_t* fut, void* data)
   tanker_future_wait(self.bytes_available_fut);
   tanker_future_t* read_future = tanker_stream_read(self.stream, buffer, (int64_t)maxLength);
   tanker_future_wait(read_future);
-  NSError* err = getOptionalFutureError(read_future);
+  NSError* err = TKR_getOptionalFutureError(read_future);
   if (err)
   {
     // Was it caused by the underlying input stream? If so, just keep the original error

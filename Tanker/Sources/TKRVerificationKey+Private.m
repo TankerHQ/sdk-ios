@@ -2,7 +2,7 @@
 #import <objc/runtime.h>
 
 #import <Tanker/TKRTanker+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 #import <Tanker/TKRVerificationKey+Private.h>
 
 @implementation TKRVerificationKey (Private)

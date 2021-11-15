@@ -1,6 +1,6 @@
 
 #import <Tanker/TKRAsyncStreamReader+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 void readInput(uint8_t* _Nonnull out,
                int64_t n,
@@ -11,7 +11,7 @@ void readInput(uint8_t* _Nonnull out,
   TKRAsyncStreamReader* reader = (__bridge typeof(TKRAsyncStreamReader*))additional_data;
 
   // dispatch on main queue since streams are scheduled on it
-  runOnMainQueue(^{
+  TKR_runOnMainQueue(^{
     if (reader.stream.hasBytesAvailable)
       [reader performRead:out maxLength:n readOperation:op];
     else

@@ -1,8 +1,9 @@
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRTanker+Private.h>
-#import <Tanker/TKRUtils+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 #include "ctanker/encryptionsession.h"
 
@@ -14,7 +15,7 @@
 {
   tanker_expected_t* resource_id_expected =
       tanker_encryption_session_get_resource_id((tanker_encryption_session_t*)self.cSession);
-  char* resource_id = unwrapAndFreeExpected(resource_id_expected);
+  char* resource_id = TKR_unwrapAndFreeExpected(resource_id_expected);
   NSString* ret = [NSString stringWithCString:resource_id encoding:NSUTF8StringEncoding];
   tanker_free_buffer(resource_id);
   return ret;
@@ -23,10 +24,10 @@
 - (void)encryptString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
   NSError* err = nil;
-  NSData* data = convertStringToData(clearText, &err);
+  NSData* data = TKR_convertStringToData(clearText, &err);
 
   if (err)
-    runOnMainQueue(^{
+    TKR_runOnMainQueue(^{
       handler(nil, err);
     });
   else
@@ -35,7 +36,7 @@
 
 - (void)encryptData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  id adapter = ^(PtrAndSizePair* hack, NSError* err) {
+  id adapter = ^(TKRPtrAndSizePair* hack, NSError* err) {
     if (err)
     {
       handler(nil, err);
@@ -60,7 +61,9 @@
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil, createNSError("Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil,
+            TKR_createNSError(
+                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
     return;
   }
 

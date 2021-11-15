@@ -13,8 +13,6 @@
 #import <Tanker/TKRVerificationMethod.h>
 #import <Tanker/TKRVerificationOptions.h>
 
-#define TKRErrorDomain @"TKRErrorDomain"
-
 /*!
  @brief Tanker object
  */
@@ -296,7 +294,7 @@
  @brief Update a group to add the given users.
 
  @param groupId the id of the group to update.
- @param userIdentities the users to add to the group.
+ @param usersToAdd the users to add to the group.
  @param handler the block called with an NSError, or nil.
  */
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId

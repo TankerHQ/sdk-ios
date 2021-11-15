@@ -1,3 +1,5 @@
+#import <Foundation/Foundation.h>
+
 /*!
  * @typedef TKRError
  */
@@ -18,3 +20,5 @@ typedef NS_ENUM(NSUInteger, TKRError) {
   TKRErrorUpgradeRequired = 14,
   TKRErrorIdentityAlreadyAttached = 15,
 };
+
+FOUNDATION_EXPORT NSString* const TKRErrorDomain;
