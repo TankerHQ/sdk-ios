@@ -4,9 +4,6 @@
 
 @interface TKRDatastore : NSObject
 
-@property(nonnull, readonly) NSString* persistentPath;
-@property(nonnull, readonly) NSString* cachePath;
-
 + (nullable TKRDatastore*)datastoreWithPersistentPath:(nonnull NSString*)persistentPath
                                             cachePath:(nonnull NSString*)cachePath
                                                 error:(NSError* _Nullable* _Nonnull)err;
@@ -15,7 +12,6 @@
                                        cachePath:(nonnull NSString*)cachePath
                                            error:(NSError* _Nullable* _Nonnull)err;
 
-- (nullable NSError*)open;
 - (nullable NSError*)nuke;
 - (void)close;
 

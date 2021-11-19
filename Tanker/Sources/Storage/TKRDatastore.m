@@ -16,10 +16,6 @@ NSString* const deviceTableName = @"device";
 
 @interface TKRDatastore ()
 
-// Redeclare them as readwrite to set them.
-@property(nonnull, readwrite) NSString* persistentPath;
-@property(nonnull, readwrite) NSString* cachePath;
-
 @property sqlite3* persistent_handle;
 @property sqlite3* cache_handle;
 
@@ -86,12 +82,6 @@ static NSError* _Nullable errorFromSQLite(sqlite3* handle)
   return TKR_createNSError(TKRDatastoreErrorDomain, msg, translateSQLiteError(sqlite_code));
 }
 
-static NSError* _Nullable openOrCreateDb(NSString* _Nonnull dbPath, sqlite3** handle)
-{
-  sqlite3_open(dbPath.UTF8String, handle);
-  return errorFromSQLite(*handle);
-}
-
 static NSError* _Nullable initDb(sqlite3* handle)
 {
   NSArray<NSString*>* cmds = @[
@@ -113,6 +103,15 @@ static NSError* _Nullable initDb(sqlite3* handle)
     }
   }
   return nil;
+}
+
+static NSError* _Nullable openOrCreateDb(NSString* _Nonnull dbPath, sqlite3** handle)
+{
+  sqlite3_open(dbPath.UTF8String, handle);
+  NSError* err = errorFromSQLite(*handle);
+  if (err)
+    return err;
+  return initDb(*handle);
 }
 
 static NSError* _Nullable dbVersion(sqlite3* handle, int* ret)
@@ -319,30 +318,20 @@ static NSArray<id>* _Nonnull setDifferenceToNull(NSArray<NSData*>* _Nonnull keys
   {
     sqlite3* tmp;
     if ((*err = openOrCreateDb(persistentPath, &tmp)))
-      return nil;
+      goto fail;
     self.persistent_handle = tmp;
     if ((*err = openOrCreateDb(cachePath, &tmp)))
-    {
-      sqlite3_close(self.persistent_handle);
-      return nil;
-    }
+      goto fail;
     self.cache_handle = tmp;
+    if ((*err = [self migrate]))
+      goto fail;
   }
   return self;
-}
 
-- (nullable NSError*)open
-{
-  NSError* err = initDb(self.persistent_handle);
-  if (err)
-    return err;
-  err = initDb(self.cache_handle);
-  if (err)
-    return err;
-  err = [self migrate];
-  if (err)
-    NSLog(@"migrate failed: %@", err.localizedDescription);
-  return err;
+fail:
+  sqlite3_close(self.persistent_handle);
+  sqlite3_close(self.cache_handle);
+  return nil;
 }
 
 - (nullable NSError*)nuke

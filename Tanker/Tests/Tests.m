@@ -1795,8 +1795,6 @@ SpecBegin(TankerSpecs)
 
           db = [TKRDatastore datastoreWithPersistentPath:storagePath cachePath:cachePath error:&err];
           expect(err).to.beNil();
-          err = [db open];
-          expect(err).to.beNil();
         });
 
         afterEach(^{
