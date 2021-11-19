@@ -4,6 +4,7 @@
 #import <Tanker/TKREncryptionSession.h>
 #import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
+#import <Tanker/TKRPadding.h>
 #import <Tanker/TKRTanker.h>
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRVerification.h>
@@ -169,6 +170,9 @@ static NSData* _Nonnull stringToData(NSString* _Nonnull str)
 {
   return [NSData dataWithBytes:str.UTF8String length:str.length];
 }
+
+static NSUInteger SIMPLE_ENCRYPTION_OVERHEAD = 17;
+static NSUInteger SIMPLE_PADDED_ENCRYPTION_OVERHEAD = SIMPLE_ENCRYPTION_OVERHEAD + 1;
 
 SpecBegin(TankerSpecs)
 
@@ -580,6 +584,96 @@ SpecBegin(TankerSpecs)
           });
 
           expect(decryptedData).to.equal(clearData);
+        });
+
+        describe(@"padding", ^{
+          it(@"should encrypt and decrypt with auto padding by default", ^{
+            NSString* clearText = @"my clear data is clear!";
+            int lengthWithPadme = 24;
+
+            NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker encryptString:clearText completionHandler:adapter];
+            });
+
+            expect(encrypted.length - SIMPLE_PADDED_ENCRYPTION_OVERHEAD).to.equal(lengthWithPadme);
+
+            NSString* decrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker decryptStringFromData:encrypted completionHandler:adapter];
+            });
+
+            expect(decrypted).to.equal(clearText);
+          });
+
+          it(@"should encrypt and decrypt with auto padding", ^{
+            NSString* clearText = @"my clear data is clear!";
+            int lengthWithPadme = 24;
+
+            TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+            encryptionOptions.paddingStep = [TKRPadding automatic];
+
+            NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
+            });
+
+            expect(encrypted.length - SIMPLE_PADDED_ENCRYPTION_OVERHEAD).to.equal(lengthWithPadme);
+
+            NSString* decrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker decryptStringFromData:encrypted completionHandler:adapter];
+            });
+
+            expect(decrypted).to.equal(clearText);
+          });
+
+          it(@"should encrypt and decrypt with no padding", ^{
+            NSString* clearText = @"Rosebud";
+
+            TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+            encryptionOptions.paddingStep = [TKRPadding off];
+
+            NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
+            });
+
+            expect(encrypted.length - SIMPLE_ENCRYPTION_OVERHEAD).to.equal(clearText.length);
+
+            NSString* decrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker decryptStringFromData:encrypted completionHandler:adapter];
+            });
+
+            expect(decrypted).to.equal(clearText);
+          });
+
+          it(@"should encrypt and decrypt with manual padding", ^{
+            NSString* clearText = @"Rosebud";
+            NSNumber* paddingStep = @13;
+
+            TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+            encryptionOptions.paddingStep = [TKRPadding step:paddingStep];
+
+            NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
+            });
+
+            expect((encrypted.length - SIMPLE_PADDED_ENCRYPTION_OVERHEAD) % paddingStep.unsignedIntValue).to.equal(0);
+
+            NSString* decrypted = hangWithAdapter(^(PMKAdapter adapter) {
+              [tanker decryptStringFromData:encrypted completionHandler:adapter];
+            });
+
+            expect(decrypted).to.equal(clearText);
+          });
+
+          it(@"should throw when a bad step is given", ^{
+            expect(^{
+                    [TKRPadding step:@-1];
+            }).to.raise(NSInvalidArgumentException);
+            expect(^{
+                    [TKRPadding step:@0];
+            }).to.raise(NSInvalidArgumentException);
+            expect(^{
+                    [TKRPadding step:@1];
+            }).to.raise(NSInvalidArgumentException);
+          });
         });
 
         describe(@"streams", ^{
