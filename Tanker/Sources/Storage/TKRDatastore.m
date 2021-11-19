@@ -176,7 +176,7 @@ static NSString* _Nonnull buildCacheRequest(NSString* _Nonnull tableName,
   return cmd;
 }
 
-static NSString* _Nonnull buildFindCacheRequest(NSString* _Nonnull tableName, NSArray<NSData*>* _Nonnull keys)
+static NSString* _Nonnull buildFindCacheRequest(NSArray<NSData*>* _Nonnull keys)
 {
   NSMutableString* cmd = [NSMutableString stringWithString:@"SELECT key, value FROM "];
   [cmd appendString:cacheTableName];
@@ -187,7 +187,7 @@ static NSString* _Nonnull buildFindCacheRequest(NSString* _Nonnull tableName, NS
     [cmd appendFormat:@"%@,", hexKey];
   }
   [cmd deleteCharactersInRange:NSMakeRange([cmd length] - 1, 1)];
-  [cmd appendString:@") ORDER BY key"];
+  [cmd appendString:@")"];
 
   return cmd;
 }
@@ -350,11 +350,11 @@ static NSArray<id>* _Nonnull setDifferenceToNull(NSArray<NSData*>* _Nonnull keys
   NSString* format = @"DELETE FROM %@";
   NSError* err;
 
-  sqlite3_exec(self.cache_handle, [NSString stringWithFormat:format, cacheTableName].UTF8String, NULL, NULL, NULL);
-  if ((err = errorFromSQLite(self.cache_handle)))
-    return err;
   sqlite3_exec(
       self.persistent_handle, [NSString stringWithFormat:format, deviceTableName].UTF8String, NULL, NULL, NULL);
+  if ((err = errorFromSQLite(self.persistent_handle)))
+    return err;
+  sqlite3_exec(self.cache_handle, [NSString stringWithFormat:format, cacheTableName].UTF8String, NULL, NULL, NULL);
   return errorFromSQLite(self.cache_handle);
 }
 
@@ -380,7 +380,7 @@ static NSArray<id>* _Nonnull setDifferenceToNull(NSArray<NSData*>* _Nonnull keys
   if (keys.count == 0)
     return @[];
 
-  NSString* cmd = buildFindCacheRequest(cacheTableName, keys);
+  NSString* cmd = buildFindCacheRequest(keys);
   NSMutableArray<NSArray<NSData*>*>* selectedValues = [NSMutableArray array];
   sqlite3_exec(self.cache_handle, cmd.UTF8String, select_cache_callback, (__bridge void*)selectedValues, NULL);
 
