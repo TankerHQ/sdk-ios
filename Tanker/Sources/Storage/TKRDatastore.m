@@ -27,8 +27,6 @@ static TKRDatastoreError translateSQLiteError(int err_code)
 
   switch (err_code)
   {
-  case SQLITE_NOTFOUND:
-    return TKRDatastoreErrorRecordNotFound;
   case SQLITE_CONSTRAINT:
     return TKRDatastoreErrorConstraintFailed;
   case SQLITE_CORRUPT:

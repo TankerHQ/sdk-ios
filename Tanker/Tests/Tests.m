@@ -71,22 +71,9 @@ static NSString* createUUID()
   return [[NSUUID UUID] UUIDString];
 }
 
-static NSString* createStorageFullpath()
+static NSString* createStorageFullpath(NSSearchPathDirectory dir)
 {
-  NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-  NSString* path = [[paths objectAtIndex:0] stringByAppendingPathComponent:createUUID()];
-  NSError* err;
-  BOOL success = [[NSFileManager defaultManager] createDirectoryAtPath:path
-                                           withIntermediateDirectories:YES
-                                                            attributes:nil
-                                                                 error:&err];
-  assert(success);
-  return path;
-}
-
-static NSString* createCacheFullpath()
-{
-  NSArray* paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+  NSArray* paths = NSSearchPathForDirectoriesInDomains(dir, NSUserDomainMask, YES);
   NSString* path = [[paths objectAtIndex:0] stringByAppendingPathComponent:createUUID()];
   NSError* err;
   BOOL success = [[NSFileManager defaultManager] createDirectoryAtPath:path
@@ -102,8 +89,8 @@ static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   TKRTankerOptions* opts = [TKRTankerOptions options];
   opts.url = url;
   opts.appID = appID;
-  opts.writablePath = createStorageFullpath();
-  opts.cachePath = createCacheFullpath();
+  opts.writablePath = createStorageFullpath(NSLibraryDirectory);
+  opts.cachePath = createStorageFullpath(NSCachesDirectory);
   opts.sdkType = @"sdk-ios-tests";
   return opts;
 }
@@ -1790,8 +1777,9 @@ SpecBegin(TankerSpecs)
 
         beforeEach(^{
           NSError* err = nil;
-          NSString* storagePath = [createStorageFullpath() stringByAppendingPathComponent:@"storage.db"];
-          NSString* cachePath = [createCacheFullpath() stringByAppendingPathComponent:@"cache.db"];
+          NSString* storagePath =
+              [createStorageFullpath(NSLibraryDirectory) stringByAppendingPathComponent:@"storage.db"];
+          NSString* cachePath = [createStorageFullpath(NSCachesDirectory) stringByAppendingPathComponent:@"cache.db"];
 
           db = [TKRDatastore datastoreWithPersistentPath:storagePath cachePath:cachePath error:&err];
           expect(err).to.beNil();
