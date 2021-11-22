@@ -40,36 +40,6 @@ static TKRDatastoreError translateSQLiteError(int err_code)
   }
 }
 
-static int version_callback(void* version_ptr, int nb_columns, char** columns, char** column_names)
-{
-  if (nb_columns != 1)
-    return -1;
-  *(int*)version_ptr = atoi(columns[0]);
-  return 0;
-}
-
-static int select_cache_callback(void* nsarray_ptr, int nb_columns, char** columns, char** column_names)
-{
-  if (nb_columns != 2)
-    return -1;
-
-  NSMutableArray<NSArray<NSData*>*>* values = (__bridge NSMutableArray<NSArray<NSData*>*>*)nsarray_ptr;
-  NSData* key = [NSData dataWithBytes:columns[0] length:strlen(columns[0])];
-  NSData* value = [NSData dataWithBytes:columns[1] length:strlen(columns[1])];
-  [values addObject:[NSArray arrayWithObjects:key, value, nil]];
-  return 0;
-}
-
-static int select_device_callback(void* nsdata_ptr, int nb_columns, char** columns, char** column_names)
-{
-  if (nb_columns != 1)
-    return -1;
-
-  NSMutableData* serializedDevice = (__bridge NSMutableData*)nsdata_ptr;
-  [serializedDevice setData:[NSData dataWithBytes:columns[0] length:strlen(columns[0])]];
-  return 0;
-}
-
 static NSError* _Nullable errorFromSQLite(sqlite3* handle)
 {
   int sqlite_code = sqlite3_errcode(handle);
@@ -116,9 +86,20 @@ static NSError* _Nullable openOrCreateDb(NSString* _Nonnull dbPath, sqlite3** ha
 
 static NSError* _Nullable dbVersion(sqlite3* handle, int* ret)
 {
-  int version = -1;
-  sqlite3_exec(handle, "PRAGMA user_version", version_callback, &version, NULL);
-  *ret = version;
+  sqlite3_stmt* stmt;
+  int err_code = sqlite3_prepare_v2(handle, "PRAGMA user_version", -1, &stmt, NULL);
+  if (err_code != SQLITE_OK)
+    return errorFromSQLite(handle);
+
+  err_code = sqlite3_step(stmt);
+  if (err_code != SQLITE_ROW)
+  {
+    NSString* errMsg = [NSString stringWithCString:sqlite3_errstr(err_code) encoding:NSUTF8StringEncoding];
+    return TKR_createNSError(TKRDatastoreErrorDomain, errMsg, translateSQLiteError(err_code));
+  }
+  *ret = sqlite3_column_int(stmt, 0);
+
+  sqlite3_finalize(stmt);
   return errorFromSQLite(handle);
 }
 
@@ -217,6 +198,38 @@ static NSArray<id>* _Nonnull setDifferenceToNull(NSArray<NSData*>* _Nonnull keys
       [ret addObject:[selectedValues objectAtIndex:idx][1]];
   }
   return ret;
+}
+
+static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handle,
+                                                                  NSString* _Nonnull cmd,
+                                                                  NSError* _Nullable* _Nonnull err)
+{
+  NSMutableArray<NSArray<NSData*>*>* selectedValues = [NSMutableArray array];
+  sqlite3_stmt* stmt;
+
+  int err_code = sqlite3_prepare_v2(handle, cmd.UTF8String, (int)cmd.length, &stmt, NULL);
+  if (err_code != SQLITE_OK)
+  {
+    *err = TKR_createNSError(TKRDatastoreErrorDomain,
+                             [NSString stringWithFormat:@"Failed to prepare statement: %s", sqlite3_errstr(err_code)],
+                             translateSQLiteError(err_code));
+    return nil;
+  }
+  for (err_code = sqlite3_step(stmt); err_code == SQLITE_ROW; err_code = sqlite3_step(stmt))
+  {
+    NSData* key = [NSData dataWithBytes:sqlite3_column_blob(stmt, 0) length:sqlite3_column_bytes(stmt, 0)];
+    NSData* value = [NSData dataWithBytes:sqlite3_column_blob(stmt, 1) length:sqlite3_column_bytes(stmt, 1)];
+    [selectedValues addObject:[NSArray arrayWithObjects:key, value, nil]];
+  }
+
+  sqlite3_finalize(stmt);
+  if (err_code != SQLITE_DONE)
+  {
+    NSString* errMsg = [NSString stringWithCString:sqlite3_errstr(err_code) encoding:NSUTF8StringEncoding];
+    *err = TKR_createNSError(TKRDatastoreErrorDomain, errMsg, translateSQLiteError(err_code));
+    return nil;
+  }
+  return selectedValues;
 }
 
 @implementation TKRDatastore
@@ -320,11 +333,13 @@ static NSArray<id>* _Nonnull setDifferenceToNull(NSArray<NSData*>* _Nonnull keys
     if ((*err = openOrCreateDb(persistentPath, &tmp)))
       goto fail;
     self.persistent_handle = tmp;
+    NSLog(@"persistent pointer = %p", self.persistent_handle);
     if ((*err = openOrCreateDb(cachePath, &tmp)))
       goto fail;
     self.cache_handle = tmp;
     if ((*err = [self migrate]))
       goto fail;
+    NSLog(@"cache pointer = %p", self.cache_handle);
   }
   return self;
 
@@ -351,6 +366,8 @@ fail:
 {
   sqlite3_close(self.persistent_handle);
   sqlite3_close(self.cache_handle);
+  self.persistent_handle = nil;
+  self.cache_handle = nil;
 }
 
 - (nullable NSError*)cacheValues:(nonnull NSDictionary<NSData*, NSData*>*)keyValues
@@ -363,20 +380,18 @@ fail:
   return errorFromSQLite(self.cache_handle);
 }
 
-- (nonnull NSArray<id>*)findCacheValuesWithKeys:(nonnull NSArray<NSData*>*)keys error:(NSError* _Nullable* _Nonnull)err
+- (nullable NSArray<id>*)findCacheValuesWithKeys:(nonnull NSArray<NSData*>*)keys error:(NSError* _Nullable* _Nonnull)err
 {
   *err = nil;
   if (keys.count == 0)
     return @[];
 
   NSString* cmd = buildFindCacheRequest(keys);
-  NSMutableArray<NSArray<NSData*>*>* selectedValues = [NSMutableArray array];
-  sqlite3_exec(self.cache_handle, cmd.UTF8String, select_cache_callback, (__bridge void*)selectedValues, NULL);
+  NSArray<NSArray<NSData*>*>* values = retrieveCachedValues(self.cache_handle, cmd, err);
 
-  if ((*err = errorFromSQLite(self.cache_handle)))
+  if (*err)
     return nil;
-
-  return setDifferenceToNull(keys, selectedValues);
+  return setDifferenceToNull(keys, values);
 }
 
 - (nullable NSError*)setSerializedDevice:(nonnull NSData*)serializedDevice
@@ -389,18 +404,29 @@ fail:
 - (nullable NSData*)serializedDeviceWithError:(NSError* _Nullable* _Nonnull)err
 {
   NSString* cmd = [NSString stringWithFormat:@"SELECT deviceblob FROM %@ WHERE id = 1", deviceTableName];
-  NSMutableData* serializedDevice = [NSMutableData data];
-  sqlite3_exec(self.persistent_handle, cmd.UTF8String, select_device_callback, (__bridge void*)serializedDevice, NULL);
-
-  *err = errorFromSQLite(self.persistent_handle);
-  if (serializedDevice.length == 0)
+  sqlite3_stmt* stmt;
+  int err_code = sqlite3_prepare_v2(self.persistent_handle, cmd.UTF8String, -1, &stmt, NULL);
+  if (err_code != SQLITE_OK)
+  {
+    *err = errorFromSQLite(self.persistent_handle);
     return nil;
-  return serializedDevice;
-}
+  }
 
-- (void)dealloc
-{
-  [self close];
+  err_code = sqlite3_step(stmt);
+  if (err_code == SQLITE_DONE)
+    return nil;
+  if (err_code != SQLITE_ROW)
+  {
+    NSString* errMsg = [NSString stringWithCString:sqlite3_errstr(err_code) encoding:NSUTF8StringEncoding];
+    *err = TKR_createNSError(TKRDatastoreErrorDomain, errMsg, translateSQLiteError(err_code));
+    return nil;
+  }
+  NSData* ret = [NSData dataWithBytes:sqlite3_column_blob(stmt, 0) length:sqlite3_column_bytes(stmt, 0)];
+
+  sqlite3_finalize(stmt);
+  if ((*err = errorFromSQLite(self.persistent_handle)))
+    return nil;
+  return ret;
 }
 
 @end
