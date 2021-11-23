@@ -52,7 +52,7 @@ static NSError* _Nullable errorFromSQLite(sqlite3* handle)
 
 static NSError* _Nullable initDb(sqlite3* handle)
 {
-  NSArray<NSString*>* cmds = @[
+  NSArray<NSString*>* queries = @[
     @"PRAGMA secure_delete = ON",
     @"SELECT count(*) FROM sqlite_master",
     @"PRAGMA locking_mode = EXCLUSIVE",
@@ -60,13 +60,13 @@ static NSError* _Nullable initDb(sqlite3* handle)
     @"UPDATE access SET last_access = 0"
   ];
 
-  for (NSString* cmd in cmds)
+  for (NSString* query in queries)
   {
-    sqlite3_exec(handle, cmd.UTF8String, NULL, NULL, NULL);
+    sqlite3_exec(handle, query.UTF8String, NULL, NULL, NULL);
     NSError* err = errorFromSQLite(handle);
     if (err)
     {
-      NSLog(@"Command failed: %@, with err: %@", cmd, err.localizedDescription);
+      NSLog(@"Command failed: %@, with err: %@", query, err.localizedDescription);
       return err;
     }
   }
@@ -103,8 +103,8 @@ static NSError* _Nullable dbVersion(sqlite3* handle, int* ret)
 
 static NSError* _Nullable setDbVersion(sqlite3* handle, int version)
 {
-  NSString* cmd = [NSString stringWithFormat:@"PRAGMA user_version = %d", version];
-  sqlite3_exec(handle, cmd.UTF8String, NULL, NULL, NULL);
+  NSString* query = [NSString stringWithFormat:@"PRAGMA user_version = %d", version];
+  sqlite3_exec(handle, query.UTF8String, NULL, NULL, NULL);
   return errorFromSQLite(handle);
 }
 
@@ -139,35 +139,35 @@ static NSString* _Nonnull buildCacheRequest(NSString* _Nonnull tableName,
                                             NSDictionary<NSData*, NSData*>* _Nonnull keyValues,
                                             TKRDatastoreOnConflict action)
 {
-  NSMutableString* cmd = [NSMutableString stringWithString:@"INSERT OR "];
-  [cmd appendString:onConflictToString(action)];
-  [cmd appendFormat:@" INTO %@ VALUES ", tableName];
+  NSMutableString* query = [NSMutableString stringWithString:@"INSERT OR "];
+  [query appendString:onConflictToString(action)];
+  [query appendFormat:@" INTO %@ VALUES ", tableName];
   for (NSData* key in keyValues)
   {
     NSString* hexKey = dataToHexString(key);
     NSString* hexValue = dataToHexString([keyValues objectForKey:key]);
-    [cmd appendFormat:@"(%@, %@),", hexKey, hexValue];
+    [query appendFormat:@"(%@, %@),", hexKey, hexValue];
   }
   // pop last ','
-  [cmd deleteCharactersInRange:NSMakeRange([cmd length] - 1, 1)];
+  [query deleteCharactersInRange:NSMakeRange([query length] - 1, 1)];
 
-  return cmd;
+  return query;
 }
 
 static NSString* _Nonnull buildFindCacheRequest(NSArray<NSData*>* _Nonnull keys)
 {
-  NSMutableString* cmd = [NSMutableString stringWithString:@"SELECT key, value FROM "];
-  [cmd appendString:cacheTableName];
-  [cmd appendString:@" WHERE key IN ("];
+  NSMutableString* query = [NSMutableString stringWithString:@"SELECT key, value FROM "];
+  [query appendString:cacheTableName];
+  [query appendString:@" WHERE key IN ("];
   for (NSData* key in keys)
   {
     NSString* hexKey = dataToHexString(key);
-    [cmd appendFormat:@"%@,", hexKey];
+    [query appendFormat:@"%@,", hexKey];
   }
-  [cmd deleteCharactersInRange:NSMakeRange([cmd length] - 1, 1)];
-  [cmd appendString:@")"];
+  [query deleteCharactersInRange:NSMakeRange([query length] - 1, 1)];
+  [query appendString:@")"];
 
-  return cmd;
+  return query;
 }
 
 static NSString* _Nonnull buildSetDeviceRequest(NSData* _Nonnull serializedDevice)
@@ -199,13 +199,13 @@ static NSArray<id>* _Nonnull setDifferenceToNull(NSArray<NSData*>* _Nonnull keys
 }
 
 static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handle,
-                                                                  NSString* _Nonnull cmd,
+                                                                  NSString* _Nonnull query,
                                                                   NSError* _Nullable* _Nonnull err)
 {
   NSMutableArray<NSArray<NSData*>*>* selectedValues = [NSMutableArray array];
   sqlite3_stmt* stmt;
 
-  int err_code = sqlite3_prepare_v2(handle, cmd.UTF8String, (int)cmd.length, &stmt, NULL);
+  int err_code = sqlite3_prepare_v2(handle, query.UTF8String, (int)query.length, &stmt, NULL);
   if (err_code != SQLITE_OK)
   {
     *err = TKR_createNSError(TKRDatastoreErrorDomain,
@@ -213,7 +213,7 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
                              translateSQLiteError(err_code));
     return nil;
   }
-  for (err_code = sqlite3_step(stmt); err_code == SQLITE_ROW; err_code = sqlite3_step(stmt))
+  while ((err_code = sqlite3_step(stmt)) == SQLITE_ROW)
   {
     NSData* key = [NSData dataWithBytes:sqlite3_column_blob(stmt, 0) length:sqlite3_column_bytes(stmt, 0)];
     NSData* value = [NSData dataWithBytes:sqlite3_column_blob(stmt, 1) length:sqlite3_column_bytes(stmt, 1)];
@@ -234,23 +234,23 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
 
 - (nullable NSError*)createDeviceTable
 {
-  char const* cmd =
+  char const* query =
       "CREATE TABLE device ("
       "  id INTEGER PRIMARY KEY,"
       "  deviceblob BLOB NOT NULL"
       ")";
-  sqlite3_exec(self.persistent_handle, cmd, NULL, NULL, NULL);
+  sqlite3_exec(self.persistent_handle, query, NULL, NULL, NULL);
   return errorFromSQLite(self.persistent_handle);
 }
 
 - (nullable NSError*)createCacheTable
 {
-  char const* cmd =
+  char const* query =
       "CREATE TABLE cache ("
       "  key BLOB PRIMARY KEY,"
       "  value BLOB NOT NULL"
       ")";
-  sqlite3_exec(self.cache_handle, cmd, NULL, NULL, NULL);
+  sqlite3_exec(self.cache_handle, query, NULL, NULL, NULL);
   return errorFromSQLite(self.cache_handle);
 }
 
@@ -331,13 +331,11 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
     if ((*err = openOrCreateDb(persistentPath, &tmp)))
       goto fail;
     self.persistent_handle = tmp;
-    NSLog(@"persistent pointer = %p", self.persistent_handle);
     if ((*err = openOrCreateDb(cachePath, &tmp)))
       goto fail;
     self.cache_handle = tmp;
     if ((*err = [self migrate]))
       goto fail;
-    NSLog(@"cache pointer = %p", self.cache_handle);
   }
   return self;
 
@@ -373,8 +371,8 @@ fail:
 {
   if (keyValues.count == 0)
     return nil;
-  NSString* cmd = buildCacheRequest(cacheTableName, keyValues, action);
-  sqlite3_exec(self.cache_handle, cmd.UTF8String, NULL, NULL, NULL);
+  NSString* query = buildCacheRequest(cacheTableName, keyValues, action);
+  sqlite3_exec(self.cache_handle, query.UTF8String, NULL, NULL, NULL);
   return errorFromSQLite(self.cache_handle);
 }
 
@@ -384,8 +382,8 @@ fail:
   if (keys.count == 0)
     return @[];
 
-  NSString* cmd = buildFindCacheRequest(keys);
-  NSArray<NSArray<NSData*>*>* values = retrieveCachedValues(self.cache_handle, cmd, err);
+  NSString* query = buildFindCacheRequest(keys);
+  NSArray<NSArray<NSData*>*>* values = retrieveCachedValues(self.cache_handle, query, err);
 
   if (*err)
     return nil;
@@ -394,16 +392,16 @@ fail:
 
 - (nullable NSError*)setSerializedDevice:(nonnull NSData*)serializedDevice
 {
-  NSString* cmd = buildSetDeviceRequest(serializedDevice);
-  sqlite3_exec(self.persistent_handle, cmd.UTF8String, NULL, NULL, NULL);
+  NSString* query = buildSetDeviceRequest(serializedDevice);
+  sqlite3_exec(self.persistent_handle, query.UTF8String, NULL, NULL, NULL);
   return errorFromSQLite(self.persistent_handle);
 }
 
 - (nullable NSData*)serializedDeviceWithError:(NSError* _Nullable* _Nonnull)err
 {
-  NSString* cmd = [NSString stringWithFormat:@"SELECT deviceblob FROM %@ WHERE id = 1", deviceTableName];
+  NSString* query = [NSString stringWithFormat:@"SELECT deviceblob FROM %@ WHERE id = 1", deviceTableName];
   sqlite3_stmt* stmt;
-  int err_code = sqlite3_prepare_v2(self.persistent_handle, cmd.UTF8String, -1, &stmt, NULL);
+  int err_code = sqlite3_prepare_v2(self.persistent_handle, query.UTF8String, -1, &stmt, NULL);
   if (err_code != SQLITE_OK)
   {
     *err = errorFromSQLite(self.persistent_handle);
