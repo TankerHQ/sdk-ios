@@ -12,6 +12,7 @@
 #import <Tanker/Utils/TKRUtils.h>
 
 #import <Tanker/Storage/TKRDatastore.h>
+#import <Tanker/Storage/TKRDatastoreBindings.h>
 #import <Tanker/Storage/TKRDatastoreError.h>
 
 #import "TKRCustomDataSource.h"
@@ -23,6 +24,7 @@
 #import <Specta/Specta.h>
 
 #include "ctanker.h"
+#include "ctanker/_datastoretests/test.h"
 #include "ctanker/admin.h"
 #include "ctanker/identity.h"
 
@@ -1777,9 +1779,8 @@ SpecBegin(TankerSpecs)
 
         beforeEach(^{
           NSError* err = nil;
-          NSString* storagePath =
-              [createStorageFullpath(NSLibraryDirectory) stringByAppendingPathComponent:@"storage.db"];
-          NSString* cachePath = [createStorageFullpath(NSCachesDirectory) stringByAppendingPathComponent:@"cache.db"];
+          NSString* storagePath = [createStorageFullpath(NSLibraryDirectory) stringByAppendingPathComponent:@"test"];
+          NSString* cachePath = [createStorageFullpath(NSCachesDirectory) stringByAppendingPathComponent:@"test"];
 
           db = [TKRDatastore datastoreWithPersistentPath:storagePath cachePath:cachePath error:&err];
           expect(err).to.beNil();
@@ -1910,6 +1911,20 @@ SpecBegin(TankerSpecs)
           expect(err).to.beNil();
           expect(values.count).to.equal(1);
           expect(values[0]).to.equal([NSNull null]);
+        });
+
+        it(@"runs C datastore-tests", ^{
+          tanker_datastore_options_t opts = {.open = TKR_datastore_open,
+                                             .close = TKR_datastore_close,
+                                             .nuke = TKR_datastore_nuke,
+                                             .put_serialized_device = TKR_datastore_put_serialized_device,
+                                             .find_serialized_device = TKR_datastore_find_serialized_device,
+                                             .put_cache_values = TKR_datastore_put_cache_values,
+                                             .find_cache_values = TKR_datastore_find_cache_values};
+
+          NSString* path = createStorageFullpath(NSCachesDirectory);
+          int ret = tanker_run_datastore_test(&opts, path.UTF8String, nil);
+          expect(ret).to.equal(0);
         });
       });
     });
