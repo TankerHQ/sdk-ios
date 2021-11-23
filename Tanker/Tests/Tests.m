@@ -9,6 +9,11 @@
 #import <Tanker/TKRVerification.h>
 #import <Tanker/TKRVerificationKey.h>
 
+#import <Tanker/Utils/TKRUtils.h>
+
+#import <Tanker/Storage/TKRDatastore.h>
+#import <Tanker/Storage/TKRDatastoreError.h>
+
 #import "TKRCustomDataSource.h"
 #import "TKRTestAsyncStreamReader.h"
 
@@ -20,35 +25,6 @@
 #include "ctanker.h"
 #include "ctanker/admin.h"
 #include "ctanker/identity.h"
-
-static NSError* TKR_getOptionalFutureError(tanker_future_t* fut)
-{
-  tanker_error_t* err = tanker_future_get_error(fut);
-  if (!err)
-    return nil;
-  NSError* error = [NSError errorWithDomain:TKRErrorDomain
-                                       code:err->code
-                                   userInfo:@{
-                                     NSLocalizedDescriptionKey : [NSString stringWithCString:err->message
-                                                                                    encoding:NSUTF8StringEncoding]
-                                   }];
-  return error;
-}
-
-static void* TKR_unwrapAndFreeExpected(tanker_expected_t* expected)
-{
-  NSError* optErr = TKR_getOptionalFutureError(expected);
-  if (optErr)
-  {
-    tanker_future_destroy(expected);
-    @throw optErr;
-  }
-
-  void* ptr = tanker_future_get_voidptr(expected);
-  tanker_future_destroy(expected);
-
-  return ptr;
-}
 
 static NSString* createIdentity(NSString* userID, NSString* appID, NSString* appSecret)
 {
@@ -95,9 +71,9 @@ static NSString* createUUID()
   return [[NSUUID UUID] UUIDString];
 }
 
-static NSString* createStorageFullpath()
+static NSString* createStorageFullpath(NSSearchPathDirectory dir)
 {
-  NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  NSArray* paths = NSSearchPathForDirectoriesInDomains(dir, NSUserDomainMask, YES);
   NSString* path = [[paths objectAtIndex:0] stringByAppendingPathComponent:createUUID()];
   NSError* err;
   BOOL success = [[NSFileManager defaultManager] createDirectoryAtPath:path
@@ -113,7 +89,8 @@ static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   TKRTankerOptions* opts = [TKRTankerOptions options];
   opts.url = url;
   opts.appID = appID;
-  opts.writablePath = createStorageFullpath();
+  opts.writablePath = createStorageFullpath(NSLibraryDirectory);
+  opts.cachePath = createStorageFullpath(NSCachesDirectory);
   opts.sdkType = @"sdk-ios-tests";
   return opts;
 }
@@ -186,6 +163,11 @@ static id hangWithResolver(void (^handler)(PMKResolver))
   return [PMKPromise hang:[PMKPromise promiseWithResolver:^(PMKResolver resolve) {
                        handler(resolve);
                      }]];
+}
+
+static NSData* _Nonnull stringToData(NSString* _Nonnull str)
+{
+  return [NSData dataWithBytes:str.UTF8String length:str.length];
 }
 
 SpecBegin(TankerSpecs)
@@ -1787,6 +1769,147 @@ SpecBegin(TankerSpecs)
           expect(revoked).to.equal(false);
 
           stop(bobTanker);
+        });
+      });
+
+      describe(@"Storage", ^{
+        __block TKRDatastore* db;
+
+        beforeEach(^{
+          NSError* err = nil;
+          NSString* storagePath =
+              [createStorageFullpath(NSLibraryDirectory) stringByAppendingPathComponent:@"storage.db"];
+          NSString* cachePath = [createStorageFullpath(NSCachesDirectory) stringByAppendingPathComponent:@"cache.db"];
+
+          db = [TKRDatastore datastoreWithPersistentPath:storagePath cachePath:cachePath error:&err];
+          expect(err).to.beNil();
+        });
+
+        afterEach(^{
+          [db close];
+        });
+
+        it(@"returns no error when caching empty values", ^{
+          NSError* err = [db cacheValues:@{} onConflict:TKRDatastoreOnConflictFail];
+          expect(err).to.beNil();
+        });
+
+        it(@"fails to cache duplicate values when onConflictFail is given", ^{
+          NSDictionary* keyValues = @{stringToData(@"key") : stringToData(@"value")};
+          NSDictionary* newKeyValues = @{stringToData(@"key") : stringToData(@"newValue")};
+
+          NSError* err = [db cacheValues:keyValues onConflict:TKRDatastoreOnConflictFail];
+          expect(err).to.beNil();
+
+          err = [db cacheValues:newKeyValues onConflict:TKRDatastoreOnConflictFail];
+          expect(err).toNot.beNil();
+          expect(err.domain).to.equal(TKRDatastoreErrorDomain);
+          expect(err.code).to.equal(TKRDatastoreErrorConstraintFailed);
+        });
+
+        it(@"does nothing when trying to cache duplicate values when onConflictIgnore is given", ^{
+          NSDictionary* keyValues = @{stringToData(@"key") : stringToData(@"value")};
+          NSDictionary* newKeyValues = @{stringToData(@"key") : stringToData(@"newValue")};
+
+          NSError* err = [db cacheValues:keyValues onConflict:TKRDatastoreOnConflictFail];
+          expect(err).to.beNil();
+
+          err = [db cacheValues:newKeyValues onConflict:TKRDatastoreOnConflictIgnore];
+          expect(err).to.beNil();
+
+          NSArray<NSData*>* values = [db findCacheValuesWithKeys:@[ stringToData(@"key") ] error:&err];
+          expect(err).to.beNil();
+          expect(values.count).to.equal(1);
+          expect([values[0] isEqualToData:stringToData(@"value")]).to.beTruthy();
+        });
+
+        it(@"overwrites the record when trying to cache duplicate values when onConflictReplace is given", ^{
+          NSDictionary* keyValues = @{stringToData(@"key") : stringToData(@"value")};
+          NSDictionary* newKeyValues = @{stringToData(@"key") : stringToData(@"newValue")};
+
+          NSError* err = [db cacheValues:keyValues onConflict:TKRDatastoreOnConflictFail];
+          expect(err).to.beNil();
+
+          err = [db cacheValues:newKeyValues onConflict:TKRDatastoreOnConflictReplace];
+          expect(err).to.beNil();
+
+          NSArray<NSData*>* values = [db findCacheValuesWithKeys:@[ stringToData(@"key") ] error:&err];
+          expect(err).to.beNil();
+          expect(values.count).to.equal(1);
+          expect([values[0] isEqualToData:stringToData(@"newValue")]).to.beTruthy();
+        });
+
+        it(@"returns values in the same order as keys, with null values for not found keys", ^{
+          NSData* key1 = stringToData(@"key");
+          NSData* key2 = stringToData(@"key2");
+          NSData* value = stringToData(@"value");
+          NSData* value2 = stringToData(@"value2");
+
+          NSDictionary* keyValues = @{key1 : value, key2 : value2};
+
+          NSError* err = [db cacheValues:keyValues onConflict:TKRDatastoreOnConflictFail];
+          expect(err).to.beNil();
+
+          NSArray<id>* values = [db findCacheValuesWithKeys:@[ key1, key2, stringToData(@"missingKey"), key2 ]
+                                                      error:&err];
+          expect(err).to.beNil();
+
+          expect(values.count).to.equal(4);
+          expect([values[0] isEqualToData:value]).to.beTruthy();
+          expect([values[1] isEqualToData:value2]).to.beTruthy();
+          expect(values[2]).to.equal([NSNull null]);
+          expect([values[3] isEqualToData:value2]).to.beTruthy();
+        });
+
+        it(@"can retrieve and overwrite the serialized device", ^{
+          NSData* serialized1 = stringToData(@"device1");
+          NSData* serialized2 = stringToData(@"device2");
+
+          NSError* err;
+          NSData* serializedDevice = [db serializedDeviceWithError:&err];
+          expect(err).to.beNil();
+          expect(serializedDevice).to.beNil();
+
+          err = [db setSerializedDevice:serialized1];
+          expect(err).to.beNil();
+
+          serializedDevice = [db serializedDeviceWithError:&err];
+          expect(err).to.beNil();
+          expect(serializedDevice).toNot.beNil();
+
+          expect([serializedDevice isEqualToData:serialized1]).to.beTruthy();
+
+          err = [db setSerializedDevice:serialized2];
+          expect(err).to.beNil();
+
+          serializedDevice = [db serializedDeviceWithError:&err];
+          expect(err).to.beNil();
+          expect(serializedDevice).toNot.beNil();
+
+          expect([serializedDevice isEqualToData:serialized2]).to.beTruthy();
+        });
+
+        it(@"wipes everything when calling nuke", ^{
+          NSError* err;
+          NSDictionary* keyValues = @{stringToData(@"key") : stringToData(@"value")};
+
+          err = [db setSerializedDevice:stringToData(@"device")];
+          expect(err).to.beNil();
+
+          err = [db cacheValues:keyValues onConflict:TKRDatastoreOnConflictFail];
+          expect(err).to.beNil();
+
+          err = [db nuke];
+          expect(err).to.beNil();
+
+          NSData* serializedDevice = [db serializedDeviceWithError:&err];
+          expect(err).to.beNil();
+          expect(serializedDevice).to.beNil();
+
+          NSArray<NSData*>* values = [db findCacheValuesWithKeys:@[ stringToData(@"key") ] error:&err];
+          expect(err).to.beNil();
+          expect(values.count).to.equal(1);
+          expect(values[0]).to.equal([NSNull null]);
         });
       });
     });

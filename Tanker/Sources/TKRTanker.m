@@ -11,10 +11,10 @@
 #import <Tanker/TKRNetwork+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
-#import <Tanker/Utils/TKRUtils.h>
 #import <Tanker/TKRVerification+Private.h>
 #import <Tanker/TKRVerificationKey+Private.h>
 #import <Tanker/TKRVerificationMethod+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 #include <assert.h>
 #include <string.h>
@@ -143,6 +143,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   cOptions->app_id = [options.appID cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->writable_path = [options.writablePath cStringUsingEncoding:NSUTF8StringEncoding];
+  cOptions->cache_path = [options.cachePath cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->url = [options.url cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->sdk_type = [options.sdkType cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->sdk_version = [TANKER_IOS_VERSION cStringUsingEncoding:NSUTF8StringEncoding];
@@ -173,8 +174,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_options_t cOptions = TANKER_OPTIONS_INIT;
   convertOptions(options, &cOptions);
-  cOptions.http_send_request = httpSendRequestCallback;
-  cOptions.http_cancel_request = httpCancelRequestCallback;
+  cOptions.http_options.send_request = httpSendRequestCallback;
+  cOptions.http_options.cancel_request = httpCancelRequestCallback;
 
   tanker_future_t* create_future = tanker_create(&cOptions);
   tanker_future_wait(create_future);
