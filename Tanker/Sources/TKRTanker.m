@@ -2,6 +2,7 @@
 
 #import <POSInputStreamLibrary/POSBlobInputStream.h>
 
+#import <Tanker/Storage/TKRDatastoreBindings.h>
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKRAttachResult+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
@@ -176,6 +177,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   convertOptions(options, &cOptions);
   cOptions.http_options.send_request = httpSendRequestCallback;
   cOptions.http_options.cancel_request = httpCancelRequestCallback;
+  cOptions.datastore_options.open = TKR_datastore_open;
+  cOptions.datastore_options.close = TKR_datastore_close;
+  cOptions.datastore_options.nuke = TKR_datastore_nuke;
+  cOptions.datastore_options.put_serialized_device = TKR_datastore_put_serialized_device;
+  cOptions.datastore_options.find_serialized_device = TKR_datastore_find_serialized_device;
+  cOptions.datastore_options.put_cache_values = TKR_datastore_put_cache_values;
+  cOptions.datastore_options.find_cache_values = TKR_datastore_find_cache_values;
 
   tanker_future_t* create_future = tanker_create(&cOptions);
   tanker_future_wait(create_future);
