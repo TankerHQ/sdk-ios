@@ -1,6 +1,6 @@
 #import <Tanker/TKRTanker+Private.h>
-#import <Tanker/Utils/TKRUtils.h>
 #import <Tanker/TKRVerificationKey+Private.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 @implementation TKRVerificationKey
 

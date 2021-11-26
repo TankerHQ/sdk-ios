@@ -328,10 +328,10 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
   if (self = [super init])
   {
     sqlite3* tmp;
-    if ((*err = openOrCreateDb(persistentPath, &tmp)))
+    if ((*err = openOrCreateDb([persistentPath stringByAppendingString:@"-device.db"], &tmp)))
       goto fail;
     self.persistent_handle = tmp;
-    if ((*err = openOrCreateDb(cachePath, &tmp)))
+    if ((*err = openOrCreateDb([cachePath stringByAppendingString:@"-cache.db"], &tmp)))
       goto fail;
     self.cache_handle = tmp;
     if ((*err = [self migrate]))

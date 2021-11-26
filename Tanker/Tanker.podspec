@@ -46,7 +46,6 @@ It's available for browsers, desktop, iOS and Android.
     test_spec.dependency 'PromiseKit/Hang', '~> 1.7'
     test_spec.dependency 'PromiseKit/When', '~> 1.7'
     # tests use admin parts
-    test_spec.vendored_frameworks = 'Frameworks/TankerDeps.xcframework'
     test_spec.scheme = {
       :environment_variables => Hash[
         [
