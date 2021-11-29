@@ -24,7 +24,7 @@
 #import <Specta/Specta.h>
 
 #include "ctanker.h"
-#include "ctanker/_datastoretests/test.h"
+#include "ctanker/private/datastore-tests/test.h"
 #include "ctanker/admin.h"
 #include "ctanker/identity.h"
 
