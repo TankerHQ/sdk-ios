@@ -1,6 +1,6 @@
 include:
   - project: TankerHQ/gitlab-ci-files
-    ref: 2021-10-04-177
+    ref: 2021-11-10-229
     file: /common.yml
 
 
@@ -155,6 +155,54 @@ bridge/native-from-sources/arm:
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
     project: TankerHQ/sdk-react-native
+    strategy: depend
+
+bridge/compat-from-sources/arm:
+  stage: bridge-check
+  extends:
+    - .variables/bridge-common
+    - .rules/native-from-sources
+  needs:
+    - check/native-from-sources/arm
+  variables:
+    UPSTREAM_JOB_NAME: check/native-from-sources/arm
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
+
+bridge/compat-downstream/arm:
+  stage: bridge-check
+  extends:
+    - .variables/bridge-common
+  rules:
+    - if: !reference [.if-upstream-ci-pipeline, if]
+  needs:
+    - check/downstream/arm
+  variables:
+    UPSTREAM_JOB_NAME: check/downstream/arm
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
+
+bridge/compat-deployed/arm:
+  stage: bridge-check
+  extends:
+    - .variables/bridge-common
+  rules:
+    # only run during standalone SDK releases
+    - if: !reference [.if-invalid-ios-release-version, if]
+      when: never
+    - !reference [.rules/web/auto, rules]
+  needs:
+    - check/deployed-native/arm
+  variables:
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: $SDK_NATIVE_LATEST_CONAN_REFERENCE
+    UPSTREAM_JOB_NAME: check/deployed-native/arm
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/compatibility-tests
     strategy: depend
 
 .rules/bridge/deployed-native:
