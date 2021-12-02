@@ -157,6 +157,24 @@ bridge/native-from-sources/arm:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
+bridge/compat-from-sources/arm:
+  stage: bridge-check
+  extends:
+    - .variables/bridge-common
+  rules:
+    - !reference [.rules/native-from-sources, rules]
+    - !reference [.rules/mr/manual, rules]
+  needs:
+    - check/native-from-sources/arm
+  variables:
+    UPSTREAM_JOB_NAME: check/native-from-sources/arm
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
+    # FIXME
+    branch: theo/storage
+
 .rules/bridge/deployed-native:
   rules: !reference [.rules/check/deployed-native, rules]
 
