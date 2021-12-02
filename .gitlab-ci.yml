@@ -129,7 +129,7 @@ check/downstream/arm:
 # bridge-check stage #
 ######################
 
-bridge/native-from-sources/x86_64:
+.bridge/native-from-sources/x86_64:
   stage: bridge-check
   extends:
     - .rules/native-from-sources
@@ -143,7 +143,7 @@ bridge/native-from-sources/x86_64:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
-bridge/native-from-sources/arm:
+.bridge/native-from-sources/arm:
   stage: bridge-check
   extends:
     - .rules/native-from-sources
@@ -181,11 +181,9 @@ bridge/compat-downstream/arm:
     - .variables/bridge-common
   rules:
     - if: !reference [.if-upstream-ci-pipeline, if]
-      when: manual
   needs:
     - check/downstream/arm
   variables:
-    UPSTREAM_BRIDGE_STAGE: $UPSTREAM_BRIDGE_STAGE
     UPSTREAM_JOB_NAME: check/downstream/arm
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
@@ -218,7 +216,7 @@ bridge/compat-deployed/arm:
 .rules/bridge/deployed-native:
   rules: !reference [.rules/check/deployed-native, rules]
 
-bridge/deployed-native/x86_64:
+.bridge/deployed-native/x86_64:
   stage: bridge-check
   extends:
     - .rules/bridge/deployed-native
@@ -232,7 +230,7 @@ bridge/deployed-native/x86_64:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
-bridge/deployed-native/arm:
+.bridge/deployed-native/arm:
   stage: bridge-check
   extends:
     - .rules/bridge/deployed-native
@@ -246,7 +244,7 @@ bridge/deployed-native/arm:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
-bridge/downstream/x86_64:
+.bridge/downstream/x86_64:
   stage: bridge-check
   extends:
     - .rules/check/downstream
@@ -260,7 +258,7 @@ bridge/downstream/x86_64:
     project: TankerHQ/sdk-react-native
     strategy: depend
 
-bridge/downstream/arm:
+.bridge/downstream/arm:
   stage: bridge-check
   extends:
     - .rules/check/downstream
