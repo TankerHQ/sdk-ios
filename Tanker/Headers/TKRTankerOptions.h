@@ -26,7 +26,7 @@
 
  @discussion The path must point to an existing folder.
  */
-@property NSString* writablePath;
+@property NSString* persistentPath;
 
 /*!
  @brief Path to which Tanker will write its internal temporary files.

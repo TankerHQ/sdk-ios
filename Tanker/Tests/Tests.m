@@ -91,7 +91,7 @@ static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   TKRTankerOptions* opts = [TKRTankerOptions options];
   opts.url = url;
   opts.appID = appID;
-  opts.writablePath = createStorageFullpath(NSLibraryDirectory);
+  opts.persistentPath = createStorageFullpath(NSLibraryDirectory);
   opts.cachePath = createStorageFullpath(NSCachesDirectory);
   opts.sdkType = @"sdk-ios-tests";
   return opts;
