@@ -143,7 +143,7 @@ static void onDeviceRevoked(void* unused, void* extra_arg)
 static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cOptions)
 {
   cOptions->app_id = [options.appID cStringUsingEncoding:NSUTF8StringEncoding];
-  cOptions->writable_path = [options.writablePath cStringUsingEncoding:NSUTF8StringEncoding];
+  cOptions->persistent_path = [options.persistentPath cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->cache_path = [options.cachePath cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->url = [options.url cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->sdk_type = [options.sdkType cStringUsingEncoding:NSUTF8StringEncoding];
