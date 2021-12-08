@@ -142,6 +142,8 @@ bridge/native-from-sources/x86_64:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/native-from-sources/arm:
   stage: bridge-check
@@ -156,6 +158,8 @@ bridge/native-from-sources/arm:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/compat-from-sources/arm:
   stage: bridge-check
@@ -171,7 +175,7 @@ bridge/compat-from-sources/arm:
     project: TankerHQ/compatibility-tests
     strategy: depend
     # FIXME
-    branch: theo/storage
+    branch: feat/storage
 
 bridge/compat-downstream/arm:
   stage: bridge-check
@@ -188,7 +192,7 @@ bridge/compat-downstream/arm:
     project: TankerHQ/compatibility-tests
     strategy: depend
     # FIXME
-    branch: theo/storage
+    branch: feat/storage
 
 bridge/compat-deployed/arm:
   stage: bridge-check
@@ -209,7 +213,7 @@ bridge/compat-deployed/arm:
     project: TankerHQ/compatibility-tests
     strategy: depend
     # FIXME
-    branch: theo/storage
+    branch: feat/storage
 
 .rules/bridge/deployed-native:
   rules: !reference [.rules/check/deployed-native, rules]
@@ -227,6 +231,8 @@ bridge/deployed-native/x86_64:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/deployed-native/arm:
   stage: bridge-check
@@ -241,6 +247,8 @@ bridge/deployed-native/arm:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/downstream/x86_64:
   stage: bridge-check
@@ -255,6 +263,8 @@ bridge/downstream/x86_64:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/downstream/arm:
   stage: bridge-check
@@ -269,6 +279,8 @@ bridge/downstream/arm:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 ################
 # deploy stage #
