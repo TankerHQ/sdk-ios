@@ -33,6 +33,11 @@ It's available for browsers, desktop, iOS and Android.
     utils_spec.vendored_framework = 'Frameworks/TankerDeps.xcframework'
   end
 
+  s.subspec 'Storage' do |storage_spec|
+    storage_spec.source_files = 'Sources/Storage/*', 'Headers/Storage/TKR*'
+    storage_spec.dependency 'Tanker/Utils'
+  end
+
   s.test_spec 'Tests' do |test_spec|
     test_spec.source_files = 'Tests/*.{h,m}'
     test_spec.dependency 'Specta'
@@ -41,7 +46,6 @@ It's available for browsers, desktop, iOS and Android.
     test_spec.dependency 'PromiseKit/Hang', '~> 1.7'
     test_spec.dependency 'PromiseKit/When', '~> 1.7'
     # tests use admin parts
-    test_spec.vendored_frameworks = 'Frameworks/TankerDeps.xcframework'
     test_spec.scheme = {
       :environment_variables => Hash[
         [

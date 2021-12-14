@@ -49,7 +49,7 @@
   NSMutableURLRequest* req = [NSMutableURLRequest requestWithURL:url];
   req.HTTPMethod = [NSString stringWithUTF8String:crequest->method];
   // Cast to void* to discard the constness
-  req.HTTPBody = [NSData dataWithBytesNoCopy:(void*)crequest->body length:crequest->body_size freeWhenDone:false];
+  req.HTTPBody = [NSData dataWithBytesNoCopy:(void*)crequest->body length:crequest->body_size freeWhenDone:NO];
   [req addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
   if (crequest->authorization)
     [req addValue:[NSString stringWithUTF8String:crequest->authorization] forHTTPHeaderField:@"Authorization"];
