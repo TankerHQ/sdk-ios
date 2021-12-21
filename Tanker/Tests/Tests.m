@@ -173,6 +173,8 @@ static NSData* _Nonnull stringToData(NSString* _Nonnull str)
 
 static NSUInteger SIMPLE_ENCRYPTION_OVERHEAD = 17;
 static NSUInteger SIMPLE_PADDED_ENCRYPTION_OVERHEAD = SIMPLE_ENCRYPTION_OVERHEAD + 1;
+static NSUInteger ENCRYPTION_SESSION_OVERHEAD = 57;
+static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = ENCRYPTION_SESSION_OVERHEAD + 1;
 
 SpecBegin(TankerSpecs)
 
@@ -1126,6 +1128,90 @@ SpecBegin(TankerSpecs)
           expect(err).to.beNil();
           NSString* sessResourceID = [encSess resourceID];
           expect(sessResourceID).to.equal(cipherResourceID);
+        });
+
+        it(@"should encrypt with auto padding by default", ^{
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter];
+          });
+          NSString* clearText = @"my clear data is clear!";
+          int lengthWithPadme = 24;
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptString:clearText completionHandler:adapter];
+          });
+
+          expect(encryptedData.length - ENCRYPTION_SESSION_PADDED_OVERHEAD).to.equal(lengthWithPadme);
+
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+          expect(decryptedString).to.equal(clearText);
+        });
+
+        it(@"should encrypt with auto padding", ^{
+          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          opts.paddingStep = [TKRPadding automatic];
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
+          });
+          NSString* clearText = @"my clear data is clear!";
+          int lengthWithPadme = 24;
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptString:clearText completionHandler:adapter];
+          });
+
+          expect(encryptedData.length - ENCRYPTION_SESSION_PADDED_OVERHEAD).to.equal(lengthWithPadme);
+
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+
+          expect(decryptedString).to.equal(clearText);
+        });
+
+        it(@"should encrypt with no padding", ^{
+          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          opts.paddingStep = [TKRPadding off];
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
+          });
+          NSString* clearText = @"Rosebud";
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptString:clearText completionHandler:adapter];
+          });
+
+          expect(encryptedData.length - ENCRYPTION_SESSION_OVERHEAD).to.equal(clearText.length);
+
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+
+          expect(decryptedString).to.equal(clearText);
+        });
+
+        it(@"should encrypt with a padding step", ^{
+          NSNumber* paddingStep = @13;
+          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          opts.paddingStep = [TKRPadding step:paddingStep];
+          TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
+          });
+          NSString* clearText = @"Rosebud";
+
+          NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
+            [encSess encryptString:clearText completionHandler:adapter];
+          });
+
+          expect((encryptedData.length - ENCRYPTION_SESSION_PADDED_OVERHEAD) % paddingStep.unsignedIntValue).to.equal(0);
+
+          NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
+            [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];
+          });
+
+          expect(decryptedString).to.equal(clearText);
         });
       });
 
