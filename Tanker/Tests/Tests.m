@@ -1923,7 +1923,7 @@ SpecBegin(TankerSpecs)
                                              .find_cache_values = TKR_datastore_find_cache_values};
 
           NSString* path = createStorageFullpath(NSCachesDirectory);
-          int ret = tanker_run_datastore_test(&opts, path.UTF8String, nil);
+          int ret = tanker_run_datastore_test(&opts, path.UTF8String);
           expect(ret).to.equal(0);
         });
       });
