@@ -7,11 +7,6 @@
 @interface TKRTankerOptions : NSObject
 
 /*!
- @deprecated use appID
- */
-@property NSString* trustchainID DEPRECATED_MSG_ATTRIBUTE("use appID instead");
-
-/*!
  @brief ID of your app
  */
 @property NSString* appID;
