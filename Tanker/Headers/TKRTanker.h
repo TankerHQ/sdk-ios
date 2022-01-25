@@ -164,7 +164,8 @@
 
  @pre Status is TKRStatusReady.
  */
-- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler;
+- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
+  DEPRECATED_MSG_ATTRIBUTE("This method is deprecated and will be removed in a future version");
 
 /*!
  @brief Stop Tanker.
