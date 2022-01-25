@@ -17,7 +17,6 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
 @interface TKRTanker (Private)
 
 @property(nonnull) void* cTanker;
-@property(nonnull) NSMutableDictionary* callbacks;
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData
                 options:(nonnull TKREncryptionOptions*)options
@@ -25,13 +24,5 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
 
 - (void)decryptDataImpl:(nonnull NSData*)encryptedData
       completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable err))handler;
-
-- (void)setEvent:(NSUInteger)event
-     callbackPtr:(nonnull NSNumber*)callbackPtr
-         handler:(nonnull TKRAbstractEventHandler)handler
-           error:(NSError* _Nullable* _Nonnull)error;
-
-- (void)disconnectEvent:(NSUInteger)event;
-- (void)disconnectEvents;
 
 @end

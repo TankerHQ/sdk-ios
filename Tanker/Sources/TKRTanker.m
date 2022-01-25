@@ -129,17 +129,6 @@ static void defaultLogHandler(tanker_log_record_t const* record)
   globalLogHandler(entry);
 }
 
-static void onDeviceRevoked(void* unused, void* extra_arg)
-{
-  NSLog(@"onDeviceRevoked called");
-  assert(!unused);
-  assert(extra_arg);
-
-  TKRDeviceRevokedHandler handler = (__bridge typeof(TKRDeviceRevokedHandler))extra_arg;
-
-  handler();
-}
-
 static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cOptions)
 {
   cOptions->app_id = [options.appID cStringUsingEncoding:NSUTF8StringEncoding];
@@ -171,7 +160,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   __block TKRTanker* tanker = [[[self class] alloc] init];
   tanker_set_log_handler(&defaultLogHandler);
   tanker.options = options;
-  tanker.callbacks = [NSMutableDictionary dictionary];
 
   tanker_options_t cOptions = TANKER_OPTIONS_INIT;
   convertOptions(options, &cOptions);
@@ -715,21 +703,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return [self createEncryptionSessionWithCompletionHandler:handler encryptionOptions:opts];
 }
 
-- (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
-{
-  NSNumber* callbackPtr = [NSNumber numberWithUnsignedLong:(uintptr_t)&onDeviceRevoked];
-
-  NSError* err = nil;
-  [self setEvent:TANKER_EVENT_DEVICE_REVOKED
-      callbackPtr:callbackPtr
-          handler:^(void* unused) {
-            dispatchInBackground(handler);
-          }
-            error:&err];
-  // Err cannot fail as the event is a valid tanker event
-  assert(!err);
-}
-
 - (void)generateVerificationKeyWithCompletionHandler:(TKRVerificationKeyHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
@@ -751,19 +724,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       verification_key_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(verification_key_fut);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)revokeDevice:(nonnull NSString*)deviceId completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
-  };
-  char const* device_id = [deviceId cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_future_t* revoke_future = tanker_revoke_device((tanker_t*)self.cTanker, device_id);
-  tanker_future_t* resolve_future =
-      tanker_future_then(revoke_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(revoke_future);
   tanker_future_destroy(resolve_future);
 }
 
@@ -864,8 +824,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)dealloc
 {
-  [self disconnectEvents];
-
   tanker_future_t* destroy_future = tanker_destroy((tanker_t*)self.cTanker);
   tanker_future_wait(destroy_future);
   tanker_future_destroy(destroy_future);
