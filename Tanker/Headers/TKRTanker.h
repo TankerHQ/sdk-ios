@@ -325,15 +325,6 @@
 /*!
  @brief Create an encryption session shared with the given users and groups.
 
- @param sharingOptions recipient identities and group IDs to share with.
- */
-- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
-                                      sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
-    DEPRECATED_MSG_ATTRIBUTE("use createEncryptionSessionWithCompletionHandler:encryptionOptions instead");
-
-/*!
- @brief Create an encryption session shared with the given users and groups.
-
  @param encryptionOptions recipient identities and group IDs to share with.
  */
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler

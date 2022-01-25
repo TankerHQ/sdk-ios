@@ -949,10 +949,10 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should be able to share with an encryption session", ^{
-          TKRSharingOptions* opts = [TKRSharingOptions options];
+          TKREncryptionOptions* opts = [TKREncryptionOptions options];
           opts.shareWithUsers = @[ bobPublicIdentity ];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter sharingOptions:opts];
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
           });
           NSString* clearText = @"Rosebud";
 
@@ -990,10 +990,10 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should be able to encrypt streams with an encryption session", ^{
-          TKRSharingOptions* opts = [TKRSharingOptions options];
+          TKREncryptionOptions* opts = [TKREncryptionOptions options];
           opts.shareWithUsers = @[ bobPublicIdentity ];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
-            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter sharingOptions:opts];
+            [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
           });
 
           NSData* clearData = [NSMutableData dataWithLength:1024 * 1024 * 2 + 4];

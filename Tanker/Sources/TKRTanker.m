@@ -692,17 +692,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   TKR_freeCStringArray((char**)encryption_options.share_with_groups, encryption_options.nb_groups);
 }
 
-- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
-                                      sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
-{
-  TKREncryptionOptions* opts = [TKREncryptionOptions options];
-  opts.shareWithUsers = sharingOptions.shareWithUsers;
-  opts.shareWithGroups = sharingOptions.shareWithGroups;
-  opts.shareWithSelf = true;
-
-  return [self createEncryptionSessionWithCompletionHandler:handler encryptionOptions:opts];
-}
-
 - (void)generateVerificationKeyWithCompletionHandler:(TKRVerificationKeyHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
