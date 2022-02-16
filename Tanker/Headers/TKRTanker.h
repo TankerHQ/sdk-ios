@@ -4,7 +4,6 @@
 
 #import <Tanker/TKRCompletionHandlers.h>
 #import <Tanker/TKREncryptionOptions.h>
-#import <Tanker/TKREvents.h>
 #import <Tanker/TKRSharingOptions.h>
 #import <Tanker/TKRStatus.h>
 #import <Tanker/TKRTankerOptions.h>
@@ -45,18 +44,6 @@
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler;
 
 // MARK: Instance methods
-
-/*!
- @brief Register a handler called when the current device is revoked.
-
- @discussion The handler will be called as soon as the device is revoked.
-
- @param handler the block called without any argument. Runs on a background queue.
-
- @deprecated the DeviceRevoked event is deprecated, it will be removed in the future
- */
-- (void)connectDeviceRevokedHandler:(nonnull TKRDeviceRevokedHandler)handler
-    DEPRECATED_MSG_ATTRIBUTE("the DeviceRevoked event is deprecated, it will be removed in the future");
 
 /*!
  @brief Get the list of the registered verification methods.
@@ -177,7 +164,8 @@
 
  @pre Status is TKRStatusReady.
  */
-- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler;
+- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
+  DEPRECATED_MSG_ATTRIBUTE("This method is deprecated and will be removed in a future version");
 
 /*!
  @brief Stop Tanker.
@@ -331,35 +319,9 @@
        completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
- @brief Revoke a device.
-
- @discussion The handler being called with nil does not mean that the device has been revoked yet.
- The TKRDeviceRevokedHandler will be called once the device is revoked.
-
- @param deviceId device ID to revoke.
- @param handler the block called with an NSError, or nil.
-
- @pre @a deviceId must be the ID of one of the current user's devices.
-
- @deprecated revokeDevice is deprecated, it will be removed in the future
- */
-- (void)revokeDevice:(nonnull NSString*)deviceId
-    completionHandler:(nonnull TKRErrorHandler)handler
-    DEPRECATED_MSG_ATTRIBUTE("revokeDevice is deprecated, it will be removed in the future");
-
-/*!
 @brief Create an encryption session without sharing it with other users or group.
 */
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler;
-
-/*!
- @brief Create an encryption session shared with the given users and groups.
-
- @param sharingOptions recipient identities and group IDs to share with.
- */
-- (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
-                                      sharingOptions:(nonnull TKRSharingOptions*)sharingOptions
-    DEPRECATED_MSG_ATTRIBUTE("use createEncryptionSessionWithCompletionHandler:encryptionOptions instead");
 
 /*!
  @brief Create an encryption session shared with the given users and groups.

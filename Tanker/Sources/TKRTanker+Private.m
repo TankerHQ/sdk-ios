@@ -95,16 +95,6 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   return TKR_numberToPtr(objc_getAssociatedObject(self, @selector(cTanker)));
 }
 
-- (void)setCallbacks:(NSMutableArray*)callbacks
-{
-  objc_setAssociatedObject(self, @selector(callbacks), callbacks, OBJC_ASSOCIATION_RETAIN);
-}
-
-- (NSMutableArray*)callbacks
-{
-  return objc_getAssociatedObject(self, @selector(callbacks));
-}
-
 - (void)encryptDataImpl:(nonnull NSData*)clearData
                 options:(nonnull TKREncryptionOptions*)options
       completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
@@ -206,42 +196,6 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   // Force encryptedData to be retained until the tanker_future is done
   // to avoid reading a dangling pointer
   TKRAntiARCRetain(encryptedData);
-}
-
-- (void)setEvent:(NSUInteger)event
-     callbackPtr:(nonnull NSNumber*)callbackPtr
-         handler:(nonnull TKRAbstractEventHandler)handler
-           error:(NSError* _Nullable* _Nonnull)error
-{
-  void* handler_ptr = (__bridge_retained void*)handler;
-  tanker_expected_t* connect_expected = tanker_event_connect((tanker_t*)self.cTanker,
-                                                             (enum tanker_event)event,
-                                                             (tanker_event_callback_t)TKR_numberToPtr(callbackPtr),
-                                                             handler_ptr);
-
-  *error = TKR_getOptionalFutureError(connect_expected);
-  if (*error)
-  {
-    releaseCPointer(handler_ptr);
-    return;
-  }
-
-  self.callbacks[[NSNumber numberWithUnsignedInteger:event]] = TKR_ptrToNumber(handler_ptr);
-}
-
-- (void)disconnectEvent:(NSUInteger)event
-{
-  NSNumber* key = [NSNumber numberWithUnsignedInteger:event];
-  releaseCPointer(TKR_numberToPtr(self.callbacks[key]));
-  [self.callbacks removeObjectForKey:key];
-  tanker_event_disconnect((tanker_t*)self.cTanker, (enum tanker_event)event);
-}
-
-- (void)disconnectEvents
-{
-  for (NSNumber* key in self.callbacks)
-    releaseCPointer(TKR_numberToPtr(self.callbacks[key]));
-  [self.callbacks removeAllObjects];
 }
 
 @end
