@@ -360,8 +360,17 @@ fail:
 
 - (void)close
 {
-  sqlite3_close(self.persistent_handle);
-  sqlite3_close(self.cache_handle);
+  if (sqlite3_close(self.persistent_handle) != SQLITE_OK)
+  {
+    NSError* err = errorFromSQLite(self.persistent_handle);
+    NSLog(@"Could not close persistent storage: %@", err.localizedDescription);
+  }
+  if (sqlite3_close(self.cache_handle) != SQLITE_OK)
+  {
+    NSError* err = errorFromSQLite(self.cache_handle);
+    NSLog(@"Could not close cache storage: %@", err.localizedDescription);
+  }
+
   self.persistent_handle = nil;
   self.cache_handle = nil;
 }
@@ -399,29 +408,33 @@ fail:
 
 - (nullable NSData*)serializedDeviceWithError:(NSError* _Nullable* _Nonnull)err
 {
+  NSData* ret;
   NSString* query = [NSString stringWithFormat:@"SELECT deviceblob FROM %@ WHERE id = 1", deviceTableName];
   sqlite3_stmt* stmt;
+    
   int err_code = sqlite3_prepare_v2(self.persistent_handle, query.UTF8String, -1, &stmt, NULL);
   if (err_code != SQLITE_OK)
   {
     *err = errorFromSQLite(self.persistent_handle);
-    return nil;
+    goto finalize;
   }
 
   err_code = sqlite3_step(stmt);
   if (err_code == SQLITE_DONE)
-    return nil;
+    goto finalize;
   if (err_code != SQLITE_ROW)
   {
     NSString* errMsg = [NSString stringWithCString:sqlite3_errstr(err_code) encoding:NSUTF8StringEncoding];
     *err = TKR_createNSError(TKRDatastoreErrorDomain, errMsg, translateSQLiteError(err_code));
-    return nil;
+    goto finalize;
   }
-  NSData* ret = [NSData dataWithBytes:sqlite3_column_blob(stmt, 0) length:sqlite3_column_bytes(stmt, 0)];
+  ret = [NSData dataWithBytes:sqlite3_column_blob(stmt, 0) length:sqlite3_column_bytes(stmt, 0)];
 
+finalize:
   sqlite3_finalize(stmt);
-  if ((*err = errorFromSQLite(self.persistent_handle)))
-    return nil;
+  NSError* err2 = errorFromSQLite(self.persistent_handle);
+  if (err2)
+    *err = err2;
   return ret;
 }
 
