@@ -432,6 +432,42 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
+- (void)createOidcNonceWithCompletionHandler:(nonnull TKRNonceHandler)handler
+{
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+    {
+      handler(nil, err);
+      return;
+    }
+    char* nonce = (char*)TKR_numberToPtr(ptrValue);
+    NSString* ret = [NSString stringWithCString:nonce encoding:NSUTF8StringEncoding];
+    tanker_free_buffer(nonce);
+    handler(ret, nil);
+  }; 
+
+  tanker_future_t* nonce_future = tanker_create_oidc_nonce((tanker_t*)self.cTanker);
+  tanker_future_t* resolve_future =
+      tanker_future_then(nonce_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(nonce_future);
+  tanker_future_destroy(resolve_future);
+}
+
+- (void)_setOidcTestNonce:(nonnull NSString*)nonce completionHandler:(nonnull TKRErrorHandler)handler
+{
+  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
+    handler(err);
+  };
+
+  char const* c_nonce = [nonce cStringUsingEncoding:NSUTF8StringEncoding];
+
+  tanker_future_t* fut = tanker_set_oidc_test_nonce((tanker_t*)self.cTanker, c_nonce);
+  tanker_future_t* resolve_future =
+      tanker_future_then(fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(fut);
+  tanker_future_destroy(resolve_future);
+}
+
 - (void)encryptString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
   [self encryptString:clearText options:[TKREncryptionOptions options] completionHandler:handler];
