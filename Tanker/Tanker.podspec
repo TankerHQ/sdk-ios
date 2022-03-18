@@ -49,10 +49,11 @@ It's available for browsers, desktop, iOS and Android.
     test_spec.scheme = {
       :environment_variables => Hash[
         [
-          'TANKER_ADMIND_URL',
           'TANKER_APPD_URL',
+          'TANKER_MANAGEMENT_API_ACCESS_TOKEN',
+          'TANKER_MANAGEMENT_API_URL',
+          'TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME',
           'TANKER_TRUSTCHAIND_URL',
-          'TANKER_ID_TOKEN',
           'TANKER_OIDC_CLIENT_ID',
           'TANKER_OIDC_CLIENT_SECRET',
           'TANKER_OIDC_PROVIDER',

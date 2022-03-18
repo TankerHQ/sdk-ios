@@ -24,9 +24,9 @@
 #import <Specta/Specta.h>
 
 #include "ctanker.h"
-#include "ctanker/private/datastore-tests/test.h"
 #include "ctanker/admin.h"
 #include "ctanker/identity.h"
+#include "ctanker/private/datastore-tests/test.h"
 
 static NSString* createIdentity(NSString* userID, NSString* appID, NSString* appSecret)
 {
@@ -295,13 +295,16 @@ SpecBegin(TankerSpecs)
 
       beforeAll(^{
         NSDictionary* env = [[NSProcessInfo processInfo] environment];
-        url = env[@"TANKER_APPD_URL"];
+        NSString* appManagementToken = env[@"TANKER_MANAGEMENT_API_ACCESS_TOKEN"];
+        expect(appManagementToken).toNot.beNil();
+        NSString* appManagementUrl = env[@"TANKER_MANAGEMENT_API_URL"];
+        expect(appManagementUrl).toNot.beNil();
+        NSString* environmentName = env[@"TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME"];
+        expect(environmentName).toNot.beNil();
         trustchaindUrl = env[@"TANKER_TRUSTCHAIND_URL"];
-        NSString* adminUrl = env[@"TANKER_ADMIND_URL"];
+        expect(trustchaindUrl).toNot.beNil();
+        url = env[@"TANKER_APPD_URL"];
         expect(url).toNot.beNil();
-        expect(adminUrl).toNot.beNil();
-        NSString* idToken = env[@"TANKER_ID_TOKEN"];
-        expect(idToken).toNot.beNil();
 
         oidcTestConfig = @{
           @"clientId" : env[@"TANKER_OIDC_CLIENT_ID"],
@@ -317,9 +320,10 @@ SpecBegin(TankerSpecs)
 
         curl = [url cStringUsingEncoding:NSUTF8StringEncoding];
         ctrustchaindurl = [trustchaindUrl cStringUsingEncoding:NSUTF8StringEncoding];
-        char const* cadminUrl = [adminUrl cStringUsingEncoding:NSUTF8StringEncoding];
-        char const* id_token = [idToken cStringUsingEncoding:NSUTF8StringEncoding];
-        tanker_future_t* connect_fut = tanker_admin_connect(cadminUrl, id_token);
+        char const* cappManagementToken = [appManagementToken cStringUsingEncoding:NSUTF8StringEncoding];
+        char const* cappManagementUrl = [appManagementUrl cStringUsingEncoding:NSUTF8StringEncoding];
+        char const* cenvironmentName = [environmentName cStringUsingEncoding:NSUTF8StringEncoding];
+        tanker_future_t* connect_fut = tanker_admin_connect(cappManagementUrl, cappManagementToken, cenvironmentName);
         tanker_future_wait(connect_fut);
         NSError* connectError = TKR_getOptionalFutureError(connect_fut);
         expect(connectError).to.beNil();
