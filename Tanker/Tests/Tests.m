@@ -101,12 +101,10 @@ static void updateAdminApp(tanker_admin_t* admin,
                            NSString* appID,
                            NSString* oidcClientID,
                            NSString* oidcClientProvider,
-                           bool* enable2FA,
                            bool* enablePreverifiedVerification)
 {
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_app_update_options_t options = TANKER_APP_UPDATE_OPTIONS_INIT;
-  options.session_certificates = enable2FA;
   options.preverified_verification = enablePreverifiedVerification;
   if (oidcClientID)
     options.oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
@@ -1345,7 +1343,7 @@ SpecBegin(TankerSpecs)
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
           NSString* refreshToken = oidcTestConfig[@"users"][userName][@"refreshToken"];
 
-          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, nil, nil);
+          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, nil);
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           NSString* userIdentity = createIdentity(email, appID, appSecret);
 
@@ -1506,11 +1504,11 @@ SpecBegin(TankerSpecs)
         describe(@"Preverified verification methods", ^{
           beforeAll(^{
             bool enablePreverified = true;
-            updateAdminApp(admin, appID, nil, nil, nil, &enablePreverified);
+            updateAdminApp(admin, appID, nil, nil, &enablePreverified);
           });
           afterAll(^{
             bool enablePreverified = false;
-            updateAdminApp(admin, appID, nil, nil, nil, &enablePreverified);
+            updateAdminApp(admin, appID, nil, nil, &enablePreverified);
           });
 
           it(@"should fail to register with a preverified email", ^{
@@ -1631,71 +1629,6 @@ SpecBegin(TankerSpecs)
                 [TKRVerification verificationFromPhoneNumber:phoneNumber
                                             verificationCode:getSMSVerificationCode(phoneNumber)]);
           });
-        });
-      });
-
-      describe(@"session tokens (2FA)", ^{
-        __block int expectedTokenLength;
-        __block TKRTanker* tanker;
-        __block NSString* identity;
-        __block TKRVerification* verification;
-
-        beforeEach(^{
-          expectedTokenLength = 44; // Base64 length of a session token (hash size)
-          tanker = [TKRTanker tankerWithOptions:tankerOptions];
-          expect(tanker).toNot.beNil();
-          identity = createIdentity(createUUID(), appID, appSecret);
-          verification = [TKRVerification verificationFromPassphrase:@"passphrase"];
-          bool enable2FA = true;
-          updateAdminApp(admin, appID, nil, nil, &enable2FA, nil);
-        });
-
-        afterEach(^{
-          bool enable2FA = false;
-          updateAdminApp(admin, appID, nil, nil, &enable2FA, nil);
-          stop(tanker);
-        });
-
-        it(@"can get a session token using registerIdentityWithVerification", ^{
-          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker startWithIdentity:identity
-                    completionHandler:^(TKRStatus status, NSError* err) {
-                      if (err)
-                        adapter(nil, err);
-                      else
-                      {
-                        expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
-                        expect(tanker.status).to.equal(TKRStatusIdentityRegistrationNeeded);
-                        TKRVerificationOptions* opts = [TKRVerificationOptions options];
-                        opts.withSessionToken = true;
-                        [tanker registerIdentityWithVerification:verification options:opts completionHandler:adapter];
-                      }
-                    }];
-          });
-          expect(token).toNot.beNil();
-          expect(token.length).to.equal(expectedTokenLength);
-        });
-
-        it(@"can get a session token using verifyIdentityWithVerification", ^{
-          startWithIdentityAndRegister(tanker, identity, verification);
-          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
-            opts.withSessionToken = true;
-            [tanker verifyIdentityWithVerification:verification options:opts completionHandler:adapter];
-          });
-          expect(token).toNot.beNil();
-          expect(token.length).to.equal(expectedTokenLength);
-        });
-
-        it(@"can get a session token using setVerificationMethod", ^{
-          startWithIdentityAndRegister(tanker, identity, verification);
-          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
-            opts.withSessionToken = true;
-            [tanker setVerificationMethod:verification options:opts completionHandler:adapter];
-          });
-          expect(token).toNot.beNil();
-          expect(token.length).to.equal(expectedTokenLength);
         });
       });
 
