@@ -179,6 +179,19 @@
 - (void)stopWithCompletionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
+ @brief Create a nonce to use in Oidc authorization code flow
+
+ @param handler the block called with the nonce.
+ */
+- (void)createOidcNonceWithCompletionHandler:(nonnull TKRNonceHandler)handler;
+
+/*!
+ @brief Set the nonce to use during Oidc verification
+ */
+- (void)_setOidcTestNonce:(nonnull NSString*)nonce
+       completionHandler:(nonnull TKRErrorHandler)handler;
+
+/*!
  @brief Create a verification key that can be used to accept devices.
 
  @discussion A new verification key is created each time.

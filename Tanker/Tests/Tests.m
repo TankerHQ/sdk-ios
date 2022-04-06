@@ -1353,10 +1353,22 @@ SpecBegin(TankerSpecs)
           NSString* oidcToken = jsonResponse[@"id_token"];
           TKRVerification* oidcVerif = [TKRVerification verificationFromOIDCIDToken:oidcToken];
 
+          NSString* nonce = hangWithAdapter(^(PMKAdapter adapter) {
+            [userPhone createOidcNonceWithCompletionHandler:adapter];
+          });
+          hangWithResolver(^(PMKResolver resolver) {
+            [userPhone _setOidcTestNonce:nonce completionHandler:resolver];
+          });
           startWithIdentityAndRegister(userPhone, userIdentity, oidcVerif);
           stop(userPhone);
 
           TKRTanker* userLaptop = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          nonce = hangWithAdapter(^(PMKAdapter adapter) {
+            [userLaptop createOidcNonceWithCompletionHandler:adapter];
+          });
+          hangWithResolver(^(PMKResolver resolver) {
+            [userLaptop _setOidcTestNonce:nonce completionHandler:resolver];
+          });
           startWithIdentityAndVerify(userLaptop, userIdentity, oidcVerif);
 
           NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {

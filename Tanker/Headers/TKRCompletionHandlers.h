@@ -62,6 +62,16 @@ typedef void (^TKRErrorHandler)(NSError* _Nullable err);
 typedef void (^TKRDeviceIDHandler)(NSString* _Nullable deviceID, NSError* _Nullable err);
 
 /*!
+ @typedef TKRNonceHandler
+ @brief Block which will be called with Nonce.
+
+ @param nonce the nonce, or nil if an error occurred.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRNonceHandler)(NSString* _Nullable nonce, NSError* _Nullable err);
+
+
+/*!
  @typedef TKRGroupIDHandler
  @brief Block which will be called with a group ID.
 
