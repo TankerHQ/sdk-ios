@@ -1632,6 +1632,93 @@ SpecBegin(TankerSpecs)
         });
       });
 
+      describe(@"session tokens (2FA)", ^{
+        __block int expectedTokenLength = 44; // Base64 length of a session token (hash size)
+        __block TKRTanker* tanker;
+        __block NSString* identity;
+        __block TKRVerification* verification;
+
+        beforeEach(^{
+          tanker = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(tanker).toNot.beNil();
+          identity = createIdentity(createUUID(), appID, appSecret);
+          verification = [TKRVerification verificationFromPassphrase:@"passphrase"];
+        });
+
+        afterEach(^{
+          stop(tanker);
+        });
+
+        it(@"can get a session token using registerIdentityWithVerification", ^{
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
+            [tanker startWithIdentity:identity
+                    completionHandler:^(TKRStatus status, NSError* err) {
+                      if (err)
+                        adapter(nil, err);
+                      else
+                      {
+                        expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
+                        TKRVerificationOptions* opts = [TKRVerificationOptions options];
+                        opts.withSessionToken = true;
+                        [tanker registerIdentityWithVerification:verification options:opts completionHandler:adapter];
+                      }
+                    }];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(expectedTokenLength);
+        });
+
+        it(@"can get a session token using verifyIdentityWithVerification", ^{
+          startWithIdentityAndRegister(tanker, identity, verification);
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            opts.withSessionToken = true;
+            [tanker verifyIdentityWithVerification:verification options:opts completionHandler:adapter];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(expectedTokenLength);
+        });
+
+        it(@"can get a session token using setVerificationMethod with passphrase", ^{
+          startWithIdentityAndRegister(tanker, identity, verification);
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            opts.withSessionToken = true;
+            [tanker setVerificationMethod:verification options:opts completionHandler:adapter];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(expectedTokenLength);
+        });
+
+        it(@"can get a session token using setVerificationMethod with email", ^{
+          NSString* email = @"bob.alice@tanker.io";
+          startWithIdentityAndRegister(tanker, identity, verification);
+          TKRVerification* verif = [TKRVerification verificationFromEmail:email
+                                                         verificationCode:getEmailVerificationCode(email)];
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            opts.withSessionToken = true;
+            [tanker setVerificationMethod:verif options:opts completionHandler:adapter];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(expectedTokenLength);
+        });
+
+        it(@"can get a session token using setVerificationMethod with phone number", ^{
+          NSString* phoneNumber = @"+33639982233";
+          startWithIdentityAndRegister(tanker, identity, verification);
+          TKRVerification* verif = [TKRVerification verificationFromPhoneNumber:phoneNumber
+                                                         verificationCode:getSMSVerificationCode(phoneNumber)];
+          NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
+            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            opts.withSessionToken = true;
+            [tanker setVerificationMethod:verif options:opts completionHandler:adapter];
+          });
+          expect(token).toNot.beNil();
+          expect(token.length).to.equal(expectedTokenLength);
+        });
+      });
+
       describe(@"Storage", ^{
         __block TKRDatastore* db;
 
