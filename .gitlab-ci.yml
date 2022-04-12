@@ -284,6 +284,7 @@ brige/bump-ios-compat-tests:
   stage: deploy
   extends:
     - .rules/deploy/ios
+    - .variables/bridge-common
   needs: [deploy]
   variables:
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
