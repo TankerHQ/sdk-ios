@@ -279,3 +279,16 @@ deploy:
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
     tag_name: v$SDK_IOS_RELEASE_VERSION
+
+brige/bump-ios-compat-tests:
+  stage: deploy
+  extends:
+    - .rules/deploy/ios
+  needs: [deploy]
+  variables:
+    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+    UPSTREAM_JOB_NAME: deploy
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
