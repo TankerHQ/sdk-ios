@@ -283,8 +283,14 @@ deploy:
 brige/bump-ios-compat-tests:
   stage: deploy
   extends:
-    - .rules/deploy/ios
     - .variables/bridge-common
+  rules:
+    - if: !reference [.if-invalid-ios-release-version, if]
+      when: never
+    - if: !reference [.if-web-pipeline, if]
+      when: manual
+    - if: !reference [.if-upstream-release-deploy-stage, if]
+      when: manual
   needs: [deploy]
   variables:
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
