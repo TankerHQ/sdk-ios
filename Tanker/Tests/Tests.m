@@ -1355,7 +1355,7 @@ SpecBegin(TankerSpecs)
             [userPhone createOidcNonceWithCompletionHandler:adapter];
           });
           hangWithResolver(^(PMKResolver resolver) {
-            [userPhone _setOidcTestNonce:nonce completionHandler:resolver];
+            [userPhone setOidcTestNonce:nonce completionHandler:resolver];
           });
           startWithIdentityAndRegister(userPhone, userIdentity, oidcVerif);
           stop(userPhone);
@@ -1365,7 +1365,7 @@ SpecBegin(TankerSpecs)
             [userLaptop createOidcNonceWithCompletionHandler:adapter];
           });
           hangWithResolver(^(PMKResolver resolver) {
-            [userLaptop _setOidcTestNonce:nonce completionHandler:resolver];
+            [userLaptop setOidcTestNonce:nonce completionHandler:resolver];
           });
           startWithIdentityAndVerify(userLaptop, userIdentity, oidcVerif);
 

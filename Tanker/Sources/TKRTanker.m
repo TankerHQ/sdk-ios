@@ -453,7 +453,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)_setOidcTestNonce:(nonnull NSString*)nonce completionHandler:(nonnull TKRErrorHandler)handler
+- (void)setOidcTestNonce:(nonnull NSString*)nonce completionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
     handler(err);
