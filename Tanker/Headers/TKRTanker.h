@@ -188,7 +188,7 @@
 /*!
  @brief Set the nonce to use during Oidc verification
  */
-- (void)_setOidcTestNonce:(nonnull NSString*)nonce
+- (void)setOidcTestNonce:(nonnull NSString*)nonce
        completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
