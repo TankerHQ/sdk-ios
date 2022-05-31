@@ -17,6 +17,16 @@
   self.valuePrivate = passphrase;
 }
 
+- (nonnull NSString*)e2ePassphrase
+{
+  return self.valuePrivate;
+}
+
+- (void)setE2ePassphrase:(nonnull NSString*)e2ePassphrase
+{
+  self.valuePrivate = e2ePassphrase;
+}
+
 - (nonnull TKREmailVerification*)email
 {
   return self.valuePrivate;

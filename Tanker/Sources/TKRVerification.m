@@ -61,4 +61,12 @@
   return ret;
 }
 
++ (nonnull TKRVerification*)verificationFromE2ePassphrase:(NSString*)e2ePassphrase
+{
+  TKRVerification* ret = [[TKRVerification alloc] init];
+  ret.type = TKRVerificationMethodTypeE2ePassphrase;
+  ret.e2ePassphrase = e2ePassphrase;
+  return ret;
+}
+
 @end

@@ -8,6 +8,7 @@
 @property TKRVerificationMethodType type;
 
 @property NSString* passphrase;
+@property NSString* e2ePassphrase;
 @property TKRVerificationKey* verificationKey;
 @property TKREmailVerification* email;
 @property NSString* oidcIDToken;

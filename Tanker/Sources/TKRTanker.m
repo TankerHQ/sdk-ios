@@ -76,6 +76,9 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
     c_verification->preverified_phone_number =
         [verification.preverifiedPhoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypeE2ePassphrase:
+    c_verification->e2e_passphrase = [verification.e2ePassphrase cStringUsingEncoding:NSUTF8StringEncoding];
+    break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -105,6 +108,7 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
   case TKRVerificationMethodTypeOIDCIDToken:
+  case TKRVerificationMethodTypeE2ePassphrase:
     break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);
@@ -260,6 +264,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
   coptions.with_session_token = options.withSessionToken;
+  coptions.allow_e2e_method_switch = options.allowE2eMethodSwitch;
 
   verificationToCVerification(verification, &c_verification);
   tanker_future_t* register_future = tanker_register_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
@@ -322,6 +327,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
   coptions.with_session_token = options.withSessionToken;
+  coptions.allow_e2e_method_switch = options.allowE2eMethodSwitch;
 
   tanker_future_t* set_future = tanker_set_verification_method((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
@@ -360,6 +366,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
   tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
   coptions.with_session_token = options.withSessionToken;
+  coptions.allow_e2e_method_switch = options.allowE2eMethodSwitch;
 
   tanker_future_t* verify_future = tanker_verify_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
   tanker_future_t* resolve_future =
@@ -444,7 +451,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
     NSString* ret = [NSString stringWithCString:nonce encoding:NSUTF8StringEncoding];
     tanker_free_buffer(nonce);
     handler(ret, nil);
-  }; 
+  };
 
   tanker_future_t* nonce_future = tanker_create_oidc_nonce((tanker_t*)self.cTanker);
   tanker_future_t* resolve_future =
