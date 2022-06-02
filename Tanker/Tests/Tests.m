@@ -180,8 +180,8 @@ SpecBegin(TankerSpecs)
       __block char const* ctrustchaindurl;
       __block NSString* appID;
       __block NSString* appSecret;
-      __block NSString* authToken;
       __block NSDictionary* oidcTestConfig;
+      __block NSString* verificationToken;
 
       __block TKRTankerOptions* tankerOptions;
 
@@ -268,10 +268,11 @@ SpecBegin(TankerSpecs)
       };
 
       __block NSString* (^getEmailVerificationCode)(NSString*) = ^(NSString* email) {
-        tanker_future_t* f = tanker_get_email_verification_code(ctrustchaindurl,
-                                                                [appID cStringUsingEncoding:NSUTF8StringEncoding],
-                                                                [authToken cStringUsingEncoding:NSUTF8StringEncoding],
-                                                                [email cStringUsingEncoding:NSUTF8StringEncoding]);
+        tanker_future_t* f =
+            tanker_get_email_verification_code(ctrustchaindurl,
+                                               [appID cStringUsingEncoding:NSUTF8StringEncoding],
+                                               [verificationToken cStringUsingEncoding:NSUTF8StringEncoding],
+                                               [email cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(f);
         char* code = (char*)tanker_future_get_voidptr(f);
         NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
@@ -280,10 +281,11 @@ SpecBegin(TankerSpecs)
       };
 
       __block NSString* (^getSMSVerificationCode)(NSString*) = ^(NSString* phoneNumber) {
-        tanker_future_t* f = tanker_get_sms_verification_code(ctrustchaindurl,
-                                                              [appID cStringUsingEncoding:NSUTF8StringEncoding],
-                                                              [authToken cStringUsingEncoding:NSUTF8StringEncoding],
-                                                              [phoneNumber cStringUsingEncoding:NSUTF8StringEncoding]);
+        tanker_future_t* f =
+            tanker_get_sms_verification_code(ctrustchaindurl,
+                                             [appID cStringUsingEncoding:NSUTF8StringEncoding],
+                                             [verificationToken cStringUsingEncoding:NSUTF8StringEncoding],
+                                             [phoneNumber cStringUsingEncoding:NSUTF8StringEncoding]);
         tanker_future_wait(f);
         char* code = (char*)tanker_future_get_voidptr(f);
         NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
@@ -303,6 +305,8 @@ SpecBegin(TankerSpecs)
         expect(trustchaindUrl).toNot.beNil();
         url = env[@"TANKER_APPD_URL"];
         expect(url).toNot.beNil();
+        verificationToken = env[@"TANKER_VERIFICATION_API_TEST_TOKEN"];
+        expect(verificationToken).toNot.beNil();
 
         oidcTestConfig = @{
           @"clientId" : env[@"TANKER_OIDC_CLIENT_ID"],
@@ -334,7 +338,6 @@ SpecBegin(TankerSpecs)
         tanker_app_descriptor_t* app = (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
         appID = [NSString stringWithCString:app->id encoding:NSUTF8StringEncoding];
         appSecret = [NSString stringWithCString:app->private_key encoding:NSUTF8StringEncoding];
-        authToken = [NSString stringWithCString:app->auth_token encoding:NSUTF8StringEncoding];
         tanker_future_destroy(app_fut);
         tanker_admin_app_descriptor_free(app);
       });
@@ -1708,7 +1711,7 @@ SpecBegin(TankerSpecs)
           NSString* phoneNumber = @"+33639982233";
           startWithIdentityAndRegister(tanker, identity, verification);
           TKRVerification* verif = [TKRVerification verificationFromPhoneNumber:phoneNumber
-                                                         verificationCode:getSMSVerificationCode(phoneNumber)];
+                                                               verificationCode:getSMSVerificationCode(phoneNumber)];
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
             TKRVerificationOptions* opts = [TKRVerificationOptions options];
             opts.withSessionToken = true;
