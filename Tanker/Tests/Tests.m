@@ -172,9 +172,9 @@ static NSData* _Nonnull stringToData(NSString* _Nonnull str)
 }
 
 static NSUInteger SIMPLE_ENCRYPTION_OVERHEAD = 17;
-static NSUInteger SIMPLE_PADDED_ENCRYPTION_OVERHEAD = SIMPLE_ENCRYPTION_OVERHEAD + 1;
+static NSUInteger SIMPLE_PADDED_ENCRYPTION_OVERHEAD = 18; // SIMPLE_ENCRYPTION_OVERHEAD + 1
 static NSUInteger ENCRYPTION_SESSION_OVERHEAD = 57;
-static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = ENCRYPTION_SESSION_OVERHEAD + 1;
+static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = 58; // ENCRYPTION_SESSION_OVERHEAD + 1
 
 SpecBegin(TankerSpecs)
 
@@ -712,19 +712,9 @@ SpecBegin(TankerSpecs)
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
             });
-            [encryptedStream open];
 
             NSData* encryptedData = [PMKPromise hang:[reader readAll:encryptedStream]];
             expect(encryptedData.length).to.equal(3211512);
-            NSInputStream* encryptedInput = [[POSBlobInputStream alloc] initWithDataSource:encryptedData];
-
-            NSInputStream* decryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker decryptStream:encryptedInput completionHandler:adapter];
-            });
-
-            NSData* decryptedData = [PMKPromise hang:[reader readAll:decryptedStream]];
-
-            expect(decryptedData).to.equal(clearData);
           });
 
           it(@"should fail to read when maxLength is superior to NSIntegerMax", ^{
