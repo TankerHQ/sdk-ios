@@ -15,8 +15,15 @@ workflow:
       when: never
     - if: !reference [.if-invalid-native-conan-reference, if]
       when: never
-    # allow everything else
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      variables:
+        CONAN_REMOTE: "artifactory"
+    - if: '$CI_MERGE_REQUEST_TITLE =~ /.*\[preview].*/'
+      variables:
+        CONAN_REMOTE: "artifactory-preview"
     - when: always
+      variables:
+        CONAN_REMOTE: "artifactory-staging"
 
 ###########
 # Default #
@@ -59,7 +66,7 @@ stages:
   extends:
     - .rules/check/deployed-native
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
+    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
     - echo $CI_COMMIT_REF_NAME > branch_name.txt
   artifacts:
     paths:
@@ -71,7 +78,7 @@ stages:
   extends:
     - .rules/native-from-sources
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
+    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home build-and-test --use-tanker=same-as-branch
     - echo $CI_COMMIT_REF_NAME > branch_name.txt
   artifacts:
     paths:
@@ -84,7 +91,7 @@ stages:
     - .before-script/download-artifacts
     - .rules/check/downstream
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --use-tanker=upstream
+    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home build-and-test --use-tanker=upstream
     # branch_name.txt is already in sdk-native's artifacts
   artifacts:
     paths:
@@ -275,7 +282,7 @@ deploy:
     - .rules/deploy/ios
   script:
     - poetry run python run-ci.py reset-branch $UPSTREAM_BRANCH_NAME
-    - poetry run python run-ci.py --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
+    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
     tag_name: v$SDK_IOS_RELEASE_VERSION

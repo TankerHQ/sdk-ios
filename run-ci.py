@@ -10,7 +10,7 @@ import tempfile
 
 import tankerci
 import tankerci.conan
-from tankerci.conan import TankerSource
+from tankerci.conan import Profile, TankerSource
 import tankerci.context
 import tankerci.cpp
 import tankerci.gcp
@@ -21,12 +21,12 @@ from tankerci.build_info import DepsConfig
 import cli_ui as ui
 
 PROFILES = [
-    "ios-armv7-release",
-    "ios-armv7s-release",
-    "ios-armv8-release",
-    "ios-simulator-x86-release",
-    "ios-simulator-x86_64-release",
-    "ios-simulator-armv8-release",
+    Profile("ios-armv7"),
+    Profile("ios-armv7s"),
+    Profile("ios-armv8"),
+    Profile("ios_simulator-x86"),
+    Profile("ios_simulator-x86_64"),
+    Profile("ios_simulator-armv8"),
 ]
 
 
@@ -49,32 +49,35 @@ def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
 
 
 class Builder:
-    def __init__(self, *, src_path: Path, profiles: List[str]):
+    def __init__(
+        self, *, src_path: Path, build_profile: Profile, host_profiles: List[Profile]
+    ):
         self.src_path = src_path
         self.pod_path = self.src_path / "Tanker"
         self.conan_path = self.pod_path / "conan"
         self.libraries_path = self.pod_path / "Libraries"
         self.private_headers_path = self.pod_path / "PrivateHeaders"
         self.example_path = self.pod_path / "Example"
-        self.profiles = profiles
+        self.host_profiles = host_profiles
+        self.build_profile = build_profile
         self.builder = tankerci.ios.Builder()
 
     def get_static_libs(self) -> List[Path]:
         libs_path = self.libraries_path
         return libs_path.glob("*.a")  # type: ignore
 
-    def get_build_path(self, profile: str) -> Path:
-        return self.conan_path / profile
+    def get_build_path(self, host_profile: Profile) -> Path:
+        return self.conan_path / str(host_profile)
 
     def get_all_dependency_libs(self) -> Dict[str, List[Path]]:
         all_libs: Dict[str, List[Path]] = dict()
-        for profile in self.profiles:
-            for lib in DepsConfig(self.get_build_path(profile)).all_lib_paths():
+        for host_profile in self.host_profiles:
+            for lib in DepsConfig(self.get_build_path(host_profile)).all_lib_paths():
                 all_libs.setdefault(lib.name, []).append(lib)
         return all_libs
 
     def copy_headers(self) -> None:
-        first_profile = list(self.profiles)[0]
+        first_profile = self.host_profiles[0]
         # we assume that all profiles have the same includes
         deps_info = DepsConfig(self.get_build_path(first_profile))
         for include_dir in deps_info["tanker"].include_dirs:
@@ -83,12 +86,12 @@ class Builder:
             _copy_folder_content(include_path, self.private_headers_path)
 
     def handle_sdk_deps(self) -> None:
-        ui.info_1("copying sdk-native for profiles: ", self.profiles)
+        ui.info_1("copying sdk-native for profiles: ", [str(p) for p in self.host_profiles])
 
-        for profile in self.profiles:
-            specific_arch_path = self.libraries_path / profile
+        for host_profile in self.host_profiles:
+            specific_arch_path = self.libraries_path / str(host_profile)
             specific_arch_path.mkdir(parents=True, exist_ok=True)
-            libs_path = DepsConfig(self.get_build_path(profile)).all_lib_paths()
+            libs_path = DepsConfig(self.get_build_path(host_profile)).all_lib_paths()
             self.builder.merge_libraries(
                 libs=libs_path,
                 keep_symbols_regex="^_?tanker_.*",
@@ -96,7 +99,9 @@ class Builder:
             )
         self.copy_headers()
 
-        libs = [self.libraries_path / p / "libtankerdeps.a" for p in self.profiles]
+        libs = [
+            self.libraries_path / str(p) / "libtankerdeps.a" for p in self.host_profiles
+        ]
         xcframework_path = (
             self.src_path / "Tanker" / "Frameworks" / "TankerDeps.xcframework"
         )
@@ -241,40 +246,53 @@ class PodPublisher:
 
 
 def prepare(
-    tanker_source: TankerSource, update: bool, tanker_ref: Optional[str]
+    tanker_source: TankerSource,
+    update: bool,
+    tanker_ref: Optional[str],
+    build_profile: Profile,
 ) -> Builder:
     artifact_path = Path.cwd() / "package"
     tanker_deployed_ref = tanker_ref
 
     if tanker_source == TankerSource.UPSTREAM:
-        profiles = [d.name for d in artifact_path.iterdir() if d.is_dir()]
+        host_profiles = [Profile(d.name) for d in artifact_path.iterdir() if d.is_dir()]
     else:
-        profiles = PROFILES
+        host_profiles = PROFILES
     if tanker_source == TankerSource.DEPLOYED and not tanker_deployed_ref:
         tanker_deployed_ref = "tanker/latest-stable@"
     tankerci.conan.install_tanker_source(
         tanker_source,
         output_path=Path("Tanker/conan"),
-        profiles=profiles,
+        host_profiles=host_profiles,
+        build_profile=build_profile,
         update=update,
         tanker_deployed_ref=tanker_deployed_ref,
     )
-    builder = Builder(src_path=Path.cwd(), profiles=profiles)
+    builder = Builder(
+        src_path=Path.cwd(), build_profile=build_profile, host_profiles=host_profiles
+    )
     builder.handle_sdk_deps()
     builder.handle_ios_deps()
     return builder
 
 
 def build_and_test(
-    *, tanker_source: TankerSource, tanker_ref: Optional[str] = None
+    *,
+    tanker_source: TankerSource,
+    tanker_ref: Optional[str] = None,
+    build_profile: Profile,
 ) -> None:
-    builder = prepare(tanker_source, False, tanker_ref)
+    builder = prepare(tanker_source, False, tanker_ref, build_profile)
     builder.build_and_test_pod()
 
 
-def deploy(*, version: str, tanker_ref: str) -> None:
+def deploy(*, version: str, tanker_ref: str, build_profile: Profile) -> None:
     tankerci.bump_files(version)
-    build_and_test(tanker_source=TankerSource.DEPLOYED, tanker_ref=tanker_ref)
+    build_and_test(
+        tanker_source=TankerSource.DEPLOYED,
+        tanker_ref=tanker_ref,
+        build_profile=build_profile,
+    )
     src_path = Path.cwd()
     pod_publisher = PodPublisher(src_path=src_path)
     pod_publisher.publish()
@@ -288,6 +306,7 @@ def main() -> None:
         dest="home_isolation",
         default=False,
     )
+    parser.add_argument("--remote", default="artifactory")
 
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
@@ -330,27 +349,32 @@ def main() -> None:
     args = parser.parse_args()
     command = args.command
 
-    if args.home_isolation:
-        tankerci.conan.set_home_isolation()
-        tankerci.conan.update_config()
-        if command in ("build-and-test", "deploy"):
-            # Because of GitLab issue https://gitlab.com/gitlab-org/gitlab/-/issues/254323
-            # the downstream deploy jobs will be triggered even if upstream has failed
-            # By removing the cache we ensure that we do not use a
-            # previously built (and potentially broken) release candidate to deploy a binding
-            tankerci.conan.run("remove", "tanker/*", "--force")
-
-    if command == "build-and-test":
-        build_and_test(
-            tanker_source=args.tanker_source,
-            tanker_ref=args.tanker_ref,
-        )
-        pod_publisher = PodPublisher(src_path=Path.cwd())
-        pod_publisher.write_artifacts()
-    elif command == "prepare":
-        prepare(args.tanker_source, args.update, args.tanker_ref)
-    elif command == "deploy":
-        deploy(version=args.version, tanker_ref=args.tanker_ref)
+    if command in ("build-and-test", "prepare", "deploy"):
+        user_home = None
+        if args.home_isolation:
+            user_home = Path.cwd() / ".cache" / "conan" / args.remote
+        is_deploy = command == "deploy"
+        with tankerci.conan.ConanContextManager(
+            [args.remote], conan_home=user_home, clean_on_exit=is_deploy
+        ):
+            if command == "build-and-test":
+                build_and_test(
+                    tanker_source=args.tanker_source,
+                    tanker_ref=args.tanker_ref,
+                    build_profile=tankerci.conan.get_build_profile(),
+                )
+                pod_publisher = PodPublisher(src_path=Path.cwd())
+                pod_publisher.write_artifacts()
+            elif is_deploy:
+                deploy(
+                    version=args.version,
+                    tanker_ref=args.tanker_ref,
+                    build_profile=tankerci.conan.get_build_profile(),
+                )
+            else:
+                prepare(
+                    args.tanker_source, args.update, args.tanker_ref, tankerci.conan.get_build_profile()
+                )
     elif command == "reset-branch":
         fallback = os.environ["CI_COMMIT_REF_NAME"]
         ref = tankerci.git.find_ref(
