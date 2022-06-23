@@ -30,15 +30,15 @@
   return [[TKRPadding alloc] initWithValue:@1];
 }
 
-+ (nullable instancetype)step:(nonnull NSNumber *)value
++ (nullable instancetype)step:(NSUInteger)value
 {
-  if (value.integerValue < 2)
+  if (value < 2)
   {
     [NSException raise:NSInvalidArgumentException
                  format:@"Invalid step. The value must be >= 2."];
   }
 
-  return [[TKRPadding alloc] initWithValue:value];
+  return [[TKRPadding alloc] initWithValue:[NSNumber numberWithUnsignedInteger:value]];
 }
 
 @end

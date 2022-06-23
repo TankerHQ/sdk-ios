@@ -647,7 +647,7 @@ SpecBegin(TankerSpecs)
 
           it(@"should encrypt and decrypt with manual padding", ^{
             NSString* clearText = @"Rosebud";
-            NSNumber* paddingStep = @13;
+            NSUInteger paddingStep = 13;
 
             TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
             encryptionOptions.paddingStep = [TKRPadding step:paddingStep];
@@ -656,7 +656,7 @@ SpecBegin(TankerSpecs)
               [tanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
             });
 
-            expect((encrypted.length - SIMPLE_PADDED_ENCRYPTION_OVERHEAD) % paddingStep.unsignedIntValue).to.equal(0);
+            expect((encrypted.length - SIMPLE_PADDED_ENCRYPTION_OVERHEAD) % paddingStep).to.equal(0);
 
             NSString* decrypted = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker decryptStringFromData:encrypted completionHandler:adapter];
@@ -667,13 +667,10 @@ SpecBegin(TankerSpecs)
 
           it(@"should throw when a bad step is given", ^{
             expect(^{
-                    [TKRPadding step:@-1];
+                    [TKRPadding step:0];
             }).to.raise(NSInvalidArgumentException);
             expect(^{
-                    [TKRPadding step:@0];
-            }).to.raise(NSInvalidArgumentException);
-            expect(^{
-                    [TKRPadding step:@1];
+                    [TKRPadding step:1];
             }).to.raise(NSInvalidArgumentException);
           });
         });
@@ -1206,7 +1203,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should encrypt with a padding step", ^{
-          NSNumber* paddingStep = @13;
+          NSUInteger paddingStep = 13;
           TKREncryptionOptions* opts = [TKREncryptionOptions options];
           opts.paddingStep = [TKRPadding step:paddingStep];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
@@ -1218,7 +1215,7 @@ SpecBegin(TankerSpecs)
             [encSess encryptString:clearText completionHandler:adapter];
           });
 
-          expect((encryptedData.length - ENCRYPTION_SESSION_PADDED_OVERHEAD) % paddingStep.unsignedIntValue).to.equal(0);
+          expect((encryptedData.length - ENCRYPTION_SESSION_PADDED_OVERHEAD) % paddingStep).to.equal(0);
 
           NSString* decryptedString = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker decryptStringFromData:encryptedData completionHandler:adapter];

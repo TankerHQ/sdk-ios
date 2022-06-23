@@ -21,8 +21,8 @@
 /*!
  @brief Pads the data up to a multiple of value before encryption
 
- @param value Must be a NSNumber >= 2
+ @param value Must be a NSUInteger >= 2
  */
-+ (nullable instancetype)step:(nonnull NSNumber*)value;
++ (nullable instancetype)step:(NSUInteger)value;
 
 @end
