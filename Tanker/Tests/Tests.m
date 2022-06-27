@@ -1279,6 +1279,176 @@ SpecBegin(TankerSpecs)
         });
       });
 
+      describe(@"e2e passphrase", ^{
+        __block NSString* identity;
+        __block TKRTanker* firstDevice;
+        __block TKRTanker* secondDevice;
+
+        beforeEach(^{
+          firstDevice = [TKRTanker tankerWithOptions:tankerOptions];
+          expect(firstDevice).toNot.beNil();
+
+          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          expect(secondDevice).toNot.beNil();
+
+          identity = createIdentity(createUUID(), appID, appSecret);
+        });
+
+        afterEach(^{
+          stop(firstDevice);
+          stop(secondDevice);
+        });
+
+        it(@"should register an e2e passphrase", ^{
+          NSString* e2ePassphrase = @"Hear the lament of the damned, cursed to write Objective-C";
+          startWithIdentityAndRegister(firstDevice,
+                                       identity,
+                                       [TKRVerification verificationFromE2ePassphrase:e2ePassphrase]);
+
+          NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice verificationMethodsWithCompletionHandler:adapter];
+          });
+          expect(methods.count).to.equal(1);
+          expect(methods[0].type).to.equal(TKRVerificationMethodTypeE2ePassphrase);
+
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice startWithIdentity:identity
+                          completionHandler:^(TKRStatus status, NSError* err) {
+                            if (err)
+                              resolver(err);
+                            else
+                            {
+                              expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                              [secondDevice
+                                  verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:e2ePassphrase]
+                                               completionHandler:resolver];
+                            }
+                          }];
+          });
+          expect(err).to.beNil();
+        });
+
+        it(@"should update an e2e passphrase", ^{
+          NSString* oldPassphrase = @"Malumosis";
+          NSString* newPassphrase = @"Aerugopenia";
+          startWithIdentityAndRegister(firstDevice,
+                                       identity,
+                                       [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
+
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
+                             completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+
+          hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice startWithIdentity:identity
+                          completionHandler:^(TKRStatus status, NSError* err) {
+                            resolver(nil);
+                          }];
+          });
+          err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:oldPassphrase]
+                                       completionHandler:resolver];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidVerification);
+
+          err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
+                                       completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+        });
+
+        it(@"should switch to an e2e passphrase", ^{
+          NSString* oldPassphrase = @"Malumosis";
+          NSString* newPassphrase = @"Aerugopenia";
+          startWithIdentityAndRegister(firstDevice,
+                                       identity,
+                                       [TKRVerification verificationFromPassphrase:oldPassphrase]);
+
+          TKRVerificationOptions* opts = [TKRVerificationOptions options];
+          opts.allowE2eMethodSwitch = true;
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
+                                       options:opts
+                             completionHandler:adapter];
+          });
+          expect(err).to.beNil();
+
+          hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice startWithIdentity:identity
+                          completionHandler:^(TKRStatus status, NSError* err) {
+                            resolver(nil);
+                          }];
+          });
+          err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:oldPassphrase]
+                                       completionHandler:resolver];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorPreconditionFailed);
+
+          err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
+                                       completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+        });
+
+        it(@"should switch from an e2e passphrase", ^{
+          NSString* oldPassphrase = @"Malumosis";
+          NSString* newPassphrase = @"Aerugopenia";
+          startWithIdentityAndRegister(firstDevice,
+                                       identity,
+                                       [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
+
+          TKRVerificationOptions* opts = [TKRVerificationOptions options];
+          opts.allowE2eMethodSwitch = true;
+          NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
+            [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:newPassphrase]
+                                       options:opts
+                             completionHandler:adapter];
+          });
+          expect(err).to.beNil();
+
+          hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice startWithIdentity:identity
+                          completionHandler:^(TKRStatus status, NSError* err) {
+                            resolver(nil);
+                          }];
+          });
+          err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:oldPassphrase]
+                                       completionHandler:resolver];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorPreconditionFailed);
+
+          err = hangWithResolver(^(PMKResolver resolver) {
+            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:newPassphrase]
+                                       completionHandler:resolver];
+          });
+          expect(err).to.beNil();
+        });
+
+        it(@"cannot switch to an e2e passphrase without allowE2eMethodSwitch flag", ^{
+          NSString* oldPassphrase = @"Malumosis";
+          NSString* newPassphrase = @"Aerugopenia";
+          startWithIdentityAndRegister(firstDevice,
+                                       identity,
+                                       [TKRVerification verificationFromPassphrase:oldPassphrase]);
+
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
+                             completionHandler:resolver];
+          });
+          expect(err).toNot.beNil();
+          expect(err.code).to.equal(TKRErrorInvalidArgument);
+        });
+      });
+
       describe(@"multi devices", ^{
         __block NSString* identity;
         __block TKRTanker* firstDevice;
