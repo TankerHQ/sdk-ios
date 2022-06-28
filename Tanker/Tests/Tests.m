@@ -331,7 +331,7 @@ SpecBegin(TankerSpecs)
         expect(connectError).to.beNil();
         admin = (tanker_admin_t*)tanker_future_get_voidptr(connect_fut);
         tanker_future_destroy(connect_fut);
-        tanker_future_t* app_fut = tanker_admin_create_app(admin, "ios-test");
+        tanker_future_t* app_fut = tanker_admin_create_app(admin, "sdk-ios-tests");
         tanker_future_wait(app_fut);
         NSError* createError = TKR_getOptionalFutureError(app_fut);
         expect(createError).to.beNil();
