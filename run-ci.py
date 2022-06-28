@@ -1,16 +1,15 @@
-from typing import Dict, List, Optional
-
 import argparse
 import os
-from pathlib import Path
 import re
 import shutil
 import sys
 import tempfile
+from pathlib import Path
+from typing import Dict, List, Optional
 
+import cli_ui as ui
 import tankerci
 import tankerci.conan
-from tankerci.conan import Profile, TankerSource
 import tankerci.context
 import tankerci.cpp
 import tankerci.gcp
@@ -18,7 +17,7 @@ import tankerci.git
 import tankerci.gitlab
 import tankerci.ios
 from tankerci.build_info import DepsConfig
-import cli_ui as ui
+from tankerci.conan import Profile, TankerSource
 
 PROFILES = [
     Profile("ios-armv7"),
@@ -70,7 +69,7 @@ class Builder:
         return self.conan_path / str(host_profile)
 
     def get_all_dependency_libs(self) -> Dict[str, List[Path]]:
-        all_libs: Dict[str, List[Path]] = dict()
+        all_libs: Dict[str, List[Path]] = {}
         for host_profile in self.host_profiles:
             for lib in DepsConfig(self.get_build_path(host_profile)).all_lib_paths():
                 all_libs.setdefault(lib.name, []).append(lib)
@@ -86,14 +85,16 @@ class Builder:
             _copy_folder_content(include_path, self.private_headers_path)
 
     def handle_sdk_deps(self) -> None:
-        ui.info_1("copying sdk-native for profiles: ", [str(p) for p in self.host_profiles])
+        ui.info_1(
+            "copying sdk-native for profiles: ", [str(p) for p in self.host_profiles]
+        )
 
         for host_profile in self.host_profiles:
             specific_arch_path = self.libraries_path / str(host_profile)
             specific_arch_path.mkdir(parents=True, exist_ok=True)
             libs_path = DepsConfig(self.get_build_path(host_profile)).all_lib_paths()
             self.builder.merge_libraries(
-                libs=libs_path,
+                libs=list(libs_path),
                 keep_symbols_regex="^_?tanker_.*",
                 output_path=specific_arch_path / "libtankerdeps.a",
             )
@@ -373,7 +374,10 @@ def main() -> None:
                 )
             else:
                 prepare(
-                    args.tanker_source, args.update, args.tanker_ref, tankerci.conan.get_build_profile()
+                    args.tanker_source,
+                    args.update,
+                    args.tanker_ref,
+                    tankerci.conan.get_build_profile(),
                 )
     elif command == "reset-branch":
         fallback = os.environ["CI_COMMIT_REF_NAME"]
