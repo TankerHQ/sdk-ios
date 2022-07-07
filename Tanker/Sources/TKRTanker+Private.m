@@ -35,6 +35,7 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
   c_opts->share_with_groups = (char const* const*)group_ids;
   c_opts->nb_groups = (uint32_t)opts.shareWithGroups.count;
   c_opts->share_with_self = opts.shareWithSelf;
+  c_opts->padding_step = opts.paddingStep.nativeValue.unsignedIntValue;
   return nil;
 }
 
@@ -99,7 +100,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
                 options:(nonnull TKREncryptionOptions*)options
       completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
-  uint64_t encrypted_size = tanker_encrypted_size(clearData.length);
+  uint64_t encrypted_size = tanker_encrypted_size(clearData.length, options.paddingStep.nativeValue.unsignedIntValue);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
   if (!encrypted_buffer)

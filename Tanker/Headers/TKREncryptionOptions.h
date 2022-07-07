@@ -1,5 +1,6 @@
 
 #import <Foundation/Foundation.h>
+#import <Tanker/TKRPadding.h>
 
 /*!
  @brief Options used when encrypting resources.
@@ -27,6 +28,11 @@
  @brief Should the resources be shared with the current user (defaults to true)
  */
 @property bool shareWithSelf;
+
+/*!
+ @brief Padding control for encryption
+ */
+@property TKRPadding* paddingStep;
 
 /*!
  @brief Create a TKREncryptionOptions with empty values.

@@ -24,7 +24,8 @@
 - (void)encryptDataImpl:(nonnull NSData*)clearData
       completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
 {
-  uint64_t encrypted_size = tanker_encryption_session_encrypted_size(clearData.length);
+  uint64_t encrypted_size = tanker_encryption_session_encrypted_size(
+    (tanker_encryption_session_t*)self.cSession, clearData.length);
   uint8_t* encrypted_buffer = (uint8_t*)malloc((unsigned long)encrypted_size);
 
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
