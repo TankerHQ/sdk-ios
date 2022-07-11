@@ -17,6 +17,7 @@
 #import <Tanker/Storage/TKRDatastoreError.h>
 
 #import "TKRCustomDataSource.h"
+#import "TKRTestAdmin.h"
 #import "TKRTestAsyncStreamReader.h"
 
 #import <Expecta/Expecta.h>
@@ -98,7 +99,7 @@ static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   return opts;
 }
 
-static void updateAdminApp(tanker_admin_t* admin,
+static void updateAdminApp(tanker_admin_t* cadmin,
                            NSString* appID,
                            NSString* oidcClientID,
                            NSString* oidcClientProvider,
@@ -111,7 +112,7 @@ static void updateAdminApp(tanker_admin_t* admin,
     options.oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
   if (oidcClientProvider)
     options.oidc_client_provider = [oidcClientProvider cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_expected_t* update_fut = tanker_admin_app_update(admin, app_id, &options);
+  tanker_expected_t* update_fut = tanker_admin_app_update(cadmin, app_id, &options);
   tanker_future_wait(update_fut);
   tanker_future_destroy(update_fut);
 }
@@ -179,7 +180,8 @@ static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = 58; // ENCRYPTION_SESSION
 SpecBegin(TankerSpecs)
 
     describe(@"Tanker Bindings", ^{
-      __block tanker_admin_t* admin;
+      __block tanker_admin_t* cadmin;
+      __block TKRTestAdmin* admin;
       __block NSString* url;
       __block NSString* trustchaindUrl;
       __block char const* curl;
@@ -331,32 +333,29 @@ SpecBegin(TankerSpecs)
         char const* cappManagementToken = [appManagementToken cStringUsingEncoding:NSUTF8StringEncoding];
         char const* cappManagementUrl = [appManagementUrl cStringUsingEncoding:NSUTF8StringEncoding];
         char const* cenvironmentName = [environmentName cStringUsingEncoding:NSUTF8StringEncoding];
+
+        admin = [TKRTestAdmin adminWithUrl:appManagementUrl
+                        appManagementToken:appManagementToken
+                           environmentName:environmentName];
+        NSDictionary* createResponse = [admin createAppWithName:@"sdk-ios-tests"];
+        NSDictionary* appDescriptor = createResponse[@"app"];
+        appID = appDescriptor[@"id"];
+        appSecret = appDescriptor[@"secret"];
+
         tanker_future_t* connect_fut = tanker_admin_connect(cappManagementUrl, cappManagementToken, cenvironmentName);
         tanker_future_wait(connect_fut);
         NSError* connectError = TKR_getOptionalFutureError(connect_fut);
         expect(connectError).to.beNil();
-        admin = (tanker_admin_t*)tanker_future_get_voidptr(connect_fut);
+        cadmin = (tanker_admin_t*)tanker_future_get_voidptr(connect_fut);
         tanker_future_destroy(connect_fut);
-        tanker_future_t* app_fut = tanker_admin_create_app(admin, "sdk-ios-tests");
-        tanker_future_wait(app_fut);
-        NSError* createError = TKR_getOptionalFutureError(app_fut);
-        expect(createError).to.beNil();
-        tanker_app_descriptor_t* app = (tanker_app_descriptor_t*)tanker_future_get_voidptr(app_fut);
-        appID = [NSString stringWithCString:app->id encoding:NSUTF8StringEncoding];
-        appSecret = [NSString stringWithCString:app->private_key encoding:NSUTF8StringEncoding];
-        tanker_future_destroy(app_fut);
-        tanker_admin_app_descriptor_free(app);
       });
 
       afterAll(^{
-        tanker_future_t* delete_fut = tanker_admin_delete_app(admin, [appID cStringUsingEncoding:NSUTF8StringEncoding]);
-        tanker_future_wait(delete_fut);
-        NSError* error = TKR_getOptionalFutureError(delete_fut);
-        expect(error).to.beNil();
+        [admin deleteApp:appID];
 
-        tanker_future_t* admin_destroy_fut = tanker_admin_destroy(admin);
+        tanker_future_t* admin_destroy_fut = tanker_admin_destroy(cadmin);
         tanker_future_wait(admin_destroy_fut);
-        error = TKR_getOptionalFutureError(admin_destroy_fut);
+        NSError* error = TKR_getOptionalFutureError(admin_destroy_fut);
         expect(error).to.beNil();
       });
 
@@ -667,10 +666,10 @@ SpecBegin(TankerSpecs)
 
           it(@"should throw when a bad step is given", ^{
             expect(^{
-                    [TKRPadding step:0];
+              [TKRPadding step:0];
             }).to.raise(NSInvalidArgumentException);
             expect(^{
-                    [TKRPadding step:1];
+              [TKRPadding step:1];
             }).to.raise(NSInvalidArgumentException);
           });
         });
@@ -1491,9 +1490,8 @@ SpecBegin(TankerSpecs)
 
         it(@"should register an e2e passphrase", ^{
           NSString* e2ePassphrase = @"Hear the lament of the damned, cursed to write Objective-C";
-          startWithIdentityAndRegister(firstDevice,
-                                       identity,
-                                       [TKRVerification verificationFromE2ePassphrase:e2ePassphrase]);
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromE2ePassphrase:e2ePassphrase]);
 
           NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice verificationMethodsWithCompletionHandler:adapter];
@@ -1502,18 +1500,19 @@ SpecBegin(TankerSpecs)
           expect(methods[0].type).to.equal(TKRVerificationMethodTypeE2ePassphrase);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice startWithIdentity:identity
-                          completionHandler:^(TKRStatus status, NSError* err) {
-                            if (err)
-                              resolver(err);
-                            else
-                            {
-                              expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
-                              [secondDevice
-                                  verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:e2ePassphrase]
-                                               completionHandler:resolver];
-                            }
-                          }];
+            [secondDevice
+                startWithIdentity:identity
+                completionHandler:^(TKRStatus status, NSError* err) {
+                  if (err)
+                    resolver(err);
+                  else
+                  {
+                    expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
+                    [secondDevice
+                        verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:e2ePassphrase]
+                                     completionHandler:resolver];
+                  }
+                }];
           });
           expect(err).to.beNil();
         });
@@ -1521,9 +1520,8 @@ SpecBegin(TankerSpecs)
         it(@"should update an e2e passphrase", ^{
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
-          startWithIdentityAndRegister(firstDevice,
-                                       identity,
-                                       [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
@@ -1554,9 +1552,8 @@ SpecBegin(TankerSpecs)
         it(@"should switch to an e2e passphrase", ^{
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
-          startWithIdentityAndRegister(firstDevice,
-                                       identity,
-                                       [TKRVerification verificationFromPassphrase:oldPassphrase]);
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:oldPassphrase]);
 
           TKRVerificationOptions* opts = [TKRVerificationOptions options];
           opts.allowE2eMethodSwitch = true;
@@ -1590,9 +1587,8 @@ SpecBegin(TankerSpecs)
         it(@"should switch from an e2e passphrase", ^{
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
-          startWithIdentityAndRegister(firstDevice,
-                                       identity,
-                                       [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
 
           TKRVerificationOptions* opts = [TKRVerificationOptions options];
           opts.allowE2eMethodSwitch = true;
@@ -1626,9 +1622,8 @@ SpecBegin(TankerSpecs)
         it(@"cannot switch to an e2e passphrase without allowE2eMethodSwitch flag", ^{
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
-          startWithIdentityAndRegister(firstDevice,
-                                       identity,
-                                       [TKRVerification verificationFromPassphrase:oldPassphrase]);
+          startWithIdentityAndRegister(
+              firstDevice, identity, [TKRVerification verificationFromPassphrase:oldPassphrase]);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
@@ -1706,7 +1701,7 @@ SpecBegin(TankerSpecs)
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
           NSString* refreshToken = oidcTestConfig[@"users"][userName][@"refreshToken"];
 
-          updateAdminApp(admin, appID, oidcClientID, oidcClientProvider, nil);
+          updateAdminApp(cadmin, appID, oidcClientID, oidcClientProvider, nil);
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           NSString* userIdentity = createIdentity(email, appID, appSecret);
 
@@ -1867,11 +1862,11 @@ SpecBegin(TankerSpecs)
         describe(@"Preverified verification methods", ^{
           beforeAll(^{
             bool enablePreverified = true;
-            updateAdminApp(admin, appID, nil, nil, &enablePreverified);
+            updateAdminApp(cadmin, appID, nil, nil, &enablePreverified);
           });
           afterAll(^{
             bool enablePreverified = false;
-            updateAdminApp(admin, appID, nil, nil, &enablePreverified);
+            updateAdminApp(cadmin, appID, nil, nil, &enablePreverified);
           });
 
           it(@"should fail to register with a preverified email", ^{
