@@ -26,7 +26,6 @@
 #import <Specta/Specta.h>
 
 #include "ctanker.h"
-#include "ctanker/admin.h"
 #include "ctanker/identity.h"
 #include "ctanker/private/datastore-tests/test.h"
 
@@ -162,7 +161,6 @@ static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = 58; // ENCRYPTION_SESSION
 SpecBegin(TankerSpecs)
 
     describe(@"Tanker Bindings", ^{
-      __block tanker_admin_t* cadmin;
       __block TKRTestAdmin* admin;
       __block NSString* url;
       __block NSString* trustchaindUrl;
@@ -311,22 +309,10 @@ SpecBegin(TankerSpecs)
         NSDictionary* appDescriptor = createResponse[@"app"];
         appID = appDescriptor[@"id"];
         appSecret = appDescriptor[@"secret"];
-
-        tanker_future_t* connect_fut = tanker_admin_connect(cappManagementUrl, cappManagementToken, cenvironmentName);
-        tanker_future_wait(connect_fut);
-        NSError* connectError = TKR_getOptionalFutureError(connect_fut);
-        expect(connectError).to.beNil();
-        cadmin = (tanker_admin_t*)tanker_future_get_voidptr(connect_fut);
-        tanker_future_destroy(connect_fut);
       });
 
       afterAll(^{
         [admin deleteApp:appID];
-
-        tanker_future_t* admin_destroy_fut = tanker_admin_destroy(cadmin);
-        tanker_future_wait(admin_destroy_fut);
-        NSError* error = TKR_getOptionalFutureError(admin_destroy_fut);
-        expect(error).to.beNil();
       });
 
       beforeEach(^{
