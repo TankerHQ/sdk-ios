@@ -85,6 +85,39 @@
   return result[@"verification_code"];
 }
 
++ (NSString* _Nullable)getSmsVerificationCodeForApp:(nonnull NSString*)appID
+                                     trustchaindUrl:(nonnull NSString*)trustchaindUrl
+                                  verificationToken:(nonnull NSString*)verificationToken
+                                        phoneNumber:(nonnull NSString*)phoneNumber
+{
+  NSString* url = [NSString stringWithFormat:@"%@/verification/sms/code", trustchaindUrl];
+  NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
+  [request setHTTPMethod:@"POST"];
+  [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+
+  NSMutableDictionary* bodyDictionary = [[NSMutableDictionary alloc] init];
+  [bodyDictionary setValue:appID forKey:@"app_id"];
+  [bodyDictionary setValue:phoneNumber forKey:@"phone_number"];
+  [bodyDictionary setValue:verificationToken forKey:@"auth_token"];
+
+  NSData* bodyData = [NSJSONSerialization dataWithJSONObject:bodyDictionary
+                                                     options:NSJSONWritingPrettyPrinted
+                                                       error:nil];
+  NSString* body = [[NSString alloc] initWithData:bodyData encoding:NSUTF8StringEncoding];
+  [request setHTTPBody:[body dataUsingEncoding:NSUTF8StringEncoding]];
+
+  NSURLResponse* response = nil;
+  NSError* error = nil;
+  NSDictionary* result = [TKRTestAdmin sendRequestSyncWithSession:[NSURLSession sharedSession]
+                                                          request:request
+                                                         errorPtr:&error
+                                                      responsePtr:&response];
+  if ([TKRTestAdmin logHttpErrorFor:@"getSmsVerificationCodeForApp" error:error response:response])
+    return nil;
+
+  return result[@"verification_code"];
+}
+
 + (NSDictionary*)sendRequestSyncWithSession:(nonnull NSURLSession*)session
                                     request:(nonnull NSMutableURLRequest*)request
                                    errorPtr:(__autoreleasing NSError**)errorPtr

@@ -15,6 +15,11 @@
                                     verificationToken:(nonnull NSString*)verificationToken
                                                 email:(nonnull NSString*)email;
 
++ (NSString* _Nullable)getSmsVerificationCodeForApp:(nonnull NSString*)appID
+                                       trustchaindUrl:(nonnull NSString*)trustchaindUrl
+                                    verificationToken:(nonnull NSString*)verificationToken
+                                          phoneNumber:(nonnull NSString*)phoneNumber;
+
 // MARK: Instance methods
 
 - (NSDictionary* _Nullable)createAppWithName:(nonnull NSString*)name;

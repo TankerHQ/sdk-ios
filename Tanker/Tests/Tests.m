@@ -265,16 +265,10 @@ SpecBegin(TankerSpecs)
       };
 
       __block NSString* (^getSMSVerificationCode)(NSString*) = ^(NSString* phoneNumber) {
-        tanker_future_t* f =
-            tanker_get_sms_verification_code(ctrustchaindurl,
-                                             [appID cStringUsingEncoding:NSUTF8StringEncoding],
-                                             [verificationToken cStringUsingEncoding:NSUTF8StringEncoding],
-                                             [phoneNumber cStringUsingEncoding:NSUTF8StringEncoding]);
-        tanker_future_wait(f);
-        char* code = (char*)tanker_future_get_voidptr(f);
-        NSString* ret = [NSString stringWithCString:code encoding:NSUTF8StringEncoding];
-        free(code);
-        return ret;
+        return [TKRTestAdmin getSmsVerificationCodeForApp:appID
+                                           trustchaindUrl:trustchaindUrl
+                                        verificationToken:verificationToken
+                                              phoneNumber:phoneNumber];
       };
 
       beforeAll(^{
