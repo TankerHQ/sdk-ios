@@ -32,7 +32,98 @@
   return admin;
 }
 
++ (BOOL)logHttpErrorFor:(nonnull NSString*)description
+                  error:(NSError* _Nullable)error
+               response:(NSURLResponse* _Nullable)response
+{
+  if (error)
+  {
+    NSLog(@"%@ http error : %@", description, error.description);
+    return YES;
+  }
+
+  NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
+  if ([httpResponse statusCode] >= 400)
+  {
+    NSLog(@"%@ request returned status %d", description, (int)[httpResponse statusCode]);
+    return YES;
+  }
+
+  return NO;
+}
+
++ (NSString* _Nullable)getEmailVerificationCodeForApp:(nonnull NSString*)appID
+                                       trustchaindUrl:(nonnull NSString*)trustchaindUrl
+                                    verificationToken:(nonnull NSString*)verificationToken
+                                                email:(nonnull NSString*)email
+{
+  NSString* url = [NSString stringWithFormat:@"%@/verification/email/code", trustchaindUrl];
+  NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
+  [request setHTTPMethod:@"POST"];
+  [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+
+  NSMutableDictionary* bodyDictionary = [[NSMutableDictionary alloc] init];
+  [bodyDictionary setValue:appID forKey:@"app_id"];
+  [bodyDictionary setValue:email forKey:@"email"];
+  [bodyDictionary setValue:verificationToken forKey:@"auth_token"];
+
+  NSData* bodyData = [NSJSONSerialization dataWithJSONObject:bodyDictionary
+                                                     options:NSJSONWritingPrettyPrinted
+                                                       error:nil];
+  NSString* body = [[NSString alloc] initWithData:bodyData encoding:NSUTF8StringEncoding];
+  [request setHTTPBody:[body dataUsingEncoding:NSUTF8StringEncoding]];
+
+  NSURLResponse* response = nil;
+  NSError* error = nil;
+  NSDictionary* result = [TKRTestAdmin sendRequestSyncWithSession:[NSURLSession sharedSession]
+                                                          request:request
+                                                         errorPtr:&error
+                                                      responsePtr:&response];
+  if ([TKRTestAdmin logHttpErrorFor:@"getEmailVerificationCodeForApp" error:error response:response])
+    return nil;
+
+  return result[@"verification_code"];
+}
+
++ (NSDictionary*)sendRequestSyncWithSession:(nonnull NSURLSession*)session
+                                    request:(nonnull NSMutableURLRequest*)request
+                                   errorPtr:(__autoreleasing NSError**)errorPtr
+                                responsePtr:(__autoreleasing NSURLResponse**)responsePtr
+{
+  __block NSData* result = nil;
+  dispatch_semaphore_t sem;
+  sem = dispatch_semaphore_create(0);
+  [[session dataTaskWithRequest:request
+              completionHandler:^(NSData* data, NSURLResponse* resp, NSError* err) {
+                if (errorPtr)
+                  *errorPtr = err;
+                if (responsePtr)
+                  *responsePtr = resp;
+                if (err == nil)
+                {
+                  result = data;
+                }
+                dispatch_semaphore_signal(sem);
+              }] resume];
+  dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+
+  if (result == nil)
+    return nil;
+
+  return [NSJSONSerialization JSONObjectWithData:result options:0 error:errorPtr];
+}
+
 // MARK: Instance methods
+
+- (NSDictionary*)sendRequestSync:(nonnull NSMutableURLRequest*)request
+                        errorPtr:(__autoreleasing NSError**)errorPtr
+                     responsePtr:(__autoreleasing NSURLResponse**)responsePtr
+{
+  return [TKRTestAdmin sendRequestSyncWithSession:self.session
+                                          request:request
+                                         errorPtr:errorPtr
+                                      responsePtr:responsePtr];
+}
 
 - (NSMutableURLRequest*)createRequestForId:(nonnull NSString*)id method:(nonnull NSString*)method body:(NSString*)body
 {
@@ -56,33 +147,6 @@
   return request;
 }
 
-- (NSDictionary*)sendRequestSync:(nonnull NSMutableURLRequest*)request
-                        errorPtr:(__autoreleasing NSError**)errorPtr
-                     responsePtr:(__autoreleasing NSURLResponse**)responsePtr
-{
-  __block NSData* result = nil;
-  dispatch_semaphore_t sem;
-  sem = dispatch_semaphore_create(0);
-  [[self.session dataTaskWithRequest:request
-                   completionHandler:^(NSData* data, NSURLResponse* resp, NSError* err) {
-                     if (errorPtr)
-                       *errorPtr = err;
-                     if (responsePtr)
-                       *responsePtr = resp;
-                     if (err == nil)
-                     {
-                       result = data;
-                     }
-                     dispatch_semaphore_signal(sem);
-                   }] resume];
-  dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
-
-  if (result == nil)
-    return nil;
-
-  return [NSJSONSerialization JSONObjectWithData:result options:0 error:errorPtr];
-}
-
 - (NSDictionary* _Nullable)createAppWithName:(nonnull NSString*)name
 {
   NSMutableDictionary* contentDictionary = [[NSMutableDictionary alloc] init];
@@ -99,19 +163,8 @@
   NSURLResponse* __block response = nil;
   NSDictionary* __block result = [self sendRequestSync:request errorPtr:&error responsePtr:&response];
 
-  if (error)
-  {
-    NSLog(@"create app error : %@", error.description);
+  if ([TKRTestAdmin logHttpErrorFor:@"createAppWithName" error:error response:response])
     return nil;
-  }
-
-  NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
-  if ([httpResponse statusCode] >= 400)
-  {
-    NSLog(@"create app request returned status %d", (int)[httpResponse statusCode]);
-    return nil;
-  }
-
   return result;
 }
 
@@ -123,15 +176,7 @@
   NSURLResponse* __block response = nil;
   [self sendRequestSync:request errorPtr:&error responsePtr:&response];
 
-  if (error)
-  {
-    NSLog(@"delete app error : %@", error.description);
-    return;
-  }
-
-  NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
-  if ([httpResponse statusCode] >= 400)
-    NSLog(@"delete app request returned status %d", (int)[httpResponse statusCode]);
+  [TKRTestAdmin logHttpErrorFor:@"deleteApp" error:error response:response];
 }
 
 - (NSError* _Nullable)updateApp:(NSString* _Nullable)appID

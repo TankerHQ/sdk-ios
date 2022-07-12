@@ -10,6 +10,11 @@
                    appManagementToken:(nonnull NSString*)appManagementToken
                       environmentName:(nonnull NSString*)environmentName;
 
++ (NSString* _Nullable)getEmailVerificationCodeForApp:(nonnull NSString*)appID
+                                       trustchaindUrl:(nonnull NSString*)trustchaindUrl
+                                    verificationToken:(nonnull NSString*)verificationToken
+                                                email:(nonnull NSString*)email;
+
 // MARK: Instance methods
 
 - (NSDictionary* _Nullable)createAppWithName:(nonnull NSString*)name;
