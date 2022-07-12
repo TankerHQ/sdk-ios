@@ -99,24 +99,6 @@ static TKRTankerOptions* createTankerOptions(NSString* url, NSString* appID)
   return opts;
 }
 
-static void updateAdminApp(tanker_admin_t* cadmin,
-                           NSString* appID,
-                           NSString* oidcClientID,
-                           NSString* oidcClientProvider,
-                           bool* enablePreverifiedVerification)
-{
-  char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_app_update_options_t options = TANKER_APP_UPDATE_OPTIONS_INIT;
-  options.preverified_verification = enablePreverifiedVerification;
-  if (oidcClientID)
-    options.oidc_client_id = [oidcClientID cStringUsingEncoding:NSUTF8StringEncoding];
-  if (oidcClientProvider)
-    options.oidc_client_provider = [oidcClientProvider cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_expected_t* update_fut = tanker_admin_app_update(cadmin, app_id, &options);
-  tanker_future_wait(update_fut);
-  tanker_future_destroy(update_fut);
-}
-
 static NSDictionary* sendOidcRequest(NSString* oidcClientId, NSString* oidcClientSecret, NSString* refreshToken)
 {
   NSMutableURLRequest* req =
@@ -1701,7 +1683,12 @@ SpecBegin(TankerSpecs)
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
           NSString* refreshToken = oidcTestConfig[@"users"][userName][@"refreshToken"];
 
-          updateAdminApp(cadmin, appID, oidcClientID, oidcClientProvider, nil);
+          NSError* error = [admin updateApp:appID
+                               oidcClientID:oidcClientID
+                         oidcClientProvider:oidcClientProvider
+              enablePreverifiedVerification:nil];
+          expect(error).to.beNil();
+
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
           NSString* userIdentity = createIdentity(email, appID, appSecret);
 
@@ -1862,11 +1849,19 @@ SpecBegin(TankerSpecs)
         describe(@"Preverified verification methods", ^{
           beforeAll(^{
             bool enablePreverified = true;
-            updateAdminApp(cadmin, appID, nil, nil, &enablePreverified);
+            NSError* error = [admin updateApp:appID
+                                 oidcClientID:nil
+                           oidcClientProvider:nil
+                enablePreverifiedVerification:&enablePreverified];
+            expect(error).to.beNil();
           });
           afterAll(^{
             bool enablePreverified = false;
-            updateAdminApp(cadmin, appID, nil, nil, &enablePreverified);
+            NSError* error = [admin updateApp:appID
+                                 oidcClientID:nil
+                           oidcClientProvider:nil
+                enablePreverifiedVerification:&enablePreverified];
+            expect(error).to.beNil();
           });
 
           it(@"should fail to register with a preverified email", ^{

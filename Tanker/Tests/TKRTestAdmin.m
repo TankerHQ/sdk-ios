@@ -134,4 +134,44 @@
     NSLog(@"delete app request returned status %d", (int)[httpResponse statusCode]);
 }
 
+- (NSError* _Nullable)updateApp:(NSString* _Nullable)appID
+                     oidcClientID:(NSString* _Nullable)oidcClientID
+               oidcClientProvider:(NSString* _Nullable)oidcClientProvider
+    enablePreverifiedVerification:(bool* _Nullable)enablePreverifiedVerification
+{
+  NSMutableDictionary* contentDictionary = [[NSMutableDictionary alloc] init];
+  if (oidcClientID != nil)
+    [contentDictionary setValue:oidcClientID forKey:@"oidc_client_id"];
+  if (oidcClientProvider != nil)
+    [contentDictionary setValue:oidcClientProvider forKey:@"oidc_provider"];
+  if (enablePreverifiedVerification != nil)
+    [contentDictionary setValue:[NSNumber numberWithBool:*enablePreverifiedVerification]
+                         forKey:@"preverified_verification_enabled"];
+
+  NSData* data = [NSJSONSerialization dataWithJSONObject:contentDictionary
+                                                 options:NSJSONWritingPrettyPrinted
+                                                   error:nil];
+  NSString* jsonStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+  NSMutableURLRequest* request = [self createRequestForId:appID method:@"PATCH" body:jsonStr];
+
+  NSError* __block error = nil;
+  NSURLResponse* __block response = nil;
+  [self sendRequestSync:request errorPtr:&error responsePtr:&response];
+  if (error)
+    return error;
+
+  NSHTTPURLResponse* httpResponse = (NSHTTPURLResponse*)response;
+  if ([httpResponse statusCode] >= 400)
+  {
+    return
+        [NSError errorWithDomain:@"TKRTestAdmin"
+                            code:1
+                        userInfo:@{
+                          NSLocalizedDescriptionKey : [NSString
+                              stringWithFormat:@"update app request returned status %d", (int)[httpResponse statusCode]]
+                        }];
+  }
+  return nil;
+}
+
 @end
