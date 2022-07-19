@@ -1,7 +1,9 @@
-#include <Tanker/TKRNetwork+Private.h>
+#include <Tanker/TKRNetwork.h>
 #import <Tanker/Utils/TKRUtils.h>
 
 #include <libkern/OSAtomic.h>
+
+#include "ctanker.h"
 
 @interface HTTPClient : NSObject
 

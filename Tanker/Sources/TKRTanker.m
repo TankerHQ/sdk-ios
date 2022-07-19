@@ -9,7 +9,7 @@
 #import <Tanker/TKRError.h>
 #import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRLogEntry.h>
-#import <Tanker/TKRNetwork+Private.h>
+#import <Tanker/TKRNetwork.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRVerification+Private.h>
