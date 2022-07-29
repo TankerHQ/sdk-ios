@@ -2,6 +2,7 @@ Pod::Spec.new do |s|
   s.name             = 'Tanker'
   s.version          = '9999'
   s.summary          = 'End to end encryption'
+  s.deprecated       = true
 
   s.description      = <<-DESC
 Tanker is a end-to-end encryption SDK.
