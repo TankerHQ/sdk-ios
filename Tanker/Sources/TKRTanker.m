@@ -94,16 +94,16 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   switch (ret.type)
   {
   case TKRVerificationMethodTypeEmail:
-    ret.email = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.email = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePhoneNumber:
-    ret.phoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.phoneNumber = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePreverifiedEmail:
-    ret.preverifiedEmail = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.preverifiedEmail = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePreverifiedPhoneNumber:
-    ret.preverifiedPhoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.preverifiedPhoneNumber = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
