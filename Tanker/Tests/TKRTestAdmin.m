@@ -160,16 +160,17 @@
 
 - (NSMutableURLRequest*)createRequestForId:(nonnull NSString*)id method:(nonnull NSString*)method body:(NSString*)body
 {
-  NSString* b64UrlId = id;
-  if (id.length != 0)
-  {
-    NSData* decoded = [[NSData alloc] initWithBase64EncodedString:id options:0];
-    b64UrlId = [decoded base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
-    b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
-    b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
-    b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"=" withString:@""];
-  }
-  NSString* url = [NSString stringWithFormat:@"%@/v1/apps/%@", self.appManagementUrl, b64UrlId];
+    NSString* b64UrlId = id;
+    if (id.length != 0)
+    {
+      NSData* decoded = [[NSData alloc] initWithBase64EncodedString:id options:0];
+      b64UrlId = [decoded base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
+      b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
+      b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
+      b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"=" withString:@""];
+      b64UrlId = [NSString stringWithFormat:@"/%@", b64UrlId];
+    }
+    NSString* url = [NSString stringWithFormat:@"%@/v2/apps%@", self.appManagementUrl, b64UrlId];
   NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
 
   [request setHTTPMethod:method];
