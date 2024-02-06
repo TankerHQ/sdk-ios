@@ -372,18 +372,6 @@ SpecBegin(TankerSpecs)
           stop(tanker);
         });
 
-        it(@"should return a valid base64 string when retrieving the current device id", ^{
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker deviceIDWithCompletionHandler:adapter];
-          });
-
-          NSData* b64Data = [[NSData alloc] initWithBase64EncodedString:deviceID options:0];
-          expect(b64Data).toNot.beNil();
-
-          stop(tanker);
-        });
-
         it(@"should be able to stop tanker while a call is in flight", ^{
           // This test tries to cancel an on-going HTTP request. There is no
           // assertion, it's just a best effort to check that we won't crash

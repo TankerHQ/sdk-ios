@@ -419,26 +419,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
-- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    if (err)
-    {
-      handler(nil, err);
-      return;
-    }
-    char* device_id = (char*)TKR_numberToPtr(ptrValue);
-    NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
-    tanker_free_buffer(device_id);
-    handler(ret, nil);
-  };
-  tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
-  tanker_future_t* resolve_future =
-      tanker_future_then(device_id_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(device_id_future);
-  tanker_future_destroy(resolve_future);
-}
-
 - (void)createOidcNonceWithCompletionHandler:(nonnull TKRNonceHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
