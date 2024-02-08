@@ -57,6 +57,7 @@ It's available for browsers, desktop, iOS and Android.
           'TANKER_OIDC_CLIENT_ID',
           'TANKER_OIDC_CLIENT_SECRET',
           'TANKER_OIDC_PROVIDER',
+          'TANKER_OIDC_ISSUER',
           'TANKER_OIDC_MARTINE_EMAIL',
           'TANKER_OIDC_MARTINE_REFRESH_TOKEN',
           'TANKER_VERIFICATION_API_TEST_TOKEN'

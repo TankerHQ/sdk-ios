@@ -288,6 +288,7 @@ SpecBegin(TankerSpecs)
           @"clientId" : env[@"TANKER_OIDC_CLIENT_ID"],
           @"clientSecret" : env[@"TANKER_OIDC_CLIENT_SECRET"],
           @"provider" : env[@"TANKER_OIDC_PROVIDER"],
+          @"issuer" : env[@"TANKER_OIDC_ISSUER"],
           @"users" : @{
             @"martine" : @{
               @"email" : env[@"TANKER_OIDC_MARTINE_EMAIL"],
@@ -1640,6 +1641,7 @@ SpecBegin(TankerSpecs)
           NSString* oidcClientID = oidcTestConfig[@"clientId"];
           NSString* oidcClientSecret = oidcTestConfig[@"clientSecret"];
           NSString* oidcClientProvider = oidcTestConfig[@"provider"];
+            NSString* oidcIssuer = oidcTestConfig[@"issuer"];
 
           NSString* userName = @"martine";
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
@@ -1648,7 +1650,7 @@ SpecBegin(TankerSpecs)
           NSError* error = [admin updateApp:appID
                                oidcClientID:oidcClientID
                          oidcClientProvider:oidcClientProvider
-              enablePreverifiedVerification:nil];
+                                 oidcIssuer:oidcIssuer];
           expect(error).to.beNil();
 
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];

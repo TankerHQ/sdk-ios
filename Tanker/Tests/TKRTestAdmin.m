@@ -216,16 +216,20 @@
 - (NSError* _Nullable)updateApp:(NSString* _Nullable)appID
                      oidcClientID:(NSString* _Nullable)oidcClientID
                oidcClientProvider:(NSString* _Nullable)oidcClientProvider
-    enablePreverifiedVerification:(bool* _Nullable)enablePreverifiedVerification
+                     oidcIssuer:(NSString* _Nullable)oidcIssuer
 {
   NSMutableDictionary* contentDictionary = [[NSMutableDictionary alloc] init];
-  if (oidcClientID != nil)
-    [contentDictionary setValue:oidcClientID forKey:@"oidc_client_id"];
-  if (oidcClientProvider != nil)
-    [contentDictionary setValue:oidcClientProvider forKey:@"oidc_provider"];
-  if (enablePreverifiedVerification != nil)
-    [contentDictionary setValue:[NSNumber numberWithBool:*enablePreverifiedVerification]
-                         forKey:@"preverified_verification_enabled"];
+    
+  if (oidcClientID != nil || oidcClientProvider != nil)
+  {
+      NSMutableDictionary* oidcProviders = [[NSMutableDictionary alloc] init];
+      
+      [oidcProviders setValue:oidcClientID forKey:@"client_id"];
+      [oidcProviders setValue:oidcClientProvider forKey:@"display_name"];
+      [oidcProviders setValue:oidcIssuer forKey:@"issuer"];
+      
+      [contentDictionary setValue:[NSArray arrayWithObjects:oidcProviders,nil] forKey:@"oidc_providers"];
+  }
 
   NSData* data = [NSJSONSerialization dataWithJSONObject:contentDictionary
                                                  options:NSJSONWritingPrettyPrinted
