@@ -648,14 +648,16 @@ SpecBegin(TankerSpecs)
           it(@"should encrypt a stream with padding", ^{
             clearData = [NSMutableData dataWithLength:1024 * 1024 * 3 + 2];
             dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
+              TKREncryptionOptions *opts = [TKREncryptionOptions options];
+              opts.paddingStep = [TKRPadding step:500];
             NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
 
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker encryptStream:clearStream completionHandler:adapter];
+                [tanker encryptStream:clearStream options:opts completionHandler:adapter];
             });
 
             NSData* encryptedData = [PMKPromise hang:[reader readAll:encryptedStream]];
-            expect(encryptedData.length).to.equal(3211512);
+            expect(encryptedData.length).to.equal(3 * 1024 * 1024 + 389);
           });
 
           it(@"should fail to read when maxLength is superior to NSIntegerMax", ^{
