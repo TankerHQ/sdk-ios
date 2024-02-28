@@ -160,16 +160,17 @@
 
 - (NSMutableURLRequest*)createRequestForId:(nonnull NSString*)id method:(nonnull NSString*)method body:(NSString*)body
 {
-  NSString* b64UrlId = id;
-  if (id.length != 0)
-  {
-    NSData* decoded = [[NSData alloc] initWithBase64EncodedString:id options:0];
-    b64UrlId = [decoded base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
-    b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
-    b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
-    b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"=" withString:@""];
-  }
-  NSString* url = [NSString stringWithFormat:@"%@/v1/apps/%@", self.appManagementUrl, b64UrlId];
+    NSString* b64UrlId = id;
+    if (id.length != 0)
+    {
+      NSData* decoded = [[NSData alloc] initWithBase64EncodedString:id options:0];
+      b64UrlId = [decoded base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
+      b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
+      b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
+      b64UrlId = [b64UrlId stringByReplacingOccurrencesOfString:@"=" withString:@""];
+      b64UrlId = [NSString stringWithFormat:@"/%@", b64UrlId];
+    }
+    NSString* url = [NSString stringWithFormat:@"%@/v2/apps%@", self.appManagementUrl, b64UrlId];
   NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
 
   [request setHTTPMethod:method];
@@ -215,16 +216,20 @@
 - (NSError* _Nullable)updateApp:(NSString* _Nullable)appID
                      oidcClientID:(NSString* _Nullable)oidcClientID
                oidcClientProvider:(NSString* _Nullable)oidcClientProvider
-    enablePreverifiedVerification:(bool* _Nullable)enablePreverifiedVerification
+                     oidcIssuer:(NSString* _Nullable)oidcIssuer
 {
   NSMutableDictionary* contentDictionary = [[NSMutableDictionary alloc] init];
-  if (oidcClientID != nil)
-    [contentDictionary setValue:oidcClientID forKey:@"oidc_client_id"];
-  if (oidcClientProvider != nil)
-    [contentDictionary setValue:oidcClientProvider forKey:@"oidc_provider"];
-  if (enablePreverifiedVerification != nil)
-    [contentDictionary setValue:[NSNumber numberWithBool:*enablePreverifiedVerification]
-                         forKey:@"preverified_verification_enabled"];
+    
+  if (oidcClientID != nil || oidcClientProvider != nil)
+  {
+      NSMutableDictionary* oidcProviders = [[NSMutableDictionary alloc] init];
+      
+      [oidcProviders setValue:oidcClientID forKey:@"client_id"];
+      [oidcProviders setValue:oidcClientProvider forKey:@"display_name"];
+      [oidcProviders setValue:oidcIssuer forKey:@"issuer"];
+      
+      [contentDictionary setValue:[NSArray arrayWithObjects:oidcProviders,nil] forKey:@"oidc_providers"];
+  }
 
   NSData* data = [NSJSONSerialization dataWithJSONObject:contentDictionary
                                                  options:NSJSONWritingPrettyPrinted

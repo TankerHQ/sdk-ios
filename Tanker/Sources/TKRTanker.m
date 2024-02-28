@@ -94,16 +94,16 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   switch (ret.type)
   {
   case TKRVerificationMethodTypeEmail:
-    ret.email = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.email = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePhoneNumber:
-    ret.phoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.phoneNumber = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePreverifiedEmail:
-    ret.preverifiedEmail = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.preverifiedEmail = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePreverifiedPhoneNumber:
-    ret.preverifiedPhoneNumber = [NSString stringWithCString:c_verification->value encoding:NSUTF8StringEncoding];
+    ret.preverifiedPhoneNumber = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
@@ -416,26 +416,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* resolve_future =
       tanker_future_then(verify_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(verify_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    if (err)
-    {
-      handler(nil, err);
-      return;
-    }
-    char* device_id = (char*)TKR_numberToPtr(ptrValue);
-    NSString* ret = [NSString stringWithCString:device_id encoding:NSUTF8StringEncoding];
-    tanker_free_buffer(device_id);
-    handler(ret, nil);
-  };
-  tanker_future_t* device_id_future = tanker_device_id((tanker_t*)self.cTanker);
-  tanker_future_t* resolve_future =
-      tanker_future_then(device_id_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(device_id_future);
   tanker_future_destroy(resolve_future);
 }
 

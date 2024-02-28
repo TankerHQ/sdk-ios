@@ -14,7 +14,7 @@ It's available for browsers, desktop, iOS and Android.
   s.author           = 'Tanker developers'
   s.source           = { :http => "https://storage.googleapis.com/cocoapods.tanker.io/ios/tanker-ios-sdk-#{s.version}.tar.gz" }
 
-  s.ios.deployment_target = '9.0'
+  s.ios.deployment_target = '12.0'
 
   s.source_files = 'Sources/TKR*', 'Headers/TKR*'
   s.private_header_files = 'Headers/*+Private.h'
@@ -57,6 +57,7 @@ It's available for browsers, desktop, iOS and Android.
           'TANKER_OIDC_CLIENT_ID',
           'TANKER_OIDC_CLIENT_SECRET',
           'TANKER_OIDC_PROVIDER',
+          'TANKER_OIDC_ISSUER',
           'TANKER_OIDC_MARTINE_EMAIL',
           'TANKER_OIDC_MARTINE_REFRESH_TOKEN',
           'TANKER_VERIFICATION_API_TEST_TOKEN'

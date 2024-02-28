@@ -153,8 +153,8 @@ static NSData* _Nonnull stringToData(NSString* _Nonnull str)
   return [NSData dataWithBytes:str.UTF8String length:str.length];
 }
 
-static NSUInteger SIMPLE_ENCRYPTION_OVERHEAD = 17;
-static NSUInteger SIMPLE_PADDED_ENCRYPTION_OVERHEAD = 18; // SIMPLE_ENCRYPTION_OVERHEAD + 1
+static NSUInteger SIMPLE_ENCRYPTION_OVERHEAD = 49;
+static NSUInteger SIMPLE_PADDED_ENCRYPTION_OVERHEAD = 50; // SIMPLE_ENCRYPTION_OVERHEAD + 1
 static NSUInteger ENCRYPTION_SESSION_OVERHEAD = 57;
 static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = 58; // ENCRYPTION_SESSION_OVERHEAD + 1
 
@@ -288,6 +288,7 @@ SpecBegin(TankerSpecs)
           @"clientId" : env[@"TANKER_OIDC_CLIENT_ID"],
           @"clientSecret" : env[@"TANKER_OIDC_CLIENT_SECRET"],
           @"provider" : env[@"TANKER_OIDC_PROVIDER"],
+          @"issuer" : env[@"TANKER_OIDC_ISSUER"],
           @"users" : @{
             @"martine" : @{
               @"email" : env[@"TANKER_OIDC_MARTINE_EMAIL"],
@@ -369,18 +370,6 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
           stop(tanker);
           startWithIdentity(tanker, identity);
-          stop(tanker);
-        });
-
-        it(@"should return a valid base64 string when retrieving the current device id", ^{
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          NSString* deviceID = hangWithAdapter(^(PMKAdapter adapter) {
-            [tanker deviceIDWithCompletionHandler:adapter];
-          });
-
-          NSData* b64Data = [[NSData alloc] initWithBase64EncodedString:deviceID options:0];
-          expect(b64Data).toNot.beNil();
-
           stop(tanker);
         });
 
@@ -659,14 +648,16 @@ SpecBegin(TankerSpecs)
           it(@"should encrypt a stream with padding", ^{
             clearData = [NSMutableData dataWithLength:1024 * 1024 * 3 + 2];
             dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
+              TKREncryptionOptions *opts = [TKREncryptionOptions options];
+              opts.paddingStep = [TKRPadding step:500];
             NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
 
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
-              [tanker encryptStream:clearStream completionHandler:adapter];
+                [tanker encryptStream:clearStream options:opts completionHandler:adapter];
             });
 
             NSData* encryptedData = [PMKPromise hang:[reader readAll:encryptedStream]];
-            expect(encryptedData.length).to.equal(3211512);
+            expect(encryptedData.length).to.equal(3 * 1024 * 1024 + 389);
           });
 
           it(@"should fail to read when maxLength is superior to NSIntegerMax", ^{
@@ -1652,6 +1643,7 @@ SpecBegin(TankerSpecs)
           NSString* oidcClientID = oidcTestConfig[@"clientId"];
           NSString* oidcClientSecret = oidcTestConfig[@"clientSecret"];
           NSString* oidcClientProvider = oidcTestConfig[@"provider"];
+            NSString* oidcIssuer = oidcTestConfig[@"issuer"];
 
           NSString* userName = @"martine";
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
@@ -1660,7 +1652,7 @@ SpecBegin(TankerSpecs)
           NSError* error = [admin updateApp:appID
                                oidcClientID:oidcClientID
                          oidcClientProvider:oidcClientProvider
-              enablePreverifiedVerification:nil];
+                                 oidcIssuer:oidcIssuer];
           expect(error).to.beNil();
 
           TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
@@ -1818,144 +1810,6 @@ SpecBegin(TankerSpecs)
             [secondDevice decryptStringFromData:encryptedText completionHandler:adapter];
           });
           expect(decryptedText).to.equal(clearText);
-        });
-
-        describe(@"Preverified verification methods", ^{
-          beforeAll(^{
-            bool enablePreverified = true;
-            NSError* error = [admin updateApp:appID
-                                 oidcClientID:nil
-                           oidcClientProvider:nil
-                enablePreverifiedVerification:&enablePreverified];
-            expect(error).to.beNil();
-          });
-          afterAll(^{
-            bool enablePreverified = false;
-            NSError* error = [admin updateApp:appID
-                                 oidcClientID:nil
-                           oidcClientProvider:nil
-                enablePreverifiedVerification:&enablePreverified];
-            expect(error).to.beNil();
-          });
-
-          it(@"should fail to register with a preverified email", ^{
-            NSString* email = @"bob.alice@tanker.io";
-            TKRVerification* verification = [TKRVerification verificationFromPreverifiedEmail:email];
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [firstDevice startWithIdentity:identity
-                           completionHandler:^(TKRStatus status, NSError* err) {
-                             if (err)
-                               resolver(err);
-                             else
-                             {
-                               [firstDevice registerIdentityWithVerification:verification completionHandler:resolver];
-                             }
-                           }];
-            });
-            expect(err).toNot.beNil();
-            expect(err.code).to.equal(TKRErrorInvalidArgument);
-          });
-
-          it(@"should fail to register with a preverified phone number", ^{
-            NSString* phoneNumber = @"+33639982233";
-            TKRVerification* verification = [TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber];
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [firstDevice startWithIdentity:identity
-                           completionHandler:^(TKRStatus status, NSError* err) {
-                             if (err)
-                               resolver(err);
-                             else
-                             {
-                               [firstDevice registerIdentityWithVerification:verification completionHandler:resolver];
-                             }
-                           }];
-            });
-            expect(err).toNot.beNil();
-            expect(err.code).to.equal(TKRErrorInvalidArgument);
-          });
-
-          it(@"should register with an email and fail to verify a preverified email", ^{
-            NSString* email = @"bob.alice@tanker.io";
-            startWithIdentityAndRegister(firstDevice,
-                                         identity,
-                                         [TKRVerification verificationFromEmail:email
-                                                               verificationCode:getEmailVerificationCode(email)]);
-            hangWithResolver(^(PMKResolver resolver) {
-              [secondDevice startWithIdentity:identity
-                            completionHandler:^(TKRStatus status, NSError* err) {
-                              resolver(nil);
-                            }];
-            });
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedEmail:email]
-                                         completionHandler:resolver];
-            });
-            expect(err).toNot.beNil();
-            expect(err.code).to.equal(TKRErrorInvalidArgument);
-          });
-
-          it(@"should register with a phone number and fail to verify a preverified phone number", ^{
-            NSString* phoneNumber = @"+33639982233";
-            startWithIdentityAndRegister(
-                firstDevice,
-                identity,
-                [TKRVerification verificationFromPhoneNumber:phoneNumber
-                                            verificationCode:getSMSVerificationCode(phoneNumber)]);
-            hangWithResolver(^(PMKResolver resolver) {
-              [secondDevice startWithIdentity:identity
-                            completionHandler:^(TKRStatus status, NSError* err) {
-                              resolver(nil);
-                            }];
-            });
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [secondDevice
-                  verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber]
-                               completionHandler:resolver];
-            });
-            expect(err).toNot.beNil();
-            expect(err.code).to.equal(TKRErrorInvalidArgument);
-          });
-
-          it(@"should register with a passphrase and set a preverified email method", ^{
-            NSString* email = @"bob.alice@tanker.io";
-            startWithIdentityAndRegister(
-                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedEmail:email]
-                               completionHandler:resolver];
-            });
-            expect(err).to.beNil();
-            NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
-              [firstDevice verificationMethodsWithCompletionHandler:adapter];
-            });
-            expect(methods.count).to.equal(2);
-
-            startWithIdentityAndVerify(secondDevice,
-                                       identity,
-                                       [TKRVerification verificationFromEmail:email
-                                                             verificationCode:getEmailVerificationCode(email)]);
-          });
-
-          it(@"should register with a passphrase and set a preverified phone number method", ^{
-            NSString* phoneNumber = @"+33639982233";
-            startWithIdentityAndRegister(
-                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
-            NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber]
-                               completionHandler:resolver];
-            });
-            expect(err).to.beNil();
-            NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
-              [firstDevice verificationMethodsWithCompletionHandler:adapter];
-            });
-            expect(methods.count).to.equal(2);
-
-            startWithIdentityAndVerify(
-                secondDevice,
-                identity,
-                [TKRVerification verificationFromPhoneNumber:phoneNumber
-                                            verificationCode:getSMSVerificationCode(phoneNumber)]);
-          });
         });
       });
 

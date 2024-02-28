@@ -27,6 +27,6 @@
 - (NSError* _Nullable)updateApp:(NSString* _Nullable)appID
                    oidcClientID:(NSString* _Nullable)oidcClientID
              oidcClientProvider:(NSString* _Nullable)oidcClientProvider
-  enablePreverifiedVerification:(bool* _Nullable)enablePreverifiedVerification;
+                     oidcIssuer:(NSString* _Nullable)oidcIssuer;
 
 @end
