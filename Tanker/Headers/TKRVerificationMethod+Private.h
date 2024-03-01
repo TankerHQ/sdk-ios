@@ -9,5 +9,7 @@
 @property(nonnull, readwrite) NSString* phoneNumber;
 @property(nonnull, readwrite) NSString* preverifiedEmail;
 @property(nonnull, readwrite) NSString* preverifiedPhoneNumber;
+@property(nonnull, readwrite) NSString* oidcProviderID;
+@property(nonnull, readwrite) NSString* oidcProviderDisplayName;
 
 @end

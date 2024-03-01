@@ -79,6 +79,10 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
   case TKRVerificationMethodTypeE2ePassphrase:
     c_verification->e2e_passphrase = [verification.e2ePassphrase cStringUsingEncoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypePreverifiedOIDC:
+    c_verification->preverified_oidc_verification.subject = [verification.preverifiedOIDC.subject cStringUsingEncoding:NSUTF8StringEncoding];
+    c_verification->preverified_oidc_verification.provider_id = [verification.preverifiedOIDC.providerID cStringUsingEncoding:NSUTF8StringEncoding];
+    break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -105,11 +109,17 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   case TKRVerificationMethodTypePreverifiedPhoneNumber:
     ret.preverifiedPhoneNumber = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypeOIDCIDToken:
+    ret.oidcProviderID = [NSString stringWithCString:c_verification->value1 encoding:NSUTF8StringEncoding];
+    ret.oidcProviderDisplayName = [NSString stringWithCString:c_verification->value2 encoding:NSUTF8StringEncoding];
+    break;
   case TKRVerificationMethodTypePassphrase:
   case TKRVerificationMethodTypeVerificationKey:
-  case TKRVerificationMethodTypeOIDCIDToken:
   case TKRVerificationMethodTypeE2ePassphrase:
     break;
+  case TKRVerificationMethodTypePreverifiedOIDC:
+    NSLog(@"Unreachable code: PreverifiedOIDC is not exposed as a VerificationMethod");
+    assert(false);
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);
     assert(false);

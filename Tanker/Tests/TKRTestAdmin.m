@@ -219,16 +219,19 @@
                      oidcIssuer:(NSString* _Nullable)oidcIssuer
 {
   NSMutableDictionary* contentDictionary = [[NSMutableDictionary alloc] init];
-    
+  [contentDictionary setValue:@YES forKey:@"oidc_providers_allow_delete"];
+
   if (oidcClientID != nil || oidcClientProvider != nil)
   {
       NSMutableDictionary* oidcProviders = [[NSMutableDictionary alloc] init];
-      
+
       [oidcProviders setValue:oidcClientID forKey:@"client_id"];
       [oidcProviders setValue:oidcClientProvider forKey:@"display_name"];
       [oidcProviders setValue:oidcIssuer forKey:@"issuer"];
-      
-      [contentDictionary setValue:[NSArray arrayWithObjects:oidcProviders,nil] forKey:@"oidc_providers"];
+
+      [contentDictionary setValue:@[oidcProviders] forKey:@"oidc_providers"];
+  } else {
+      [contentDictionary setValue:@[] forKey:@"oidc_providers"];
   }
 
   NSData* data = [NSJSONSerialization dataWithJSONObject:contentDictionary
@@ -255,6 +258,18 @@
                         }];
   }
   return nil;
+}
+
+- (NSDictionary* _Nullable) getOIDCProviderFromAppID:(nonnull NSString*)appID
+{
+  NSMutableURLRequest* request = [self createRequestForId:appID method:@"GET" body:nil];
+
+  NSError* __block error = nil;
+  NSURLResponse* __block response = nil;
+  NSDictionary* __block result = [self sendRequestSync:request errorPtr:&error responsePtr:&response];
+  [TKRTestAdmin logHttpErrorFor:@"getOIDCProviderIDForApp" error:error response:response];
+
+  return result[@"app"][@"oidc_providers"][0];
 }
 
 @end
