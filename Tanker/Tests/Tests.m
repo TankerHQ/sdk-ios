@@ -3,7 +3,6 @@
 #import <Tanker/TKRAttachResult.h>
 #import <Tanker/TKREncryptionSession.h>
 #import <Tanker/TKRError.h>
-#import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRPadding.h>
 #import <Tanker/TKRTanker.h>
 #import <Tanker/TKRTankerOptions.h>
@@ -21,7 +20,6 @@
 #import "TKRTestAsyncStreamReader.h"
 
 #import <Expecta/Expecta.h>
-#import <POSInputStreamLibrary/POSInputStreamLibrary.h>
 #import <PromiseKit/PromiseKit.h>
 #import <Specta/Specta.h>
 
@@ -621,17 +619,16 @@ SpecBegin(TankerSpecs)
 
         describe(@"streams", ^{
           __block NSData* clearData;
-          __block TKRCustomDataSource* dataSource;
+          __block TKRCustomDataSource* clearStream;
           __block TKRTestAsyncStreamReader* reader;
 
           beforeEach(^{
             clearData = [NSMutableData dataWithLength:1024 * 1024 * 2 + 4];
-            dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
+            clearStream = [TKRCustomDataSource customDataSourceWithData:clearData];
             reader = [[TKRTestAsyncStreamReader alloc] init];
           });
 
           it(@"should decrypt an encrypted stream", ^{
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
             });
@@ -647,10 +644,9 @@ SpecBegin(TankerSpecs)
 
           it(@"should encrypt a stream with padding", ^{
             clearData = [NSMutableData dataWithLength:1024 * 1024 * 3 + 2];
-            dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
-              TKREncryptionOptions *opts = [TKREncryptionOptions options];
-              opts.paddingStep = [TKRPadding step:500];
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+            NSInputStream* clearStream = [TKRCustomDataSource customDataSourceWithData:clearData];
+            TKREncryptionOptions *opts = [TKREncryptionOptions options];
+            opts.paddingStep = [TKRPadding step:500];
 
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
                 [tanker encryptStream:clearStream options:opts completionHandler:adapter];
@@ -661,8 +657,6 @@ SpecBegin(TankerSpecs)
           });
 
           it(@"should fail to read when maxLength is superior to NSIntegerMax", ^{
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
-
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
             });
@@ -673,15 +667,13 @@ SpecBegin(TankerSpecs)
 
             expect(nbRead).to.equal(-1);
             expect(encryptedStream.streamError).toNot.beNil();
-            NSError* underlyingError = encryptedStream.streamError.userInfo[NSUnderlyingErrorKey];
+            NSError* underlyingError = encryptedStream.streamError;
 
             expect(underlyingError.code).to.equal(TKRErrorInvalidArgument);
             expect(underlyingError.domain).to.equal(TKRErrorDomain);
           });
 
           it(@"should read a stream asynchronously", ^{
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
-
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
             });
@@ -696,9 +688,7 @@ SpecBegin(TankerSpecs)
           });
 
           it(@"should read a slow stream asynchronously", ^{
-            dataSource.isSlow = YES;
-
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+            clearStream.isSlow = YES;
 
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
@@ -715,10 +705,8 @@ SpecBegin(TankerSpecs)
           });
 
           it(@"should err when asynchronously reading a stream fails", ^{
-            dataSource.willErr = YES;
-
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
-
+            clearStream.willErr = YES;
+            
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
             });
@@ -727,18 +715,13 @@ SpecBegin(TankerSpecs)
             NSError* err = [PMKPromise hang:[reader readAll:encryptedStream]];
 
             expect(err).toNot.beNil();
-            expect(err.domain).to.equal(@"com.github.pavelosipov.POSBlobInputStreamErrorDomain");
-            NSError* underlyingError = err.userInfo[NSUnderlyingErrorKey];
-            NSError* tankerError = underlyingError.userInfo[NSUnderlyingErrorKey];
-            expect(underlyingError).to.equal(clearStream.streamError);
-            expect(tankerError.domain).to.equal(@"TKRTestErrorDomain");
+            expect(err.domain).to.equal(@"TKRTestErrorDomain");
+            expect(err).to.equal(clearStream.streamError);
           });
 
           it(@"should err when asynchronously reading a slow stream fails", ^{
-            dataSource.isSlow = YES;
-            dataSource.willErr = YES;
-
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+            clearStream.isSlow = YES;
+            clearStream.willErr = YES;
 
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
@@ -748,16 +731,11 @@ SpecBegin(TankerSpecs)
             NSError* err = [PMKPromise hang:[reader readAll:encryptedStream]];
 
             expect(err).toNot.beNil();
-            expect(err.domain).to.equal(@"com.github.pavelosipov.POSBlobInputStreamErrorDomain");
-            NSError* underlyingError = err.userInfo[NSUnderlyingErrorKey];
-            NSError* tankerError = underlyingError.userInfo[NSUnderlyingErrorKey];
-            expect(underlyingError).to.equal(clearStream.streamError);
-            expect(tankerError.domain).to.equal(@"TKRTestErrorDomain");
+            expect(err.domain).to.equal(@"TKRTestErrorDomain");
+            expect(err).to.equal(clearStream.streamError);
           });
 
           it(@"should return the correct hasBytesAvailable value", ^{
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
-
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
             });
@@ -771,7 +749,6 @@ SpecBegin(TankerSpecs)
           });
 
           it(@"should fail to process an already open stream", ^{
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
             [clearStream open];
             NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
@@ -783,7 +760,6 @@ SpecBegin(TankerSpecs)
           });
 
           it(@"does not support getBuffer function", ^{
-            NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptStream:clearStream completionHandler:adapter];
             });
@@ -1054,9 +1030,8 @@ SpecBegin(TankerSpecs)
           });
 
           NSData* clearData = [NSMutableData dataWithLength:1024 * 1024 * 2 + 4];
-          TKRCustomDataSource* dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
+          NSInputStream* clearStream = [TKRCustomDataSource customDataSourceWithData:clearData];
           TKRTestAsyncStreamReader* reader = [[TKRTestAsyncStreamReader alloc] init];
-          NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
 
           NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
             [encSess encryptStream:clearStream completionHandler:adapter];
@@ -1262,11 +1237,10 @@ SpecBegin(TankerSpecs)
 
         it(@"should share a stream with Bob who can decrypt it", ^{
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
-          TKRCustomDataSource* dataSource = [TKRCustomDataSource customDataSourceWithData:clearData];
+          NSInputStream* clearStream = [TKRCustomDataSource customDataSourceWithData:clearData];
           TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
           encryptionOptions.shareWithUsers = @[ bobPublicIdentity ];
 
-          NSInputStream* clearStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
           NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker encryptStream:clearStream options:encryptionOptions completionHandler:adapter];
           });

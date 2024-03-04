@@ -1,5 +1,13 @@
+#import <Foundation/Foundation.h>
 
 #import "TKRCustomDataSource.h"
+
+@interface TKRCustomDataSource () <NSStreamDelegate> {
+    // Not a property to avoid clash with NSInputStream's hasBytesAvailable
+    BOOL hasBytesAvailable;
+}
+
+@end
 
 @implementation TKRCustomDataSource
 
@@ -8,48 +16,67 @@
   return [[TKRCustomDataSource alloc] initWithData:data];
 }
 
-- (nullable instancetype)initWithData:(nonnull NSData*)data
+- (instancetype)initWithData:(nonnull NSData*)data
 {
-  if (self = [super init])
-  {
-    self.willErr = NO;
-    self.isSlow = NO;
-    self.data = data;
-    self.currentPosition = 0;
-  }
-  return self;
-}
+  self = [super init];
+  assert(self);
 
-- (BOOL)getBuffer:(uint8_t**)buffer length:(NSUInteger*)bufferLength
-{
-  return NO;
+  self.willErr = NO;
+  self.isSlow = NO;
+  self.data = data;
+  self.currentPosition = 0;
+  return self;
 }
 
 - (void)open
 {
-  self.openCompleted = YES;
+  if ([self streamStatus] != NSStreamStatusNotOpen) {
+    NSLog(@"%@: stream already open", self);
+    return;
+  }
+  [super open];
+  
   if (self.isSlow)
   {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 100 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-      self.hasBytesAvailable = YES;
+      self->hasBytesAvailable = YES;
+      [self enqueueEvent:NSStreamEventHasBytesAvailable];
     });
   }
-  else
-    self.hasBytesAvailable = YES;
+  else {
+    self->hasBytesAvailable = YES;
+    [self enqueueEvent:NSStreamEventHasBytesAvailable];
+  }
 }
 
-- (id)propertyForKey:(NSString*)key
-{
-  return nil;
+- (void)close {
+  if (![self isOpen])
+    return;
+  [super close];
+}
+
+- (BOOL)hasBytesAvailable {
+  if (![self isOpen]) {
+    return NO;
+  }
+  
+  return self->hasBytesAvailable;
 }
 
 - (NSInteger)read:(uint8_t*)buffer maxLength:(NSUInteger)maxLength
 {
-  // POSInputStreamLibrary errors when reading a closed stream, this function cannot be called in this state.
+  if (![self isOpen]) {
+    NSLog(@"%@: Stream is not open, status %ld.", self, (long)[self streamStatus]);
+    return -1;
+  }
+  if ([self streamStatus] == NSStreamStatusAtEnd) {
+    return 0;
+  }
+  
   assert(maxLength <= NSIntegerMax);
   if (self.willErr && self.currentPosition > 0)
   {
-    self.error = [NSError errorWithDomain:@"TKRTestErrorDomain" code:42 userInfo:nil];
+    [self setError:[NSError errorWithDomain:@"TKRTestErrorDomain" code:42 userInfo:nil]];
     return -1;
   }
   NSInteger remaining = self.data.length - self.currentPosition;
@@ -58,22 +85,22 @@
   self.currentPosition += toRead;
   if (self.isSlow)
   {
-    self.hasBytesAvailable = NO;
+    self->hasBytesAvailable = NO;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 100 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-      if (self.willErr)
-        self.error = [NSError errorWithDomain:@"TKRTestErrorDomain" code:42 userInfo:nil];
-      else if (self.currentPosition == self.data.length)
+      if (self.willErr) {
+        [self setError:[NSError errorWithDomain:@"TKRTestErrorDomain" code:42 userInfo:nil]];
+      } else if (self.currentPosition == self.data.length) {
         self.atEnd = YES;
-      else
-        self.hasBytesAvailable = YES;
+        [self setStatus:NSStreamStatusAtEnd];
+        [self enqueueEvent:NSStreamEventEndEncountered];
+      } else {
+        self->hasBytesAvailable = YES;
+        [self enqueueEvent:NSStreamEventHasBytesAvailable];
+      }
     });
   }
-  return toRead;
-}
 
-- (BOOL)setProperty:(id)property forKey:(NSString*)key
-{
-  return NO;
+  return toRead;
 }
 
 @end
