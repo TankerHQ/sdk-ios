@@ -26,7 +26,6 @@ It's available for browsers, desktop, iOS and Android.
   s.header_mappings_dir = 'Headers'
   s.vendored_framework = 'Frameworks/TankerDeps.xcframework'
   s.preserve_paths = 'Tests/Dummy.m'
-  s.dependency 'POSInputStreamLibrary'
 
   s.subspec 'Utils' do |utils_spec|
     utils_spec.source_files = 'Sources/Utils/*', 'Headers/Utils/*'

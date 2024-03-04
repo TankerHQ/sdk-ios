@@ -38,7 +38,7 @@
 
 /* Begin PBXFileReference section */
 		02E5DC2DDAB5F93C7280ED1A /* Pods-Tanker_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tanker_Tests.debug.xcconfig"; path = "Target Support Files/Pods-Tanker_Tests/Pods-Tanker_Tests.debug.xcconfig"; sourceTree = "<group>"; };
-		0C75F15D2718BE70837D37F6 /* Tanker.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Tanker.podspec; path = ../Tanker.podspec; sourceTree = "<group>"; };
+		0C75F15D2718BE70837D37F6 /* Tanker.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Tanker.podspec; path = ../Tanker.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		2C5B10D68352B723B5FF0F8C /* Pods_Tanker_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Tanker_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		484E3C8C20DA4ECC0046812D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		484E3C8F20DA4F7D0046812D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -261,6 +261,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -349,12 +350,10 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Tanker_Example/Pods-Tanker_Example-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/POSInputStreamLibrary/POSInputStreamLibrary.framework",
 				"${BUILT_PRODUCTS_DIR}/Tanker/Tanker.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/POSInputStreamLibrary.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Tanker.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
