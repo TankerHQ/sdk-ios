@@ -1,7 +1,6 @@
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
 #import <Tanker/TKRError.h>
-#import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
 

@@ -1,10 +1,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import <POSInputStreamLibrary/POSBlobInputStream.h>
-
 #import <Tanker/TKRError.h>
-#import <Tanker/TKRInputStreamDataSource+Private.h>
+#import <Tanker/TKRStreamsFromNative+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
 
@@ -70,9 +68,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
       return;
     }
     tanker_stream_t* stream = TKR_numberToPtr(ptrValue);
-    TKRInputStreamDataSource* dataSource = [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream
-                                                                                          asyncReader:reader];
-    POSBlobInputStream* encryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+    TKRStreamsFromNative* encryptionStream = [[TKRStreamsFromNative alloc] initWithCStream:stream asyncReader:reader];
     handler(encryptionStream, nil);
   };
 

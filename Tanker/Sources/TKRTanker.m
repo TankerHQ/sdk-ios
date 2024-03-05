@@ -1,15 +1,13 @@
 #import <Foundation/Foundation.h>
 
-#import <POSInputStreamLibrary/POSBlobInputStream.h>
-
 #import <Tanker/Storage/TKRDatastoreBindings.h>
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKRAttachResult+Private.h>
 #import <Tanker/TKREncryptionSession+Private.h>
 #import <Tanker/TKRError.h>
-#import <Tanker/TKRInputStreamDataSource+Private.h>
 #import <Tanker/TKRLogEntry.h>
 #import <Tanker/TKRNetwork.h>
+#import <Tanker/TKRStreamsFromNative+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRVerification+Private.h>
@@ -815,9 +813,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       return;
     }
     tanker_stream_t* stream = TKR_numberToPtr(ptrValue);
-    TKRInputStreamDataSource* dataSource = [TKRInputStreamDataSource inputStreamDataSourceWithCStream:stream
-                                                                                          asyncReader:reader];
-    POSBlobInputStream* decryptionStream = [[POSBlobInputStream alloc] initWithDataSource:dataSource];
+    TKRStreamsFromNative* decryptionStream = [[TKRStreamsFromNative alloc] initWithCStream:stream asyncReader:reader];
     handler(decryptionStream, nil);
   };
 

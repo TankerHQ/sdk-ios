@@ -38,6 +38,12 @@
     [self.buffer increaseLengthBy:1024 * 1024];
     NSInputStream* input = (NSInputStream*)aStream;
     NSInteger nbRead = [input read:(self.buffer.mutableBytes + self.totalRead) maxLength:1024 * 1024];
+    if (nbRead < 0) {
+      [aStream close];
+      self.resolver(aStream.streamError);
+      break;
+    }
+    
     self.totalRead += nbRead;
     self.buffer.length = self.totalRead;
   }
