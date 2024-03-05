@@ -69,4 +69,12 @@
   return ret;
 }
 
++ (nonnull TKRVerification*)verificationFromPreverifiedOIDCSubject:(nonnull NSString*)subject providerID:(nonnull NSString*)providerID
+{
+  TKRVerification* ret = [[TKRVerification alloc] init];
+  ret.type = TKRVerificationMethodTypePreverifiedOIDC;
+  ret.preverifiedOIDC = [TKRPreverifiedOIDCVerification preverifiedOIDCVerificationFromSubject:subject providerID:providerID];
+  return ret;
+}
+
 @end

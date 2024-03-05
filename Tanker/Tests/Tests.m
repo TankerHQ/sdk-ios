@@ -132,6 +132,18 @@ static NSDictionary* sendOidcRequest(NSString* oidcClientId, NSString* oidcClien
   return [PMKPromise hang:prom];
 }
 
+static NSString* extractOIDCSubject(NSString* idToken)
+{
+  NSString* jwtBody = [idToken componentsSeparatedByString:@"."][1];
+  jwtBody = [jwtBody stringByReplacingOccurrencesOfString:@"_" withString:@"/"];
+  jwtBody = [jwtBody stringByReplacingOccurrencesOfString:@"-" withString:@"+"];
+  jwtBody = [jwtBody stringByAppendingString:@"=="];
+  NSData* decodedBody = [[NSData alloc] initWithBase64EncodedString:jwtBody options:NSDataBase64DecodingIgnoreUnknownCharacters];
+  NSError* __block error = nil;
+  NSDictionary* body = [NSJSONSerialization JSONObjectWithData:decodedBody options:0 error:&error];
+  return body[@"sub"];
+}
+
 static id hangWithAdapter(void (^handler)(PMKAdapter))
 {
   return [PMKPromise hang:[PMKPromise promiseWithAdapter:^(PMKAdapter adapter) {
@@ -1617,7 +1629,7 @@ SpecBegin(TankerSpecs)
           NSString* oidcClientID = oidcTestConfig[@"clientId"];
           NSString* oidcClientSecret = oidcTestConfig[@"clientSecret"];
           NSString* oidcClientProvider = oidcTestConfig[@"provider"];
-            NSString* oidcIssuer = oidcTestConfig[@"issuer"];
+          NSString* oidcIssuer = oidcTestConfig[@"issuer"];
 
           NSString* userName = @"martine";
           NSString* email = oidcTestConfig[@"users"][userName][@"email"];
@@ -1784,6 +1796,234 @@ SpecBegin(TankerSpecs)
             [secondDevice decryptStringFromData:encryptedText completionHandler:adapter];
           });
           expect(decryptedText).to.equal(clearText);
+        });
+
+        describe(@"Preverified verification methods", ^{
+          beforeAll(^{
+            NSString* oidcClientID = oidcTestConfig[@"clientId"];
+            NSString* oidcClientProvider = oidcTestConfig[@"provider"];
+            NSString* oidcIssuer = oidcTestConfig[@"issuer"];
+            NSError* error = [admin updateApp:appID
+                                 oidcClientID:oidcClientID
+                           oidcClientProvider:oidcClientProvider
+                                   oidcIssuer:oidcIssuer];
+            expect(error).to.beNil();
+          });
+          afterAll(^{
+            NSError* error = [admin updateApp:appID
+                                 oidcClientID:nil
+                           oidcClientProvider:nil
+                                   oidcIssuer:nil];
+            expect(error).to.beNil();
+          });
+
+          it(@"should fail to register with a preverified email", ^{
+            NSString* email = @"bob.alice@tanker.io";
+            TKRVerification* verification = [TKRVerification verificationFromPreverifiedEmail:email];
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [firstDevice startWithIdentity:identity
+                           completionHandler:^(TKRStatus status, NSError* err) {
+                             if (err)
+                               resolver(err);
+                             else
+                             {
+                               [firstDevice registerIdentityWithVerification:verification completionHandler:resolver];
+                             }
+                           }];
+            });
+            expect(err).toNot.beNil();
+            expect(err.code).to.equal(TKRErrorInvalidArgument);
+          });
+
+          it(@"should fail to register with a preverified phone number", ^{
+            NSString* phoneNumber = @"+33639982233";
+            TKRVerification* verification = [TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber];
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [firstDevice startWithIdentity:identity
+                           completionHandler:^(TKRStatus status, NSError* err) {
+                             if (err)
+                               resolver(err);
+                             else
+                             {
+                               [firstDevice registerIdentityWithVerification:verification completionHandler:resolver];
+                             }
+                           }];
+            });
+            expect(err).toNot.beNil();
+            expect(err.code).to.equal(TKRErrorInvalidArgument);
+          });
+
+          it(@"should fail to register with a preverified oidc", ^{
+            NSString* subject = @"subject";
+            NSDictionary* provider = [admin getOIDCProviderFromAppID:appID];
+            TKRVerification* verification = [TKRVerification verificationFromPreverifiedOIDCSubject:subject providerID:provider[@"id"]];
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [firstDevice startWithIdentity:identity
+                           completionHandler:^(TKRStatus status, NSError* err) {
+                             if (err)
+                               resolver(err);
+                             else
+                             {
+                               [firstDevice registerIdentityWithVerification:verification completionHandler:resolver];
+                             }
+                           }];
+            });
+            expect(err).toNot.beNil();
+            expect(err.code).to.equal(TKRErrorInvalidArgument);
+          });
+
+          it(@"should register with an email and fail to verify a preverified email", ^{
+            NSString* email = @"bob.alice@tanker.io";
+            startWithIdentityAndRegister(firstDevice,
+                                         identity,
+                                         [TKRVerification verificationFromEmail:email
+                                                               verificationCode:getEmailVerificationCode(email)]);
+            hangWithResolver(^(PMKResolver resolver) {
+              [secondDevice startWithIdentity:identity
+                            completionHandler:^(TKRStatus status, NSError* err) {
+                              resolver(nil);
+                            }];
+            });
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedEmail:email]
+                                         completionHandler:resolver];
+            });
+            expect(err).toNot.beNil();
+            expect(err.code).to.equal(TKRErrorInvalidArgument);
+          });
+
+          it(@"should register with a phone number and fail to verify a preverified phone number", ^{
+            NSString* phoneNumber = @"+33639982233";
+            startWithIdentityAndRegister(
+                firstDevice,
+                identity,
+                [TKRVerification verificationFromPhoneNumber:phoneNumber
+                                            verificationCode:getSMSVerificationCode(phoneNumber)]);
+            hangWithResolver(^(PMKResolver resolver) {
+              [secondDevice startWithIdentity:identity
+                            completionHandler:^(TKRStatus status, NSError* err) {
+                              resolver(nil);
+                            }];
+            });
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [secondDevice
+                  verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber]
+                               completionHandler:resolver];
+            });
+            expect(err).toNot.beNil();
+            expect(err.code).to.equal(TKRErrorInvalidArgument);
+          });
+
+          it(@"should register with an oidc IDToken and fail to verify a preverified oidc", ^{
+            NSString* oidcClientID = oidcTestConfig[@"clientId"];
+            NSString* oidcClientSecret = oidcTestConfig[@"clientSecret"];
+            NSString* refreshToken = oidcTestConfig[@"users"][@"martine"][@"refreshToken"];
+
+            NSDictionary* provider = [admin getOIDCProviderFromAppID:appID];
+            NSDictionary* jsonResponse = sendOidcRequest(oidcClientID, oidcClientSecret, refreshToken);
+            NSString* oidcToken = jsonResponse[@"id_token"];
+
+            NSString* nonce = hangWithAdapter(^(PMKAdapter adapter) {
+              [firstDevice createOidcNonceWithCompletionHandler:adapter];
+            });
+            hangWithResolver(^(PMKResolver resolver) {
+              [firstDevice setOidcTestNonce:nonce completionHandler:resolver];
+            });
+
+            startWithIdentityAndRegister(firstDevice,
+                                         identity,
+                                         [TKRVerification verificationFromOIDCIDToken:oidcToken]);
+            hangWithResolver(^(PMKResolver resolver) {
+              [secondDevice startWithIdentity:identity
+                            completionHandler:^(TKRStatus status, NSError* err) {
+                              resolver(nil);
+                            }];
+            });
+
+            NSString* subject = extractOIDCSubject(oidcToken);
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedOIDCSubject:subject providerID:provider[@"id"]]
+                                         completionHandler:resolver];
+            });
+            expect(err).toNot.beNil();
+            expect(err.code).to.equal(TKRErrorInvalidArgument);
+          });
+
+          it(@"should register with a passphrase and set a preverified email method", ^{
+            NSString* email = @"bob.alice@tanker.io";
+            startWithIdentityAndRegister(
+                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedEmail:email]
+                               completionHandler:resolver];
+            });
+            expect(err).to.beNil();
+            NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+              [firstDevice verificationMethodsWithCompletionHandler:adapter];
+            });
+            expect(methods.count).to.equal(2);
+
+            startWithIdentityAndVerify(secondDevice,
+                                       identity,
+                                       [TKRVerification verificationFromEmail:email
+                                                             verificationCode:getEmailVerificationCode(email)]);
+          });
+
+          it(@"should register with a passphrase and set a preverified phone number method", ^{
+            NSString* phoneNumber = @"+33639982233";
+            startWithIdentityAndRegister(
+                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber]
+                               completionHandler:resolver];
+            });
+            expect(err).to.beNil();
+            NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+              [firstDevice verificationMethodsWithCompletionHandler:adapter];
+            });
+            expect(methods.count).to.equal(2);
+
+            startWithIdentityAndVerify(
+                secondDevice,
+                identity,
+                [TKRVerification verificationFromPhoneNumber:phoneNumber
+                                            verificationCode:getSMSVerificationCode(phoneNumber)]);
+          });
+
+          it(@"should register with a passphrase and set a preverified oidc method", ^{
+            NSString* oidcClientID = oidcTestConfig[@"clientId"];
+            NSString* oidcClientSecret = oidcTestConfig[@"clientSecret"];
+            NSString* refreshToken = oidcTestConfig[@"users"][@"martine"][@"refreshToken"];
+
+            NSDictionary* provider = [admin getOIDCProviderFromAppID:appID];
+            NSDictionary* jsonResponse = sendOidcRequest(oidcClientID, oidcClientSecret, refreshToken);
+            NSString* oidcToken = jsonResponse[@"id_token"];
+            NSString* subject = extractOIDCSubject(oidcToken);
+
+            startWithIdentityAndRegister(
+                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+            NSError* err = hangWithResolver(^(PMKResolver resolver) {
+              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedOIDCSubject:subject providerID:provider[@"id"]]
+                               completionHandler:resolver];
+            });
+            expect(err).to.beNil();
+
+            NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
+              [firstDevice verificationMethodsWithCompletionHandler:adapter];
+            });
+            expect(methods.count).to.equal(2);
+
+            NSString* nonce = hangWithAdapter(^(PMKAdapter adapter) {
+              [secondDevice createOidcNonceWithCompletionHandler:adapter];
+            });
+            hangWithResolver(^(PMKResolver resolver) {
+              [secondDevice setOidcTestNonce:nonce completionHandler:resolver];
+            });
+            startWithIdentityAndVerify(
+                secondDevice,
+                identity,
+                [TKRVerification verificationFromOIDCIDToken:oidcToken]);
+          });
         });
       });
 

@@ -28,5 +28,6 @@
                    oidcClientID:(NSString* _Nullable)oidcClientID
              oidcClientProvider:(NSString* _Nullable)oidcClientProvider
                      oidcIssuer:(NSString* _Nullable)oidcIssuer;
+- (NSDictionary* _Nullable) getOIDCProviderFromAppID:(nonnull NSString*)appID;
 
 @end

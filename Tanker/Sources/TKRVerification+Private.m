@@ -87,6 +87,16 @@
   self.valuePrivate = preverifiedPhoneNumber;
 }
 
+- (nonnull TKRPreverifiedOIDCVerification*)preverifiedOIDC
+{
+  return self.valuePrivate;
+}
+
+- (void)setPreverifiedOIDC:(nonnull TKRPreverifiedOIDCVerification*)preverifiedOIDC
+{
+  self.valuePrivate = preverifiedOIDC;
+}
+
 - (void)setValuePrivate:(id)value
 {
   objc_setAssociatedObject(self, @selector(valuePrivate), value, OBJC_ASSOCIATION_RETAIN);

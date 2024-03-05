@@ -35,4 +35,18 @@
  */
 @property(nonnull, readonly) NSString* preverifiedPhoneNumber;
 
+/*!
+ @brief OIDC provider ID (as returned by the App managment API)
+
+ @pre type == TKRVerificationMethodTypeOIDCIDToken
+ */
+@property(nonnull, readonly) NSString* oidcProviderID;
+
+/*!
+ @brief OIDC provider display name
+
+ @pre type == TKRVerificationMethodTypeOIDCIDToken
+ */
+@property(nonnull, readonly) NSString* oidcProviderDisplayName;
+
 @end
