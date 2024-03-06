@@ -15,6 +15,7 @@ It's available for browsers, desktop, iOS and Android.
   s.source           = { :http => "https://storage.googleapis.com/cocoapods.tanker.io/ios/tanker-ios-sdk-#{s.version}.tar.gz" }
 
   s.ios.deployment_target = '12.0'
+  s.swift_version = '5.0'
 
   s.source_files = 'Sources/TKR*', 'Headers/TKR*'
   s.private_header_files = 'Headers/*+Private.h'

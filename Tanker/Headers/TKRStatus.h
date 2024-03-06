@@ -1,9 +1,2 @@
-/*!
- * @typedef TKRStatus
- */
-typedef NS_ENUM(NSUInteger, TKRStatus) {
-  TKRStatusStopped,
-  TKRStatusReady,
-  TKRStatusIdentityRegistrationNeeded,
-  TKRStatusIdentityVerificationNeeded,
-};
+// Forward declaration of Swift type
+typedef NS_ENUM(NSUInteger, TKRStatus);
