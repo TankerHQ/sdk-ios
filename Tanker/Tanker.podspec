@@ -38,7 +38,7 @@ It's available for browsers, desktop, iOS and Android.
   end
 
   s.test_spec 'Tests' do |test_spec|
-    test_spec.source_files = 'Tests/*.{h,m}'
+    test_spec.source_files = 'Tests/*.{h,m,swift}'
     test_spec.dependency 'Specta'
     test_spec.dependency 'Expecta'
     test_spec.dependency 'PromiseKit/Promise', '~> 1.7'
