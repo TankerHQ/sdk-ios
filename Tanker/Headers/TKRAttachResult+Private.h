@@ -1,4 +1,5 @@
 #import <Tanker/TKRAttachResult.h>
+#import <Tanker/Tanker-Swift.h>
 
 @interface TKRAttachResult ()
 

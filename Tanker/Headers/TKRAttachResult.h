@@ -1,7 +1,8 @@
 #import <Foundation/Foundation.h>
 
-#import <Tanker/TKRStatus.h>
 #import <Tanker/TKRVerificationMethod.h>
+
+typedef NS_ENUM(NSUInteger, TKRStatus);
 
 @interface TKRAttachResult : NSObject
 

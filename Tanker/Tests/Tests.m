@@ -1,5 +1,7 @@
 // https://github.com/Specta/Specta
 
+#import <Tanker/Tanker-Swift.h>
+
 #import <Tanker/TKRAttachResult.h>
 #import <Tanker/TKREncryptionSession.h>
 #import <Tanker/TKRError.h>
