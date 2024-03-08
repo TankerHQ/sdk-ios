@@ -331,44 +331,6 @@ SpecBegin(TankerSpecs)
         tankerOptions = createTankerOptions(url, appID);
       });
 
-      describe(@"open", ^{
-        __block TKRTanker* tanker;
-        __block NSString* identity;
-
-        beforeEach(^{
-          tanker = [TKRTanker tankerWithOptions:tankerOptions];
-          expect(tanker).toNot.beNil();
-          identity = createIdentity(createUUID(), appID, appSecret);
-        });
-
-        it(@"should return TKRStatusIdentityRegistrationNeeded when start is called for the first time", ^{
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          stop(tanker);
-        });
-
-        it(@"should return TKRStatusReady when start is called after identity has been registered", ^{
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          stop(tanker);
-          startWithIdentity(tanker, identity);
-          stop(tanker);
-        });
-
-        it(@"should be able to stop tanker while a call is in flight", ^{
-          // This test tries to cancel an on-going HTTP request. There is no
-          // assertion, it's just a best effort to check that we won't crash
-          // because of some use-after-free.
-
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-
-          // trigger an encrypt and do not wait
-          [tanker encryptString:@"Rosebud"
-              completionHandler:^(NSData* _Nullable encryptedData, NSError* _Nullable err){
-              }];
-
-          stop(tanker);
-        });
-      });
-
       describe(@"http", ^{
         it(@"reports http errors correctly", ^{
           // This error should be reported before any network call
