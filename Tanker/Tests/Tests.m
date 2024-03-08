@@ -171,7 +171,6 @@ static NSUInteger ENCRYPTION_SESSION_OVERHEAD = 57;
 static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = 58; // ENCRYPTION_SESSION_OVERHEAD + 1
 
 SpecBegin(TankerSpecs)
-
     describe(@"Tanker Bindings", ^{
       __block TKRTestAdmin* admin;
       __block NSString* url;
@@ -330,37 +329,6 @@ SpecBegin(TankerSpecs)
 
       beforeEach(^{
         tankerOptions = createTankerOptions(url, appID);
-      });
-
-      describe(@"prehashPassword", ^{
-        it(@"should fail to hash an empty password", ^{
-          expect(^{
-            [TKRTanker prehashPassword:@""];
-          }).to.raise(NSInvalidArgumentException);
-        });
-
-        it(@"should hash a test vector 1", ^{
-          NSString* input = @"super secretive password";
-          NSString* expected = @"UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=";
-          NSString* hashed = [TKRTanker prehashPassword:input];
-          expect(hashed).to.equal(expected);
-        });
-
-        it(@"should hash a test vector 2", ^{
-          NSString* input = @"test éå 한국어 😃";
-          NSString* expected = @"Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=";
-          NSString* hashed = [TKRTanker prehashPassword:input];
-          expect(hashed).to.equal(expected);
-        });
-      });
-
-      describe(@"init", ^{
-        it(@"should throw when AppID is not base64", ^{
-          tankerOptions.appID = @",,";
-          expect(^{
-            [TKRTanker tankerWithOptions:tankerOptions];
-          }).to.raise(NSInvalidArgumentException);
-        });
       });
 
       describe(@"open", ^{

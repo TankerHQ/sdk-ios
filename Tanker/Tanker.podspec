@@ -40,8 +40,14 @@ It's available for browsers, desktop, iOS and Android.
 
   s.test_spec 'Tests' do |test_spec|
     test_spec.source_files = 'Tests/*.{h,m,swift}'
+
+    # Quick/Nimble require iOS 13 min starting from v6/v11
+    test_spec.dependency 'Quick', '~> 5.0'
+    test_spec.dependency 'Nimble', '~> 10.0'
+
     test_spec.dependency 'Specta'
     test_spec.dependency 'Expecta'
+
     test_spec.dependency 'PromiseKit/Promise', '~> 1.7'
     test_spec.dependency 'PromiseKit/Hang', '~> 1.7'
     test_spec.dependency 'PromiseKit/When', '~> 1.7'
