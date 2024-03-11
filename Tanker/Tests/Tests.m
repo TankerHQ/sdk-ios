@@ -171,7 +171,6 @@ static NSUInteger ENCRYPTION_SESSION_OVERHEAD = 57;
 static NSUInteger ENCRYPTION_SESSION_PADDED_OVERHEAD = 58; // ENCRYPTION_SESSION_OVERHEAD + 1
 
 SpecBegin(TankerSpecs)
-
     describe(@"Tanker Bindings", ^{
       __block TKRTestAdmin* admin;
       __block NSString* url;
@@ -330,75 +329,6 @@ SpecBegin(TankerSpecs)
 
       beforeEach(^{
         tankerOptions = createTankerOptions(url, appID);
-      });
-
-      describe(@"prehashPassword", ^{
-        it(@"should fail to hash an empty password", ^{
-          expect(^{
-            [TKRTanker prehashPassword:@""];
-          }).to.raise(NSInvalidArgumentException);
-        });
-
-        it(@"should hash a test vector 1", ^{
-          NSString* input = @"super secretive password";
-          NSString* expected = @"UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=";
-          NSString* hashed = [TKRTanker prehashPassword:input];
-          expect(hashed).to.equal(expected);
-        });
-
-        it(@"should hash a test vector 2", ^{
-          NSString* input = @"test éå 한국어 😃";
-          NSString* expected = @"Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=";
-          NSString* hashed = [TKRTanker prehashPassword:input];
-          expect(hashed).to.equal(expected);
-        });
-      });
-
-      describe(@"init", ^{
-        it(@"should throw when AppID is not base64", ^{
-          tankerOptions.appID = @",,";
-          expect(^{
-            [TKRTanker tankerWithOptions:tankerOptions];
-          }).to.raise(NSInvalidArgumentException);
-        });
-      });
-
-      describe(@"open", ^{
-        __block TKRTanker* tanker;
-        __block NSString* identity;
-
-        beforeEach(^{
-          tanker = [TKRTanker tankerWithOptions:tankerOptions];
-          expect(tanker).toNot.beNil();
-          identity = createIdentity(createUUID(), appID, appSecret);
-        });
-
-        it(@"should return TKRStatusIdentityRegistrationNeeded when start is called for the first time", ^{
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          stop(tanker);
-        });
-
-        it(@"should return TKRStatusReady when start is called after identity has been registered", ^{
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          stop(tanker);
-          startWithIdentity(tanker, identity);
-          stop(tanker);
-        });
-
-        it(@"should be able to stop tanker while a call is in flight", ^{
-          // This test tries to cancel an on-going HTTP request. There is no
-          // assertion, it's just a best effort to check that we won't crash
-          // because of some use-after-free.
-
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-
-          // trigger an encrypt and do not wait
-          [tanker encryptString:@"Rosebud"
-              completionHandler:^(NSData* _Nullable encryptedData, NSError* _Nullable err){
-              }];
-
-          stop(tanker);
-        });
       });
 
       describe(@"http", ^{

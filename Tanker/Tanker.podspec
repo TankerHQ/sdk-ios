@@ -40,11 +40,23 @@ It's available for browsers, desktop, iOS and Android.
 
   s.test_spec 'Tests' do |test_spec|
     test_spec.source_files = 'Tests/*.{h,m,swift}'
+    test_spec.exclude_files = 'Tests/TankerTests-Bridging-Header.h'
+    test_spec.preserve_paths = 'Tests/TankerTests-Bridging-Header.h'
+    test_spec.pod_target_xcconfig = {
+      "SWIFT_OBJC_BRIDGING_HEADER" => "$(PODS_TARGET_SRCROOT)/Tests/TankerTests-Bridging-Header.h"
+    }
+
+    # Quick/Nimble require iOS 13 min starting from v6/v11
+    test_spec.dependency 'Quick', '~> 5.0'
+    test_spec.dependency 'Nimble', '~> 10.0'
+
     test_spec.dependency 'Specta'
     test_spec.dependency 'Expecta'
+
     test_spec.dependency 'PromiseKit/Promise', '~> 1.7'
     test_spec.dependency 'PromiseKit/Hang', '~> 1.7'
     test_spec.dependency 'PromiseKit/When', '~> 1.7'
+    
     # tests use admin parts
     test_spec.scheme = {
       :environment_variables => Hash[
