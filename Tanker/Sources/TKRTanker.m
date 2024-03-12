@@ -771,9 +771,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil,
-            TKR_createNSError(
-                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil, TKR_createNSError(TKRErrorInvalidArgument, @"Input stream status must be NSStreamStatusNotOpen"));
     return;
   }
 
@@ -805,9 +803,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (encryptedStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil,
-            TKR_createNSError(
-                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil, TKR_createNSError(TKRErrorInvalidArgument, @"Input stream status must be NSStreamStatusNotOpen"));
     return;
   }
 
