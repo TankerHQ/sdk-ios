@@ -21,7 +21,7 @@ func createIdentity(appID: String, appSecret: String, userID: String) -> String
   return NSString(
     bytesNoCopy: identity_ptr,
     length: strlen(identity_ptr),
-    encoding: NSUTF8StringEncoding,
+    encoding: String.Encoding.utf8.rawValue,
     freeWhenDone: true
   )! as String
 }
