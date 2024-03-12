@@ -168,7 +168,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 // Note: this constructor blocks until tanker_create resolves.
 // If we start doing background operation in tanker_create, we should
 // get rid of the tanker_future_wait()
-+ (nonnull TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options
++ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options err:(NSError**)errResult
 {
   __block TKRTanker* tanker = [[[self class] alloc] init];
   tanker_set_log_handler(&defaultLogHandler);
@@ -192,7 +192,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   if (error)
   {
     tanker_future_destroy(create_future);
-    [NSException raise:NSInvalidArgumentException format:@"Could not init Tanker %@", [error localizedDescription]];
+    if (errResult != nil)
+      *errResult = TKR_createNSError(TKRErrorInvalidArgument, [NSString stringWithFormat:@"Could not init Tanker %@", [error localizedDescription]]);
+    return nil;
   }
   tanker.cTanker = tanker_future_get_voidptr(create_future);
   tanker_future_destroy(create_future);
@@ -771,9 +773,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (clearStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil,
-            TKR_createNSError(
-                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil, TKR_createNSError(TKRErrorInvalidArgument, @"Input stream status must be NSStreamStatusNotOpen"));
     return;
   }
 
@@ -805,9 +805,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 {
   if (encryptedStream.streamStatus != NSStreamStatusNotOpen)
   {
-    handler(nil,
-            TKR_createNSError(
-                TKRErrorDomain, @"Input stream status must be NSStreamStatusNotOpen", TKRErrorInvalidArgument));
+    handler(nil, TKR_createNSError(TKRErrorInvalidArgument, @"Input stream status must be NSStreamStatusNotOpen"));
     return;
   }
 

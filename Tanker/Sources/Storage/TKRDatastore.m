@@ -47,7 +47,7 @@ static NSError* _Nullable errorFromSQLite(sqlite3* handle)
 
   NSString* msg = [NSString stringWithFormat:@"SQLite returned %d, with message: %s", sqlite_code, sqlite_msg];
 
-  return TKR_createNSError(TKRDatastoreErrorDomain, msg, translateSQLiteError(sqlite_code));
+  return TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain, translateSQLiteError(sqlite_code), msg);
 }
 
 static NSError* _Nullable initDb(sqlite3* handle)
@@ -93,7 +93,7 @@ static NSError* _Nullable dbVersion(sqlite3* handle, int* ret)
   if (err_code != SQLITE_ROW)
   {
     NSString* errMsg = [NSString stringWithCString:sqlite3_errstr(err_code) encoding:NSUTF8StringEncoding];
-    return TKR_createNSError(TKRDatastoreErrorDomain, errMsg, translateSQLiteError(err_code));
+    return TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain, translateSQLiteError(err_code), errMsg);
   }
   *ret = sqlite3_column_int(stmt, 0);
 
@@ -208,9 +208,10 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
   int err_code = sqlite3_prepare_v2(handle, query.UTF8String, (int)query.length, &stmt, NULL);
   if (err_code != SQLITE_OK)
   {
-    *err = TKR_createNSError(TKRDatastoreErrorDomain,
-                             [NSString stringWithFormat:@"Failed to prepare statement: %s", sqlite3_errstr(err_code)],
-                             translateSQLiteError(err_code));
+    *err = TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain,
+                                       translateSQLiteError(err_code),
+                                       [NSString stringWithFormat:@"Failed to prepare statement: %s", sqlite3_errstr(err_code)]
+                                       );
     return nil;
   }
   while ((err_code = sqlite3_step(stmt)) == SQLITE_ROW)
@@ -224,7 +225,7 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
   if (err_code != SQLITE_DONE)
   {
     NSString* errMsg = [NSString stringWithCString:sqlite3_errstr(err_code) encoding:NSUTF8StringEncoding];
-    *err = TKR_createNSError(TKRDatastoreErrorDomain, errMsg, translateSQLiteError(err_code));
+    *err = TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain, translateSQLiteError(err_code), errMsg);
     return nil;
   }
   return selectedValues;
@@ -275,7 +276,7 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
   {
     NSString* msg = [NSString
         stringWithFormat:@"device database version too recent, expected %d, got %d", latestDeviceVersion, version];
-    return TKR_createNSError(TKRDatastoreErrorDomain, msg, TKRDatastoreErrorDatabaseTooRecent);
+    return TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain, TKRDatastoreErrorDatabaseTooRecent, msg);
   }
   }
 }
@@ -301,7 +302,7 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
   {
     NSString* msg = [NSString
         stringWithFormat:@"cache database version too recent, expected %d, got %d", latestCacheVersion, version];
-    return TKR_createNSError(TKRDatastoreErrorDomain, msg, TKRDatastoreErrorDatabaseTooRecent);
+    return TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain, TKRDatastoreErrorDatabaseTooRecent, msg);
   }
   }
 }
@@ -425,7 +426,7 @@ fail:
   if (err_code != SQLITE_ROW)
   {
     NSString* errMsg = [NSString stringWithCString:sqlite3_errstr(err_code) encoding:NSUTF8StringEncoding];
-    *err = TKR_createNSError(TKRDatastoreErrorDomain, errMsg, translateSQLiteError(err_code));
+    *err = TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain, translateSQLiteError(err_code), errMsg);
     goto finalize;
   }
   ret = [NSData dataWithBytes:sqlite3_column_blob(stmt, 0) length:sqlite3_column_bytes(stmt, 0)];

@@ -83,7 +83,7 @@ static void* finishTankerRead(tanker_future_t* fut, void* data)
   
   if (maxLength > NSIntegerMax)
   {
-    [self setError:TKR_createNSError(TKRErrorDomain, @"Attempting to read more than NSIntegerMax", TKRErrorInvalidArgument)];
+    [self setError:TKR_createNSError(TKRErrorInvalidArgument, @"Attempting to read more than NSIntegerMax")];
     return -1;
   }
   

@@ -101,7 +101,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 
   if (!encrypted_buffer)
   {
-    handler(nil, TKR_createNSError(NSPOSIXErrorDomain, @"could not allocate encrypted buffer", ENOMEM));
+    handler(nil, TKR_createNSErrorWithDomain(NSPOSIXErrorDomain, ENOMEM, @"could not allocate encrypted buffer"));
     return;
   }
 
@@ -180,7 +180,7 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)
   {
-    handler(nil, TKR_createNSError(NSPOSIXErrorDomain, @"could not allocate decrypted buffer", ENOMEM));
+    handler(nil, TKR_createNSErrorWithDomain(NSPOSIXErrorDomain, ENOMEM, @"could not allocate decrypted buffer"));
     return;
   }
   tanker_future_t* decrypt_future =
