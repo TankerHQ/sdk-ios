@@ -30,7 +30,7 @@ class TankerTests: TankerFunctionalQuickSpec {
       var identity: String!;
 
       beforeEach {
-        tanker = TKRTanker(options: self.tankerOptions);
+        tanker = try! TKRTanker(options: self.tankerOptions);
         identity = createIdentity(appID: self.appID, appSecret: self.appSecret, userID: NSUUID().uuidString);
       }
 

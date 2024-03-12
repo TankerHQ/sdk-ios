@@ -335,7 +335,7 @@ SpecBegin(TankerSpecs)
         it(@"reports http errors correctly", ^{
           // This error should be reported before any network call
           tankerOptions.url = @"this is not an url at all";
-          TKRTanker* tanker = [TKRTanker tankerWithOptions:tankerOptions];
+          TKRTanker* tanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           NSString* identity = createIdentity(createUUID(), appID, appSecret);
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [tanker startWithIdentity:identity
@@ -356,10 +356,10 @@ SpecBegin(TankerSpecs)
         __block NSString* bobIdentity;
 
         beforeEach(^{
-          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(aliceTanker).toNot.beNil();
           aliceIdentity = createIdentity(createUUID(), appID, appSecret);
-          bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          bobTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(bobTanker).toNot.beNil();
           bobIdentity = createIdentity(createUUID(), appID, appSecret);
         });
@@ -428,7 +428,7 @@ SpecBegin(TankerSpecs)
         __block TKRTanker* tanker;
 
         beforeEach(^{
-          tanker = [TKRTanker tankerWithOptions:tankerOptions];
+          tanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(tanker).toNot.beNil();
           NSString* identity = createIdentity(createUUID(), appID, appSecret);
           startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
@@ -724,8 +724,8 @@ SpecBegin(TankerSpecs)
         __block NSString* bobPublicIdentity;
 
         beforeEach(^{
-          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions];
-          bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
+          bobTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(aliceTanker).toNot.beNil();
           expect(bobTanker).toNot.beNil();
 
@@ -904,8 +904,8 @@ SpecBegin(TankerSpecs)
         __block NSString* bobPublicIdentity;
 
         beforeEach(^{
-          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions];
-          bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
+          bobTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(aliceTanker).toNot.beNil();
           expect(bobTanker).toNot.beNil();
 
@@ -1103,9 +1103,9 @@ SpecBegin(TankerSpecs)
         __block TKREncryptionOptions* encryptionOptions;
 
         beforeEach(^{
-          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions];
-          bobTanker = [TKRTanker tankerWithOptions:tankerOptions];
-          charlieTanker = [TKRTanker tankerWithOptions:tankerOptions];
+          aliceTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
+          bobTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
+          charlieTanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(aliceTanker).toNot.beNil();
           expect(bobTanker).toNot.beNil();
           expect(charlieTanker).toNot.beNil();
@@ -1339,10 +1339,10 @@ SpecBegin(TankerSpecs)
         __block TKRTanker* secondDevice;
 
         beforeEach(^{
-          firstDevice = [TKRTanker tankerWithOptions:tankerOptions];
+          firstDevice = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(firstDevice).toNot.beNil();
 
-          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(url, appID) err:nil];
           expect(secondDevice).toNot.beNil();
 
           identity = createIdentity(createUUID(), appID, appSecret);
@@ -1505,10 +1505,10 @@ SpecBegin(TankerSpecs)
         __block TKRTanker* secondDevice;
 
         beforeEach(^{
-          firstDevice = [TKRTanker tankerWithOptions:tankerOptions];
+          firstDevice = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(firstDevice).toNot.beNil();
 
-          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          secondDevice = [TKRTanker tankerWithOptions:createTankerOptions(url, appID) err:nil];
           expect(secondDevice).toNot.beNil();
 
           identity = createIdentity(createUUID(), appID, appSecret);
@@ -1573,7 +1573,7 @@ SpecBegin(TankerSpecs)
                                  oidcIssuer:oidcIssuer];
           expect(error).to.beNil();
 
-          TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID) err:nil];
           NSString* userIdentity = createIdentity(email, appID, appSecret);
 
           NSDictionary* jsonResponse = sendOidcRequest(oidcClientID, oidcClientSecret, refreshToken);
@@ -1589,7 +1589,7 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(userPhone, userIdentity, oidcVerif);
           stop(userPhone);
 
-          TKRTanker* userLaptop = [TKRTanker tankerWithOptions:createTankerOptions(url, appID)];
+          TKRTanker* userLaptop = [TKRTanker tankerWithOptions:createTankerOptions(url, appID) err:nil];
           nonce = hangWithAdapter(^(PMKAdapter adapter) {
             [userLaptop createOidcNonceWithCompletionHandler:adapter];
           });
@@ -1966,7 +1966,7 @@ SpecBegin(TankerSpecs)
         __block TKRVerification* verification;
 
         beforeEach(^{
-          tanker = [TKRTanker tankerWithOptions:tankerOptions];
+          tanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(tanker).toNot.beNil();
           identity = createIdentity(createUUID(), appID, appSecret);
           verification = [TKRVerification verificationFromPassphrase:@"passphrase"];

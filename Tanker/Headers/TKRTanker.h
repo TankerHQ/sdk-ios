@@ -21,16 +21,16 @@
 /*!
  @brief Create a TKRTanker object with options.
 
- @throw NSInvalidArgumentException if initialization fails.
-
  @param options Options needed to initialize Tanker.
 
  @pre Every field must be set with a valid value.
+ 
+ @result  Errors with NSInvalidArgumentException if initialization fails
 
- @return an initialized TKRTanker*.
+ @return An initialized TKRTanker*.
 
  */
-+ (nonnull TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options;
++ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options err:(NSError**)errResult;
 
 /*!
  @brief Get Tanker version as a string

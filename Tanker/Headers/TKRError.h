@@ -3,7 +3,7 @@
 /*!
  * @typedef TKRError
  */
-typedef NS_ENUM(NSUInteger, TKRError) {
+typedef NS_ENUM(NSInteger, TKRError) {
   TKRErrorInvalidArgument = 1,
   TKRErrorInternalError = 2,
   TKRErrorNetworkError = 3,

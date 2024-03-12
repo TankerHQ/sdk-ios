@@ -34,9 +34,10 @@ class UnitTests: QuickSpec {
         let tankerOptions = TKRTankerOptions();
         tankerOptions.appID = ",,";
         
-        expect {
-          TKRTanker(options:tankerOptions)
-        }.to(raiseException(named: "NSInvalidArgumentException"));
+        expect { try TKRTanker(options:tankerOptions) }.to(throwError { (error: NSError) in
+          expect(error.domain).to(equal(TKRErrorDomain));
+          expect(error.code) == TKRError.invalidArgument.rawValue;
+        })
       }
     }
   }
