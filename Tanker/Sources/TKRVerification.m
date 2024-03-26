@@ -77,4 +77,12 @@
   return ret;
 }
 
++ (nonnull TKRVerification*)verificationFromOIDCAuthorizationCode:(nonnull NSString*)authorizationCode providerID:(nonnull NSString*)providerID state:(nonnull NSString*)state
+{
+  TKRVerification* ret = [[TKRVerification alloc] init];
+  ret.type = TKRVerificationMethodTypeOIDCAuthorizationCode;
+  ret.oidcAuthorizationCode = [TKROIDCAuthorizationCodeVerification oidcAuthorizationCodeVerificationFromProviderID:providerID authorizationCode:authorizationCode state:state];
+  return ret;
+}
+
 @end

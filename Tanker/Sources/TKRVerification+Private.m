@@ -97,6 +97,16 @@
   self.valuePrivate = preverifiedOIDC;
 }
 
+- (nonnull TKROIDCAuthorizationCodeVerification*)oidcAuthorizationCode
+{
+  return self.valuePrivate;
+}
+
+- (void)setOidcAuthorizationCode:(nonnull TKROIDCAuthorizationCodeVerification*)oidcAuthorizationCode
+{
+  self.valuePrivate = oidcAuthorizationCode;
+}
+
 - (void)setValuePrivate:(id)value
 {
   objc_setAssociatedObject(self, @selector(valuePrivate), value, OBJC_ASSOCIATION_RETAIN);

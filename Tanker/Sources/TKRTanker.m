@@ -80,6 +80,11 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
     c_verification->preverified_oidc_verification.subject = [verification.preverifiedOIDC.subject cStringUsingEncoding:NSUTF8StringEncoding];
     c_verification->preverified_oidc_verification.provider_id = [verification.preverifiedOIDC.providerID cStringUsingEncoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypeOIDCAuthorizationCode:
+    c_verification->oidc_authorization_code_verification.provider_id = [verification.oidcAuthorizationCode.providerID cStringUsingEncoding:NSUTF8StringEncoding];
+    c_verification->oidc_authorization_code_verification.authorization_code = [verification.oidcAuthorizationCode.authorizationCode cStringUsingEncoding:NSUTF8StringEncoding];
+    c_verification->oidc_authorization_code_verification.state = [verification.oidcAuthorizationCode.state cStringUsingEncoding:NSUTF8StringEncoding];
+    break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -116,6 +121,9 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
     break;
   case TKRVerificationMethodTypePreverifiedOIDC:
     NSLog(@"Unreachable code: PreverifiedOIDC is not exposed as a VerificationMethod");
+    assert(false);
+  case TKRVerificationMethodTypeOIDCAuthorizationCode:
+    NSLog(@"Unreachable code: OIDCAuthorizationCode is not exposed as a VerificationMethod");
     assert(false);
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);
