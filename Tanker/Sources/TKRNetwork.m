@@ -1,4 +1,5 @@
 #include <Tanker/TKRNetwork.h>
+#include <Tanker/TKRTanker.h>
 #import <Tanker/Utils/TKRUtils.h>
 
 #include <libkern/OSAtomic.h>
@@ -52,43 +53,62 @@
   req.HTTPMethod = [NSString stringWithUTF8String:crequest->method];
   // Cast to void* to discard the constness
   req.HTTPBody = [NSData dataWithBytesNoCopy:(void*)crequest->body length:crequest->body_size freeWhenDone:NO];
-  [req addValue:@"application/json; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
-  if (crequest->authorization)
-    [req addValue:[NSString stringWithUTF8String:crequest->authorization] forHTTPHeaderField:@"Authorization"];
-  if (crequest->instance_id)
-    [req addValue:[NSString stringWithUTF8String:crequest->instance_id] forHTTPHeaderField:@"X-Tanker-Instanceid"];
+  
+  for (int i=0; i<crequest->num_headers; ++i) {
+    tanker_http_header_t* hdr = &crequest->headers[i];
+    [req addValue:[NSString stringWithUTF8String:hdr->value] forHTTPHeaderField:[NSString stringWithUTF8String:hdr->name]];
+  }
+  
+  TKRTanker* tanker = (__bridge TKRTanker*)data;
+  [req setValue:tanker.options.sdkType forHTTPHeaderField:@"X-Tanker-SdkType"];
+  [req setValue:[TKRTanker versionString] forHTTPHeaderField:@"X-Tanker-SdkVersion"];
 
   NSNumber* requestId = [NSNumber numberWithInteger:OSAtomicIncrement32(&_lastId)];
   NSURLSessionDataTask* task =
-      [[NSURLSession sharedSession] dataTaskWithRequest:req
-                                      completionHandler:^(NSData* data, NSURLResponse* baseResponse, NSError* error) {
-                                        NSHTTPURLResponse* response = (NSHTTPURLResponse*)baseResponse;
-
-                                        tanker_http_response_t cresponse;
-
-                                        if (error)
-                                        {
-                                          cresponse.error_msg = error.localizedDescription.UTF8String;
-                                        }
-                                        else
-                                        {
-                                          cresponse.error_msg = NULL;
-                                          cresponse.status_code = (int32_t)response.statusCode;
-                                          cresponse.content_type = response.MIMEType.UTF8String;
-                                          cresponse.body = data.bytes;
-                                          cresponse.body_size = data.length;
-                                        }
-
-                                        @synchronized(self)
-                                        {
-                                          NSURLSessionDataTask* task = [self->_requests objectForKey:requestId];
-                                          if (task)
-                                          {
-                                            tanker_http_handle_response(crequest, &cresponse);
-                                            [self->_requests removeObjectForKey:requestId];
-                                          }
-                                        }
-                                      }];
+  [[NSURLSession sharedSession] dataTaskWithRequest:req
+                                  completionHandler:^(NSData* data, NSURLResponse* baseResponse, NSError* error) {
+    NSHTTPURLResponse* response = (NSHTTPURLResponse*)baseResponse;
+    
+    tanker_http_response_t cresponse;
+    
+    if (error)
+    {
+      cresponse.error_msg = error.localizedDescription.UTF8String;
+      cresponse.headers = NULL;
+      cresponse.num_headers = 0;
+      cresponse.body = NULL;
+      cresponse.body_size = 0;
+    }
+    else
+    {
+      cresponse.num_headers = (int32_t)response.allHeaderFields.count;
+      cresponse.headers = malloc(sizeof(tanker_http_header_t) * response.allHeaderFields.count);
+      int i = 0;
+      for(NSString* key in response.allHeaderFields) {
+        cresponse.headers[i++] = (tanker_http_header_t){
+          .name = key.UTF8String,
+          .value = ((NSString*)response.allHeaderFields[key]).UTF8String,
+        };
+      }
+      
+      cresponse.error_msg = NULL;
+      cresponse.status_code = (int32_t)response.statusCode;
+      cresponse.body = data.bytes;
+      cresponse.body_size = data.length;
+    }
+    
+    @synchronized(self)
+    {
+      NSURLSessionDataTask* task = [self->_requests objectForKey:requestId];
+      if (task)
+      {
+        tanker_http_handle_response(crequest, &cresponse);
+        [self->_requests removeObjectForKey:requestId];
+      }
+    }
+    
+    free(cresponse.headers);
+  }];
 
   @synchronized(self)
   {
