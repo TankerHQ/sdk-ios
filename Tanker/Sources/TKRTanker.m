@@ -24,8 +24,6 @@
 
 NSString* const TKRErrorDomain = @"TKRErrorDomain";
 
-#define TANKER_IOS_VERSION @"9999"
-
 TKRLogHandler globalLogHandler = ^(TKRLogEntry* _Nonnull entry) {
   switch (entry.level)
   {
@@ -178,6 +176,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   convertOptions(options, &cOptions);
   cOptions.http_options.send_request = httpSendRequestCallback;
   cOptions.http_options.cancel_request = httpCancelRequestCallback;
+  cOptions.http_options.data = (__bridge void*)tanker;
   cOptions.datastore_options.open = TKR_datastore_open;
   cOptions.datastore_options.close = TKR_datastore_close;
   cOptions.datastore_options.nuke = TKR_datastore_nuke;
