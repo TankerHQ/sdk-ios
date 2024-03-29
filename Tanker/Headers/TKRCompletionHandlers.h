@@ -7,6 +7,7 @@
 @class TKRAttachResult;
 @class TKREncryptionSession;
 @class TKRLogEntry;
+@class TKRVerification;
 
 /*!
  @typedef TKRStartHandler
@@ -107,6 +108,15 @@ typedef void (^TKRVerificationKeyHandler)(TKRVerificationKey* _Nullable key, NSE
  */
 typedef void (^TKRVerificationMethodsHandler)(NSArray<TKRVerificationMethod*>* _Nullable methods,
                                               NSError* _Nullable err);
+
+/*!
+ @typedef TKRAuthenticateWithIDPResultHandler
+ @brief Block which will be called with a TKRVerification*.
+
+ @param result the result of authenticateWithIDP, or nil.
+ @param err the error which occurred, or nil.
+ */
+typedef void (^TKRAuthenticateWithIDPResultHandler)(TKRVerification* _Nullable result, NSError* _Nullable err);
 
 /*!
  @typedef TKRAttachResultHandler
