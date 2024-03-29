@@ -757,6 +757,39 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_destroy(resolve_future);
 }
 
+// Needs to be public to be accessible in tests
+- (void)authenticateWithIDP:(NSString*)providerID
+                     cookie:(NSString*)cookie
+          completionHandler:(nonnull TKRAuthenticateWithIDPResultHandler)handler
+{
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      tanker_oidc_authorization_code_verification_t* c_result = TKR_numberToPtr(ptrValue);
+      NSString* providerID = [NSString stringWithCString:c_result->provider_id encoding:NSUTF8StringEncoding];
+      NSString* authorizationCode = [NSString stringWithCString:c_result->authorization_code encoding:NSUTF8StringEncoding];
+      NSString* state = [NSString stringWithCString:c_result->state encoding:NSUTF8StringEncoding];
+
+      TKRVerification* ret = [TKRVerification verificationFromOIDCAuthorizationCode:authorizationCode
+                                                                         providerID:providerID
+                                                                              state:state];
+      tanker_free_authenticate_with_idp_result(c_result);
+      handler(ret, nil);
+    }
+  };
+
+  char const* c_provider_id = [providerID cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* c_cookie = [cookie cStringUsingEncoding:NSUTF8StringEncoding];
+
+  tanker_future_t* authenticate_future = tanker_authenticate_with_idp((tanker_t*)self.cTanker, c_provider_id, c_cookie);
+  tanker_future_t* resolve_future =
+      tanker_future_then(authenticate_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(authenticate_future);
+  tanker_future_destroy(resolve_future);
+}
+
 - (void)stopWithCompletionHandler:(nonnull TKRErrorHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
