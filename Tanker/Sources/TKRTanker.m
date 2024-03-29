@@ -408,6 +408,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
         ret.method = cVerificationMethodToVerificationMethod(c_result->method);
       else
         ret.method = nil;
+
+      tanker_free_attach_result(c_result);
       handler(ret, nil);
     }
   };
