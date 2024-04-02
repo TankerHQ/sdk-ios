@@ -6,7 +6,7 @@
 
 #include "ctanker.h"
 
-@interface HTTPClient : NSObject
+@interface HTTPClient : NSObject <NSURLSessionTaskDelegate>
 
 @property int32_t _lastId;
 @property NSMutableDictionary* _requests;
@@ -64,9 +64,12 @@
   [req setValue:[TKRTanker versionString] forHTTPHeaderField:@"X-Tanker-SdkVersion"];
 
   NSNumber* requestId = [NSNumber numberWithInteger:OSAtomicIncrement32(&_lastId)];
-  NSURLSessionDataTask* task =
-  [[NSURLSession sharedSession] dataTaskWithRequest:req
-                                  completionHandler:^(NSData* data, NSURLResponse* baseResponse, NSError* error) {
+
+  NSURLSessionConfiguration* configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+  NSURLSession* session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
+
+  NSURLSessionDataTask* task = [session dataTaskWithRequest:req
+                                          completionHandler:^(NSData* data, NSURLResponse* baseResponse, NSError* error) {
     NSHTTPURLResponse* response = (NSHTTPURLResponse*)baseResponse;
     
     tanker_http_response_t cresponse;
@@ -116,8 +119,20 @@
   }
 
   [task resume];
+  [session finishTasksAndInvalidate];
 
   return (tanker_http_request_handle_t*)TKR_numberToPtr(requestId);
+}
+
+// Prevent URLSession from following redirections:
+// - sdk-native will handle the redirection response
+- (void)URLSession:(NSURLSession *)session
+              task:(NSURLSessionTask *)task
+willPerformHTTPRedirection:(NSHTTPURLResponse *)response
+        newRequest:(NSURLRequest *)request
+ completionHandler:(void (^)(NSURLRequest *))completionHandler
+{
+  completionHandler(NULL);
 }
 
 - (void)cancelRequest:(tanker_http_request_t*)request
