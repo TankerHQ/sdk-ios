@@ -21,6 +21,7 @@ It's available for browsers, desktop, iOS and Android.
   s.private_header_files = 'Headers/*+Private.h'
   s.pod_target_xcconfig = {
     'USE_HEADERMAP' => "NO",
+    'DEFINES_MODULE' => "YES",
   }
 
 
