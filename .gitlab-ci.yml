@@ -139,33 +139,29 @@ check/downstream/arm:
 # bridge-check stage #
 ######################
 
-bridge/native-from-sources/x86_64:
+bridge-dotenv:
   stage: bridge-check
-  extends:
-    - .rules/native-from-sources
-    - .variables/bridge-common
-  needs:
-    - check/native-from-sources/x86_64
-  variables:
-    UPSTREAM_JOB_NAME: check/native-from-sources/x86_64
-    UPSTREAM_JOB_TARGET: ios-x86_64
-  trigger:
-    project: TankerHQ/sdk-react-native
-    strategy: depend
-
-bridge/native-from-sources/arm:
-  stage: bridge-check
-  extends:
-    - .rules/native-from-sources
-    - .variables/bridge-common
-  needs:
-    - check/native-from-sources/arm
-  variables:
-    UPSTREAM_JOB_NAME: check/native-from-sources/arm
-    UPSTREAM_JOB_TARGET: ios-arm
-  trigger:
-    project: TankerHQ/sdk-react-native
-    strategy: depend
+  rules:
+    # Start with accept-only rules, these must **NOT** contain a when: never
+    - !reference [ .rules/push-master-or-feat, rules ]
+    - !reference [ .rules/mr/manual, rules ]
+    - !reference [ .rules/nightly, rules ]
+    - !reference [ .rules/check/downstream, rules ]
+    # Deploy pipeline checks start here, this must be the *ONLY* when: never in these rules!
+    - if: !reference [ .if-invalid-ios-release-version, if ]
+      when: never
+    - !reference [ .rules/web/auto, rules ]
+    - !reference [ .rules/deploy-pipeline, rules ]
+  before_script:
+    - *global_before_script
+  script:
+    - poetry run python run-ci.py write-bridge-dotenv --downstream compatibility-tests
+                                                      --downstream sdk-react-native
+  artifacts:
+    expire_in: 7 days
+    reports:
+      dotenv: bridge.env
+  tags: !reference [.tags/macos, tags]
 
 bridge/compat-from-sources/arm:
   stage: bridge-check
@@ -174,11 +170,13 @@ bridge/compat-from-sources/arm:
     - .rules/native-from-sources
   needs:
     - check/native-from-sources/arm
+    - bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: check/native-from-sources/arm
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
     project: TankerHQ/compatibility-tests
+    branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
     strategy: depend
 
 bridge/compat-downstream/arm:
@@ -189,11 +187,13 @@ bridge/compat-downstream/arm:
     - if: !reference [.if-upstream-ci-pipeline, if]
   needs:
     - check/downstream/arm
+    - bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: check/downstream/arm
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
     project: TankerHQ/compatibility-tests
+    branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
     strategy: depend
 
 bridge/compat-deployed/arm:
@@ -207,71 +207,110 @@ bridge/compat-deployed/arm:
     - !reference [.rules/web/auto, rules]
   needs:
     - check/deployed-native/arm
+    - bridge-dotenv
   variables:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: $SDK_NATIVE_LATEST_CONAN_REFERENCE
     UPSTREAM_JOB_NAME: check/deployed-native/arm
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
     project: TankerHQ/compatibility-tests
+    branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
     strategy: depend
 
-.rules/bridge/deployed-native:
-  rules: !reference [.rules/check/deployed-native, rules]
-
-bridge/deployed-native/x86_64:
+bridge/react-native-from-sources/x86_64:
   stage: bridge-check
   extends:
-    - .rules/bridge/deployed-native
+    - .rules/native-from-sources
+    - .variables/bridge-common
+  needs:
+    - check/native-from-sources/x86_64
+    - bridge-dotenv
+  variables:
+    UPSTREAM_JOB_NAME: check/native-from-sources/x86_64
+    UPSTREAM_JOB_TARGET: ios-x86_64
+  trigger:
+    project: TankerHQ/sdk-react-native
+    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
+    strategy: depend
+
+bridge/react-native-from-sources/arm:
+  stage: bridge-check
+  extends:
+    - .rules/native-from-sources
+    - .variables/bridge-common
+  needs:
+    - check/native-from-sources/arm
+    - bridge-dotenv
+  variables:
+    UPSTREAM_JOB_NAME: check/native-from-sources/arm
+    UPSTREAM_JOB_TARGET: ios-arm
+  trigger:
+    project: TankerHQ/sdk-react-native
+    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
+    strategy: depend
+
+bridge/react-native-deployed/x86_64:
+  stage: bridge-check
+  extends:
+    - .rules/check/deployed-native
     - .variables/bridge-common
   needs:
     - check/deployed-native/x86_64
+    - bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: check/deployed-native/x86_64
     UPSTREAM_JOB_TARGET: ios-x86_64
   trigger:
     project: TankerHQ/sdk-react-native
+    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
     strategy: depend
 
-bridge/deployed-native/arm:
+bridge/react-native-deployed/arm:
   stage: bridge-check
   extends:
-    - .rules/bridge/deployed-native
+    - .rules/check/deployed-native
     - .variables/bridge-common
   needs:
     - check/deployed-native/arm
+    - bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: check/deployed-native/arm
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
     project: TankerHQ/sdk-react-native
+    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
     strategy: depend
 
-bridge/downstream/x86_64:
+bridge/react-native-downstream/x86_64:
   stage: bridge-check
   extends:
     - .rules/check/downstream
     - .variables/bridge-common
   needs:
     - check/downstream/x86_64
+    - bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: check/downstream/x86_64
     UPSTREAM_JOB_TARGET: ios-x86_64
   trigger:
     project: TankerHQ/sdk-react-native
+    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
     strategy: depend
 
-bridge/downstream/arm:
+bridge/react-native-downstream/arm:
   stage: bridge-check
   extends:
     - .rules/check/downstream
     - .variables/bridge-common
   needs:
     - check/downstream/arm
+    - bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: check/downstream/arm
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
     project: TankerHQ/sdk-react-native
+    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
     strategy: depend
 
 ################
