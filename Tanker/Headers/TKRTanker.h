@@ -39,7 +39,7 @@
 
 + (nonnull NSString*)nativeVersionString;
 
-+ (nonnull NSString*)prehashPassword:(nonnull NSString*)password;
++ (nullable NSString*)prehashPassword:(nonnull NSString*)password err:(NSError**)errResult;
 
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler;
 

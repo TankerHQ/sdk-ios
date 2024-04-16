@@ -218,10 +218,13 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return [NSString stringWithCString:tanker_version_string() encoding:NSUTF8StringEncoding];
 }
 
-+ (nonnull NSString*)prehashPassword:(nonnull NSString*)password
++ (nullable NSString*)prehashPassword:(nonnull NSString*)password err:(NSError**)errResult
 {
-  if (!password.length)
-    [NSException raise:NSInvalidArgumentException format:@"cannot hash empty password"];
+  if (!password.length) {
+    if (errResult != nil)
+      *errResult = TKR_createNSError(TKRErrorInvalidArgument, @"cannot hash empty password");
+    return nil;
+  }
 
   char const* c_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* expected_chashed = tanker_prehash_password(c_password);
