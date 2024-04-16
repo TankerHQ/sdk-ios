@@ -14,7 +14,7 @@
 #import <Tanker/TKRVerificationKey+Private.h>
 #import <Tanker/TKRVerificationMethod+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
-#import <Tanker/Tanker-Swift.h>
+#import <Tanker/TKRSwift+Private.h>
 
 #include <assert.h>
 #include <string.h>
