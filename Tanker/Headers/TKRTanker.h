@@ -296,7 +296,7 @@
 
  @param groupId the id of the group to update.
  @param usersToAdd the users to add to the group.
- @param handler the block called with an NSError, or nil.
+ @param handler the block called with an NSError*, or nil.
  */
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
                   usersToAdd:(nonnull NSArray<NSString*>*)usersToAdd
@@ -308,7 +308,7 @@
  @param groupId the id of the group to update.
  @param usersToAdd the users to add to the group.
  @param usersToRemove the users to remove from the group.
- @param handler the block called with an NSError, or nil.
+ @param handler the block called with an NSError*, or nil.
  */
 - (void)updateMembersOfGroup:(nonnull NSString*)groupId
                   usersToAdd:(nonnull NSArray<NSString*>*)usersToAdd
@@ -316,11 +316,26 @@
            completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
+ @brief Authenticates against a trusted identity provider.
+
+ @warning Experimental: This API is exposed for testing purposes only
+
+ @pre status must be TKRStatusIdentityRegistrationNeeded, TKRStatusIdentityVerificationNeeded or TKRStatusReady
+ 
+ @param providerID oidc provider id of the trusted identity provider (as returned by the app managment API)
+ @param cookie a cookie-list added to the authorization HTTP request (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
+ @param handler the block called with an NSError*, or TKRVerification*.
+ */
+- (void)authenticateWithIDP:(NSString*)providerID
+                     cookie:(NSString*)cookie
+          completionHandler:(nonnull TKRAuthenticateWithIDPResultHandler)handler;
+
+/*!
  @brief Share multiple encrypted resources to multiple users.
 
  @param resourceIDs resource IDs to share.
  @param options recipient identities and group IDs to share with.
- @param handler the block called with an NSError, or nil.
+ @param handler the block called with an NSError*, or nil.
 
  @pre @a resourceIDs must contain resource IDs retrieved with the resourceIDOfEncryptedData method.
  @a userIDs must contain valid user IDs.

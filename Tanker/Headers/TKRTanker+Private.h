@@ -6,6 +6,8 @@
 #import <Tanker/TKRTanker.h>
 #import <Tanker/Utils/TKRUtils.h>
 
+#define TANKER_IOS_VERSION @"9999"
+
 typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
 
 void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,

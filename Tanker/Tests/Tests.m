@@ -181,6 +181,7 @@ SpecBegin(TankerSpecs)
       __block NSString* appSecret;
       __block NSDictionary* oidcTestConfig;
       __block NSString* verificationToken;
+      __block NSString* fakeOidcIssuerUrl;
 
       __block TKRTankerOptions* tankerOptions;
 
@@ -294,6 +295,10 @@ SpecBegin(TankerSpecs)
         expect(url).toNot.beNil();
         verificationToken = env[@"TANKER_VERIFICATION_API_TEST_TOKEN"];
         expect(verificationToken).toNot.beNil();
+
+        fakeOidcIssuerUrl = env[@"TANKER_FAKE_OIDC_URL"];
+        expect(fakeOidcIssuerUrl).toNot.beNil();
+        fakeOidcIssuerUrl = [NSString stringWithFormat:@"%@/issuer", fakeOidcIssuerUrl];
 
         oidcTestConfig = @{
           @"clientId" : env[@"TANKER_OIDC_CLIENT_ID"],
@@ -1603,6 +1608,50 @@ SpecBegin(TankerSpecs)
           });
           expect(methods.count).to.equal(1);
           expect(methods[0].type).to.equal(TKRVerificationMethodTypeOIDCIDToken);
+          stop(userLaptop);
+        });
+
+        it(@"should setup verification with an OIDC authorization code", ^{
+          NSString* subjectCookie = @"fake_oidc_subject=martine";
+
+          NSError* error = [admin updateApp:appID
+                               oidcClientID:@"tanker"
+                         oidcClientProvider:@"fake-oidc"
+                                 oidcIssuer:fakeOidcIssuerUrl];
+          expect(error).to.beNil();
+
+          NSDictionary* provider = [admin getOIDCProviderFromAppID:appID];
+
+          TKRTanker* userPhone = [TKRTanker tankerWithOptions:createTankerOptions(url, appID) err:nil];
+          NSString* userIdentity = createIdentity(createUUID(), appID, appSecret);
+
+          NSError* err = hangWithResolver(^(PMKResolver resolver) {
+            [userPhone startWithIdentity:userIdentity
+                       completionHandler:^(TKRStatus _status, NSError* err) {
+              resolver(err);
+            }];
+          });
+          expect(err).to.beNil();
+          expect(userPhone.status).to.equal(TKRStatusIdentityRegistrationNeeded);
+
+          TKRVerification* verification1 = hangWithAdapter(^(PMKAdapter adapter) {
+            [userPhone authenticateWithIDP:provider[@"id"] cookie:subjectCookie completionHandler:adapter];
+          });
+          
+          TKRVerification* verification2 = hangWithAdapter(^(PMKAdapter adapter) {
+            [userPhone authenticateWithIDP:provider[@"id"] cookie:subjectCookie completionHandler:adapter];
+          });
+          
+          err = hangWithResolver(^(PMKResolver resolver) {
+              [userPhone registerIdentityWithVerification:verification1
+                                     completionHandler:resolver];
+            });
+          expect(err).to.beNil();
+          expect(userPhone.status).to.equal(TKRStatusReady);
+          stop(userPhone);
+
+          TKRTanker* userLaptop = [TKRTanker tankerWithOptions:createTankerOptions(url, appID) err:nil];
+          startWithIdentityAndVerify(userLaptop, userIdentity, verification2);
           stop(userLaptop);
         });
 

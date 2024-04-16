@@ -90,6 +90,7 @@ class TankerFunctionalQuickSpec: QuickSpec {
     "clientSecret": getEnv("TANKER_OIDC_CLIENT_SECRET"),
     "provider": getEnv("TANKER_OIDC_PROVIDER"),
     "issuer": getEnv("TANKER_OIDC_ISSUER"),
+    "fakeOidcIssuerUrl": getEnv("TANKER_FAKE_OIDC_URL") + "/issuer",
     "users": [
       "martine": [
         "email": getEnv("TANKER_OIDC_MARTINE_EMAIL"),
@@ -97,12 +98,12 @@ class TankerFunctionalQuickSpec: QuickSpec {
       ]
     ]
   ];
-  
+
   let admin = TKRTestAdmin(
     url: getEnv("TANKER_MANAGEMENT_API_URL"),
     appManagementToken: getEnv("TANKER_MANAGEMENT_API_ACCESS_TOKEN"),
     environmentName: getEnv("TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME")
   );
-  
+
   static func getEnv(_ key: String) -> String { ProcessInfo.processInfo.environment[key]! }
 }

@@ -62,6 +62,7 @@ It's available for browsers, desktop, iOS and Android.
       :environment_variables => Hash[
         [
           'TANKER_APPD_URL',
+          'TANKER_FAKE_OIDC_URL',
           'TANKER_MANAGEMENT_API_ACCESS_TOKEN',
           'TANKER_MANAGEMENT_API_URL',
           'TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME',

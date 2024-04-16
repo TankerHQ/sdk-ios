@@ -24,8 +24,6 @@
 
 NSString* const TKRErrorDomain = @"TKRErrorDomain";
 
-#define TANKER_IOS_VERSION @"9999"
-
 TKRLogHandler globalLogHandler = ^(TKRLogEntry* _Nonnull entry) {
   switch (entry.level)
   {
@@ -82,6 +80,11 @@ static void verificationToCVerification(TKRVerification* _Nonnull verification, 
     c_verification->preverified_oidc_verification.subject = [verification.preverifiedOIDC.subject cStringUsingEncoding:NSUTF8StringEncoding];
     c_verification->preverified_oidc_verification.provider_id = [verification.preverifiedOIDC.providerID cStringUsingEncoding:NSUTF8StringEncoding];
     break;
+  case TKRVerificationMethodTypeOIDCAuthorizationCode:
+    c_verification->oidc_authorization_code_verification.provider_id = [verification.oidcAuthorizationCode.providerID cStringUsingEncoding:NSUTF8StringEncoding];
+    c_verification->oidc_authorization_code_verification.authorization_code = [verification.oidcAuthorizationCode.authorizationCode cStringUsingEncoding:NSUTF8StringEncoding];
+    c_verification->oidc_authorization_code_verification.state = [verification.oidcAuthorizationCode.state cStringUsingEncoding:NSUTF8StringEncoding];
+    break;
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
     assert(false);
@@ -118,6 +121,9 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
     break;
   case TKRVerificationMethodTypePreverifiedOIDC:
     NSLog(@"Unreachable code: PreverifiedOIDC is not exposed as a VerificationMethod");
+    assert(false);
+  case TKRVerificationMethodTypeOIDCAuthorizationCode:
+    NSLog(@"Unreachable code: OIDCAuthorizationCode is not exposed as a VerificationMethod");
     assert(false);
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);
@@ -178,6 +184,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   convertOptions(options, &cOptions);
   cOptions.http_options.send_request = httpSendRequestCallback;
   cOptions.http_options.cancel_request = httpCancelRequestCallback;
+  cOptions.http_options.data = (__bridge void*)tanker;
   cOptions.datastore_options.open = TKR_datastore_open;
   cOptions.datastore_options.close = TKR_datastore_close;
   cOptions.datastore_options.nuke = TKR_datastore_nuke;
@@ -401,6 +408,8 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
         ret.method = cVerificationMethodToVerificationMethod(c_result->method);
       else
         ret.method = nil;
+
+      tanker_free_attach_result(c_result);
       handler(ret, nil);
     }
   };
@@ -747,6 +756,39 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       verification_key_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(verification_key_fut);
+  tanker_future_destroy(resolve_future);
+}
+
+// Needs to be public to be accessible in tests
+- (void)authenticateWithIDP:(NSString*)providerID
+                     cookie:(NSString*)cookie
+          completionHandler:(nonnull TKRAuthenticateWithIDPResultHandler)handler
+{
+  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
+    if (err)
+      handler(nil, err);
+    else
+    {
+      tanker_oidc_authorization_code_verification_t* c_result = TKR_numberToPtr(ptrValue);
+      NSString* providerID = [NSString stringWithCString:c_result->provider_id encoding:NSUTF8StringEncoding];
+      NSString* authorizationCode = [NSString stringWithCString:c_result->authorization_code encoding:NSUTF8StringEncoding];
+      NSString* state = [NSString stringWithCString:c_result->state encoding:NSUTF8StringEncoding];
+
+      TKRVerification* ret = [TKRVerification verificationFromOIDCAuthorizationCode:authorizationCode
+                                                                         providerID:providerID
+                                                                              state:state];
+      tanker_free_authenticate_with_idp_result(c_result);
+      handler(ret, nil);
+    }
+  };
+
+  char const* c_provider_id = [providerID cStringUsingEncoding:NSUTF8StringEncoding];
+  char const* c_cookie = [cookie cStringUsingEncoding:NSUTF8StringEncoding];
+
+  tanker_future_t* authenticate_future = tanker_authenticate_with_idp((tanker_t*)self.cTanker, c_provider_id, c_cookie);
+  tanker_future_t* resolve_future =
+      tanker_future_then(authenticate_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
+  tanker_future_destroy(authenticate_future);
   tanker_future_destroy(resolve_future);
 }
 

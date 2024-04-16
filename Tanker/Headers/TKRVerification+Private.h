@@ -1,4 +1,5 @@
 #import <Tanker/TKREmailVerification+Private.h>
+#import <Tanker/TKROIDCAuthorizationCodeVerification+Private.h>
 #import <Tanker/TKRPhoneNumberVerification+Private.h>
 #import <Tanker/TKRPreverifiedOIDCVerification+Private.h>
 #import <Tanker/TKRVerification.h>
@@ -17,6 +18,7 @@
 @property NSString* preverifiedEmail;
 @property NSString* preverifiedPhoneNumber;
 @property TKRPreverifiedOIDCVerification* preverifiedOIDC;
+@property TKROIDCAuthorizationCodeVerification* oidcAuthorizationCode;
 
 @property id valuePrivate;
 
