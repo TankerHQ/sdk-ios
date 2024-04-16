@@ -12,10 +12,11 @@ class UnitTests: QuickSpec {
     describe("prehashPassword") {
       it("should fail to hash an empty password") {
         expect {
-          try TKRTanker.prehashPassword("")
+          let _: String = try TKRTanker.prehashPassword("")
         }.to(throwError { (error: NSError) in
           expect(error.domain).to(equal(TKRErrorDomain));
           expect(error.code) == TKRError.invalidArgument.rawValue;
+          expect(error.localizedDescription) == "Cannot hash empty password";
         })
       }
       
