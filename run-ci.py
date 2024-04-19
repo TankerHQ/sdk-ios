@@ -119,7 +119,7 @@ class Builder:
         self.builder.generate_xcframework(
             xcframework_path=xcframework_path,
             libs=libs,
-            include_path=self.native_headers_path,
+            include_path=None,
             output_lib_filename="libtankerdeps.a",
         )
         _import_ctanker_headers(self.native_headers_path, self.headers_path)
