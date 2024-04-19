@@ -4,7 +4,7 @@
 
 #include <libkern/OSAtomic.h>
 
-#include "ctanker.h"
+#include <Tanker/ctanker.h>
 
 @interface HTTPClient : NSObject <NSURLSessionTaskDelegate>
 

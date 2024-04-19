@@ -25,9 +25,9 @@
 #import <PromiseKit/PromiseKit.h>
 #import <Specta/Specta.h>
 
-#include "ctanker.h"
-#include "ctanker/identity.h"
-#include "ctanker/private/datastore-tests/test.h"
+#include <Tanker/ctanker.h>
+#include <Tanker/ctanker/identity.h>
+#include <Tanker/ctanker/private/datastore-tests/test.h>
 
 static NSString* createIdentity(NSString* userID, NSString* appID, NSString* appSecret)
 {

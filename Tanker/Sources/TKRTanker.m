@@ -19,8 +19,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include "ctanker.h"
-#include "ctanker/stream.h"
+#include <Tanker/ctanker.h>
+#include <Tanker/ctanker/stream.h>
 
 NSString* const TKRErrorDomain = @"TKRErrorDomain";
 

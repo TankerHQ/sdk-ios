@@ -4,7 +4,7 @@
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
 
-#include "ctanker/encryptionsession.h"
+#include <Tanker/ctanker/encryptionsession.h>
 
 @implementation TKREncryptionSession
 
