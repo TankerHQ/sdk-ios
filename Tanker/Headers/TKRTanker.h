@@ -30,7 +30,7 @@
  @return An initialized TKRTanker*.
 
  */
-+ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options err:(NSError**)errResult;
++ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options err:(NSError * _Nullable * _Nullable)errResult;
 
 /*!
  @brief Get Tanker version as a string
@@ -39,7 +39,7 @@
 
 + (nonnull NSString*)nativeVersionString;
 
-+ (nullable NSString*)prehashPassword:(nonnull NSString*)password err:(NSError**)errResult;
++ (nullable NSString*)prehashPassword:(nonnull NSString*)password err:(NSError * _Nullable * _Nullable)errResult;
 
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler;
 
@@ -326,8 +326,8 @@
  @param cookie a cookie-list added to the authorization HTTP request (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
  @param handler the block called with an NSError*, or TKRVerification*.
  */
-- (void)authenticateWithIDP:(NSString*)providerID
-                     cookie:(NSString*)cookie
+- (void)authenticateWithIDP:(nonnull NSString*)providerID
+                     cookie:(nonnull NSString*)cookie
           completionHandler:(nonnull TKRAuthenticateWithIDPResultHandler)handler;
 
 /*!
