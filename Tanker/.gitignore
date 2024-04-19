@@ -36,4 +36,5 @@ Carthage/Build
 #
 Pods/
 Libraries/
+NativeHeaders/
 conan/
