@@ -26,11 +26,11 @@ class TankerTests: TankerFunctionalQuickSpec {
     }
     
     describe("open") {
-      var tanker: TKRTanker!;
+      var tanker: Tanker!;
       var identity: String!;
 
       beforeEach {
-        tanker = try! TKRTanker(options: self.tankerOptions);
+        tanker = try! Tanker(options: self.tankerOptions);
         identity = createIdentity(appID: self.appID, appSecret: self.appSecret, userID: NSUUID().uuidString);
       }
 

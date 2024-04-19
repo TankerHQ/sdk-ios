@@ -15,6 +15,7 @@
 /*!
  @brief Tanker object
  */
+NS_SWIFT_NAME(Tanker)
 @interface TKRTanker : NSObject
 
 // MARK: Class methods
@@ -39,7 +40,7 @@
 
 + (nonnull NSString*)nativeVersionString;
 
-+ (nullable NSString*)prehashPassword:(nonnull NSString*)password err:(NSError * _Nullable * _Nullable)errResult;
++ (nullable NSString*)prehashPassword:(nonnull NSString*)password error:(NSError * _Nullable * _Nullable)errResult;
 
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler;
 

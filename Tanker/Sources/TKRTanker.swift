@@ -1,7 +1,8 @@
 import Foundation
 
-@objc
-extension TKRTanker {
+@objc(TKRTanker)
+public extension Tanker {
+  @objc
   static func prehashPassword(_ password: String) throws -> String {
     if password.isEmpty {
       throw NSError(domain: "TKRErrorDomain", code: TKRError.invalidArgument.rawValue, userInfo: [

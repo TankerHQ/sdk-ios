@@ -18,11 +18,8 @@ It's available for browsers, desktop, iOS and Android.
   s.swift_version = '5.0'
 
   s.source_files = [
-    'Sources/TKR*', 'Headers/TKR*',
-    'Sources/Utils/*', 'Headers/Utils/*',
-    'Sources/Storage/*', 'Headers/Storage/*',
-    'Headers/ctanker/**/*.h', 'Headers/ctanker.h',
-    'Headers/Tanker-umbrella.h'
+    'Sources/**/*.{m,swift}',
+    'Headers/**/*.h',
   ]
   s.private_header_files = 'Headers/*+Private.h'
 
