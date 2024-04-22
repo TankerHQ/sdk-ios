@@ -8,7 +8,6 @@
 #import <Tanker/TKRPadding.h>
 #import <Tanker/TKRTanker.h>
 #import <Tanker/TKRTankerOptions.h>
-#import <Tanker/TKRVerification.h>
 #import <Tanker/TKRVerificationKey.h>
 
 #import <Tanker/Utils/TKRUtils.h>
@@ -233,7 +232,7 @@ SpecBegin(TankerSpecs)
             });
             expect(verificationKey).toNot.beNil();
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [tanker registerIdentityWithVerification:[TKRVerification verificationFromVerificationKey:verificationKey]
+              [tanker registerIdentityWithVerification:[[TKRVerification alloc] withVerificationKey:verificationKey]
                                      completionHandler:resolver];
             });
             expect(tanker.status).to.equal(TKRStatusReady);
@@ -376,7 +375,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should attach and verify a provisional identity", ^{
           startWithIdentityAndRegister(
-              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              aliceTanker, aliceIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           __block NSString* provIdentity = createProvisionalIdentity(appID, aliceEmail);
           TKRAttachResult* result = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
@@ -385,8 +384,8 @@ SpecBegin(TankerSpecs)
           expect(result.method.type).to.equal(TKRVerificationMethodTypeEmail);
           expect(result.method.email).to.equal(aliceEmail);
 
-          TKRVerification* verif = [TKRVerification verificationFromEmail:aliceEmail
-                                                         verificationCode:getEmailVerificationCode(aliceEmail)];
+          TKRVerification* verif = [[TKRVerification alloc] withEmail:aliceEmail
+                                                     verificationCode:getEmailVerificationCode(aliceEmail)];
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [aliceTanker verifyProvisionalIdentityWithVerification:verif completionHandler:resolver];
           });
@@ -400,13 +399,13 @@ SpecBegin(TankerSpecs)
 
         it(@"should fail to attach an already attached identity", ^{
           startWithIdentityAndRegister(
-              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              aliceTanker, aliceIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           __block NSString* provIdentity = createProvisionalIdentity(appID, aliceEmail);
           hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
           });
-          TKRVerification* aliceVerif = [TKRVerification verificationFromEmail:aliceEmail
-                                                              verificationCode:getEmailVerificationCode(aliceEmail)];
+          TKRVerification* aliceVerif = [[TKRVerification alloc] withEmail:aliceEmail
+                                                          verificationCode:getEmailVerificationCode(aliceEmail)];
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [aliceTanker verifyProvisionalIdentityWithVerification:aliceVerif completionHandler:resolver];
           });
@@ -414,9 +413,9 @@ SpecBegin(TankerSpecs)
 
           // try to attach/verify with Bob now
           startWithIdentityAndRegister(
-              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
-          TKRVerification* bobVerif = [TKRVerification verificationFromEmail:aliceEmail
-                                                            verificationCode:getEmailVerificationCode(aliceEmail)];
+              bobTanker, bobIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
+          TKRVerification* bobVerif = [[TKRVerification alloc] withEmail:aliceEmail
+                                                        verificationCode:getEmailVerificationCode(aliceEmail)];
           TKRAttachResult* result = hangWithAdapter(^(PMKAdapter adapter) {
             [bobTanker attachProvisionalIdentity:provIdentity completionHandler:adapter];
           });
@@ -436,7 +435,7 @@ SpecBegin(TankerSpecs)
           tanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(tanker).toNot.beNil();
           NSString* identity = createIdentity(createUUID(), appID, appSecret);
-          startWithIdentityAndRegister(tanker, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+          startWithIdentityAndRegister(tanker, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
@@ -740,9 +739,9 @@ SpecBegin(TankerSpecs)
           bobPublicIdentity = getPublicIdentity(bobIdentity);
 
           startWithIdentityAndRegister(
-              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              aliceTanker, aliceIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           startWithIdentityAndRegister(
-              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              bobTanker, bobIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
@@ -920,9 +919,9 @@ SpecBegin(TankerSpecs)
           bobPublicIdentity = getPublicIdentity(bobIdentity);
 
           startWithIdentityAndRegister(
-              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              aliceTanker, aliceIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           startWithIdentityAndRegister(
-              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              bobTanker, bobIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
@@ -1124,11 +1123,11 @@ SpecBegin(TankerSpecs)
           charliePublicIdentity = getPublicIdentity(charlieIdentity);
 
           startWithIdentityAndRegister(
-              aliceTanker, aliceIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              aliceTanker, aliceIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           startWithIdentityAndRegister(
-              bobTanker, bobIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              bobTanker, bobIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           startWithIdentityAndRegister(
-              charlieTanker, charlieIdentity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              charlieTanker, charlieIdentity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
         });
 
         afterEach(^{
@@ -1361,7 +1360,7 @@ SpecBegin(TankerSpecs)
         it(@"should register an e2e passphrase", ^{
           NSString* e2ePassphrase = @"Hear the lament of the damned, cursed to write Objective-C";
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromE2ePassphrase:e2ePassphrase]);
+              firstDevice, identity, [[TKRVerification alloc] withE2ePassphrase:e2ePassphrase]);
 
           NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice verificationMethodsWithCompletionHandler:adapter];
@@ -1379,7 +1378,7 @@ SpecBegin(TankerSpecs)
                   {
                     expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                     [secondDevice
-                        verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:e2ePassphrase]
+                        verifyIdentityWithVerification:[[TKRVerification alloc] withE2ePassphrase:e2ePassphrase]
                                      completionHandler:resolver];
                   }
                 }];
@@ -1391,11 +1390,11 @@ SpecBegin(TankerSpecs)
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
+              firstDevice, identity, [[TKRVerification alloc] withE2ePassphrase:oldPassphrase]);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
-            [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
-                             completionHandler:resolver];
+            [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withE2ePassphrase:newPassphrase]
+                                             completionHandler:resolver];
           });
           expect(err).to.beNil();
 
@@ -1406,14 +1405,14 @@ SpecBegin(TankerSpecs)
                           }];
           });
           err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:oldPassphrase]
+            [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withE2ePassphrase:oldPassphrase]
                                        completionHandler:resolver];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidVerification);
 
           err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
+            [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withE2ePassphrase:newPassphrase]
                                        completionHandler:resolver];
           });
           expect(err).to.beNil();
@@ -1423,14 +1422,14 @@ SpecBegin(TankerSpecs)
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:oldPassphrase]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:oldPassphrase]);
 
           TKRVerificationOptions* opts = [TKRVerificationOptions options];
           opts.allowE2eMethodSwitch = true;
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
-                                       options:opts
-                             completionHandler:adapter];
+            [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withE2ePassphrase:newPassphrase]
+                                                       options:opts
+                                             completionHandler:adapter];
           });
           expect(err).to.beNil();
 
@@ -1441,14 +1440,14 @@ SpecBegin(TankerSpecs)
                           }];
           });
           err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:oldPassphrase]
+            [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withPassphrase:oldPassphrase]
                                        completionHandler:resolver];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorPreconditionFailed);
 
           err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
+            [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withE2ePassphrase:newPassphrase]
                                        completionHandler:resolver];
           });
           expect(err).to.beNil();
@@ -1458,14 +1457,14 @@ SpecBegin(TankerSpecs)
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromE2ePassphrase:oldPassphrase]);
+              firstDevice, identity, [[TKRVerification alloc] withE2ePassphrase:oldPassphrase]);
 
           TKRVerificationOptions* opts = [TKRVerificationOptions options];
           opts.allowE2eMethodSwitch = true;
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
-            [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:newPassphrase]
-                                       options:opts
-                             completionHandler:adapter];
+            [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withPassphrase:newPassphrase]
+                                                       options:opts
+                                             completionHandler:adapter];
           });
           expect(err).to.beNil();
 
@@ -1476,14 +1475,14 @@ SpecBegin(TankerSpecs)
                           }];
           });
           err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromE2ePassphrase:oldPassphrase]
+            [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withE2ePassphrase:oldPassphrase]
                                        completionHandler:resolver];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorPreconditionFailed);
 
           err = hangWithResolver(^(PMKResolver resolver) {
-            [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:newPassphrase]
+            [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withPassphrase:newPassphrase]
                                        completionHandler:resolver];
           });
           expect(err).to.beNil();
@@ -1493,11 +1492,11 @@ SpecBegin(TankerSpecs)
           NSString* oldPassphrase = @"Malumosis";
           NSString* newPassphrase = @"Aerugopenia";
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:oldPassphrase]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:oldPassphrase]);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
-            [firstDevice setVerificationMethod:[TKRVerification verificationFromE2ePassphrase:newPassphrase]
-                             completionHandler:resolver];
+            [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withE2ePassphrase:newPassphrase]
+                                             completionHandler:resolver];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorInvalidArgument);
@@ -1526,17 +1525,17 @@ SpecBegin(TankerSpecs)
 
         it(@"should return TKRStatusIdentityVerificationNeeded when starting on a new device", ^{
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           startWithIdentityAndVerify(
-              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              secondDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
         });
 
         it(@"should setup verification with an email", ^{
           NSString* email = @"bob.alice@tanker.io";
           startWithIdentityAndRegister(firstDevice,
                                        identity,
-                                       [TKRVerification verificationFromEmail:email
-                                                             verificationCode:getEmailVerificationCode(email)]);
+                                       [[TKRVerification alloc] withEmail:email
+                                                         verificationCode:getEmailVerificationCode(email)]);
 
           NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice verificationMethodsWithCompletionHandler:adapter];
@@ -1551,8 +1550,8 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice,
               identity,
-              [TKRVerification verificationFromPhoneNumber:phoneNumber
-                                          verificationCode:getSMSVerificationCode(phoneNumber)]);
+              [[TKRVerification alloc] withPhoneNumber:phoneNumber
+                                      verificationCode:getSMSVerificationCode(phoneNumber)]);
 
           NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice verificationMethodsWithCompletionHandler:adapter];
@@ -1583,7 +1582,7 @@ SpecBegin(TankerSpecs)
 
           NSDictionary* jsonResponse = sendOidcRequest(oidcClientID, oidcClientSecret, refreshToken);
           NSString* oidcToken = jsonResponse[@"id_token"];
-          TKRVerification* oidcVerif = [TKRVerification verificationFromOIDCIDToken:oidcToken];
+          TKRVerification* oidcVerif = [[TKRVerification alloc] withOIDCIDToken:oidcToken];
 
           NSString* nonce = hangWithAdapter(^(PMKAdapter adapter) {
             [userPhone createOidcNonceWithCompletionHandler:adapter];
@@ -1657,9 +1656,9 @@ SpecBegin(TankerSpecs)
 
         it(@"should share encrypted data with every accepted device", ^{
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           startWithIdentityAndVerify(
-              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              secondDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
 
           NSString* clearText = @"Rosebud";
 
@@ -1675,7 +1674,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should fail to generate a verification key when a previous verification method was set", ^{
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice generateVerificationKeyWithCompletionHandler:adapter];
           });
@@ -1687,15 +1686,15 @@ SpecBegin(TankerSpecs)
           TKRVerificationKey* verificationKey = startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
 
           startWithIdentityAndVerify(
-              secondDevice, identity, [TKRVerification verificationFromVerificationKey:verificationKey]);
+              secondDevice, identity, [[TKRVerification alloc] withVerificationKey:verificationKey]);
         });
 
         it(@"should fail to set a verification method if a verification key was generated", ^{
           startWithIdentityAndRegisterVerificationKey(firstDevice, identity);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
-            [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"fail"]
-                             completionHandler:resolver];
+            [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withPassphrase:@"fail"]
+                                             completionHandler:resolver];
           });
           expect(err).toNot.beNil();
           expect(err.code).to.equal(TKRErrorPreconditionFailed);
@@ -1703,7 +1702,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should error when adding a device with an invalid passphrase", ^{
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
             [secondDevice startWithIdentity:identity
@@ -1714,7 +1713,7 @@ SpecBegin(TankerSpecs)
                             {
                               expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                               [secondDevice
-                                  verifyIdentityWithVerification:[TKRVerification verificationFromPassphrase:@"fail"]
+                                  verifyIdentityWithVerification:[[TKRVerification alloc] withPassphrase:@"fail"]
                                                completionHandler:resolver];
                             }
                           }];
@@ -1725,16 +1724,16 @@ SpecBegin(TankerSpecs)
 
         it(@"should update a verification passphrase", ^{
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
 
           NSError* err = hangWithResolver(^(PMKResolver resolver) {
-            [firstDevice setVerificationMethod:[TKRVerification verificationFromPassphrase:@"new passphrase"]
-                             completionHandler:resolver];
+            [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withPassphrase:@"new passphrase"]
+                                             completionHandler:resolver];
           });
           expect(err).to.beNil();
 
           startWithIdentityAndVerify(
-              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"new passphrase"]);
+              secondDevice, identity, [[TKRVerification alloc] withPassphrase:@"new passphrase"]);
         });
 
         it(@"should throw when verifying an identity with an invalid verification key", ^{
@@ -1750,8 +1749,7 @@ SpecBegin(TankerSpecs)
                     expect(status).to.equal(TKRStatusIdentityVerificationNeeded);
                     [secondDevice
                         verifyIdentityWithVerification:
-                            [TKRVerification
-                                verificationFromVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
+                            [[TKRVerification alloc] withVerificationKey:[TKRVerificationKey verificationKeyFromValue:@"fail"]]
                                      completionHandler:resolver];
                   }
                 }];
@@ -1763,7 +1761,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should decrypt old resources on second device", ^{
           startWithIdentityAndRegister(
-              firstDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
 
           NSString* clearText = @"Rosebud";
           NSData* encryptedText = hangWithAdapter(^(PMKAdapter adapter) {
@@ -1771,7 +1769,7 @@ SpecBegin(TankerSpecs)
           });
           stop(firstDevice);
           startWithIdentityAndVerify(
-              secondDevice, identity, [TKRVerification verificationFromPassphrase:@"passphrase"]);
+              secondDevice, identity, [[TKRVerification alloc] withPassphrase:@"passphrase"]);
 
           NSString* decryptedText = hangWithAdapter(^(PMKAdapter adapter) {
             [secondDevice decryptStringFromData:encryptedText completionHandler:adapter];
@@ -1800,7 +1798,7 @@ SpecBegin(TankerSpecs)
 
           it(@"should fail to register with a preverified email", ^{
             NSString* email = @"bob.alice@tanker.io";
-            TKRVerification* verification = [TKRVerification verificationFromPreverifiedEmail:email];
+            TKRVerification* verification = [[TKRVerification alloc] withPreverifiedEmail:email];
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [firstDevice startWithIdentity:identity
                            completionHandler:^(TKRStatus status, NSError* err) {
@@ -1818,7 +1816,7 @@ SpecBegin(TankerSpecs)
 
           it(@"should fail to register with a preverified phone number", ^{
             NSString* phoneNumber = @"+33639982233";
-            TKRVerification* verification = [TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber];
+            TKRVerification* verification = [[TKRVerification alloc] withPreverifiedPhoneNumber:phoneNumber];
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [firstDevice startWithIdentity:identity
                            completionHandler:^(TKRStatus status, NSError* err) {
@@ -1837,7 +1835,7 @@ SpecBegin(TankerSpecs)
           it(@"should fail to register with a preverified oidc", ^{
             NSString* subject = @"subject";
             NSDictionary* provider = [admin getOIDCProviderFromAppID:appID];
-            TKRVerification* verification = [TKRVerification verificationFromPreverifiedOIDCSubject:subject providerID:provider[@"id"]];
+            TKRVerification* verification = [[TKRVerification alloc] withPreverifiedOIDCSubject:subject providerID:provider[@"id"]];
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [firstDevice startWithIdentity:identity
                            completionHandler:^(TKRStatus status, NSError* err) {
@@ -1857,8 +1855,8 @@ SpecBegin(TankerSpecs)
             NSString* email = @"bob.alice@tanker.io";
             startWithIdentityAndRegister(firstDevice,
                                          identity,
-                                         [TKRVerification verificationFromEmail:email
-                                                               verificationCode:getEmailVerificationCode(email)]);
+                                         [[TKRVerification alloc] withEmail:email
+                                                           verificationCode:getEmailVerificationCode(email)]);
             hangWithResolver(^(PMKResolver resolver) {
               [secondDevice startWithIdentity:identity
                             completionHandler:^(TKRStatus status, NSError* err) {
@@ -1866,7 +1864,7 @@ SpecBegin(TankerSpecs)
                             }];
             });
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedEmail:email]
+              [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withPreverifiedEmail:email]
                                          completionHandler:resolver];
             });
             expect(err).toNot.beNil();
@@ -1878,8 +1876,8 @@ SpecBegin(TankerSpecs)
             startWithIdentityAndRegister(
                 firstDevice,
                 identity,
-                [TKRVerification verificationFromPhoneNumber:phoneNumber
-                                            verificationCode:getSMSVerificationCode(phoneNumber)]);
+                [[TKRVerification alloc] withPhoneNumber:phoneNumber
+                                        verificationCode:getSMSVerificationCode(phoneNumber)]);
             hangWithResolver(^(PMKResolver resolver) {
               [secondDevice startWithIdentity:identity
                             completionHandler:^(TKRStatus status, NSError* err) {
@@ -1888,7 +1886,7 @@ SpecBegin(TankerSpecs)
             });
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
               [secondDevice
-                  verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber]
+                  verifyIdentityWithVerification:[[TKRVerification alloc] withPreverifiedPhoneNumber:phoneNumber]
                                completionHandler:resolver];
             });
             expect(err).toNot.beNil();
@@ -1913,7 +1911,7 @@ SpecBegin(TankerSpecs)
 
             startWithIdentityAndRegister(firstDevice,
                                          identity,
-                                         [TKRVerification verificationFromOIDCIDToken:oidcToken]);
+                                         [[TKRVerification alloc] withOIDCIDToken:oidcToken]);
             hangWithResolver(^(PMKResolver resolver) {
               [secondDevice startWithIdentity:identity
                             completionHandler:^(TKRStatus status, NSError* err) {
@@ -1923,7 +1921,7 @@ SpecBegin(TankerSpecs)
 
             NSString* subject = extractOIDCSubject(oidcToken);
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [secondDevice verifyIdentityWithVerification:[TKRVerification verificationFromPreverifiedOIDCSubject:subject providerID:provider[@"id"]]
+              [secondDevice verifyIdentityWithVerification:[[TKRVerification alloc] withPreverifiedOIDCSubject:subject providerID:provider[@"id"]]
                                          completionHandler:resolver];
             });
             expect(err).toNot.beNil();
@@ -1933,10 +1931,10 @@ SpecBegin(TankerSpecs)
           it(@"should register with a passphrase and set a preverified email method", ^{
             NSString* email = @"bob.alice@tanker.io";
             startWithIdentityAndRegister(
-                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+                firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"Rosebud"]);
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedEmail:email]
-                               completionHandler:resolver];
+              [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withPreverifiedEmail:email]
+                                               completionHandler:resolver];
             });
             expect(err).to.beNil();
             NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
@@ -1946,17 +1944,17 @@ SpecBegin(TankerSpecs)
 
             startWithIdentityAndVerify(secondDevice,
                                        identity,
-                                       [TKRVerification verificationFromEmail:email
-                                                             verificationCode:getEmailVerificationCode(email)]);
+                                       [[TKRVerification alloc] withEmail:email
+                                                         verificationCode:getEmailVerificationCode(email)]);
           });
 
           it(@"should register with a passphrase and set a preverified phone number method", ^{
             NSString* phoneNumber = @"+33639982233";
             startWithIdentityAndRegister(
-                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+                firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"Rosebud"]);
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedPhoneNumber:phoneNumber]
-                               completionHandler:resolver];
+              [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withPreverifiedPhoneNumber:phoneNumber]
+                                               completionHandler:resolver];
             });
             expect(err).to.beNil();
             NSArray<TKRVerificationMethod*>* methods = hangWithAdapter(^(PMKAdapter adapter) {
@@ -1967,8 +1965,8 @@ SpecBegin(TankerSpecs)
             startWithIdentityAndVerify(
                 secondDevice,
                 identity,
-                [TKRVerification verificationFromPhoneNumber:phoneNumber
-                                            verificationCode:getSMSVerificationCode(phoneNumber)]);
+                [[TKRVerification alloc] withPhoneNumber:phoneNumber
+                                        verificationCode:getSMSVerificationCode(phoneNumber)]);
           });
 
           it(@"should register with a passphrase and set a preverified oidc method", ^{
@@ -1982,10 +1980,12 @@ SpecBegin(TankerSpecs)
             NSString* subject = extractOIDCSubject(oidcToken);
 
             startWithIdentityAndRegister(
-                firstDevice, identity, [TKRVerification verificationFromPassphrase:@"Rosebud"]);
+                firstDevice, identity, [[TKRVerification alloc] withPassphrase:@"Rosebud"]);
             NSError* err = hangWithResolver(^(PMKResolver resolver) {
-              [firstDevice setVerificationMethod:[TKRVerification verificationFromPreverifiedOIDCSubject:subject providerID:provider[@"id"]]
-                               completionHandler:resolver];
+              [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc]
+                                                                  withPreverifiedOIDCSubject:subject
+                                                                  providerID:provider[@"id"]]
+                                               completionHandler:resolver];
             });
             expect(err).to.beNil();
 
@@ -2003,7 +2003,7 @@ SpecBegin(TankerSpecs)
             startWithIdentityAndVerify(
                 secondDevice,
                 identity,
-                [TKRVerification verificationFromOIDCIDToken:oidcToken]);
+                [[TKRVerification alloc] withOIDCIDToken:oidcToken]);
           });
         });
       });
@@ -2018,7 +2018,7 @@ SpecBegin(TankerSpecs)
           tanker = [TKRTanker tankerWithOptions:tankerOptions err:nil];
           expect(tanker).toNot.beNil();
           identity = createIdentity(createUUID(), appID, appSecret);
-          verification = [TKRVerification verificationFromPassphrase:@"passphrase"];
+          verification = [[TKRVerification alloc] withPassphrase:@"passphrase"];
         });
 
         afterEach(^{
@@ -2060,7 +2060,7 @@ SpecBegin(TankerSpecs)
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
             TKRVerificationOptions* opts = [TKRVerificationOptions options];
             opts.withSessionToken = true;
-            [tanker setVerificationMethod:verification options:opts completionHandler:adapter];
+            [tanker setVerificationMethodWithVerification:verification options:opts completionHandler:adapter];
           });
           expect(token).toNot.beNil();
           expect(token.length).to.equal(expectedTokenLength);
@@ -2069,12 +2069,12 @@ SpecBegin(TankerSpecs)
         it(@"can get a session token using setVerificationMethod with email", ^{
           NSString* email = @"bob.alice@tanker.io";
           startWithIdentityAndRegister(tanker, identity, verification);
-          TKRVerification* verif = [TKRVerification verificationFromEmail:email
-                                                         verificationCode:getEmailVerificationCode(email)];
+          TKRVerification* verif = [[TKRVerification alloc] withEmail:email
+                                                     verificationCode:getEmailVerificationCode(email)];
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
             TKRVerificationOptions* opts = [TKRVerificationOptions options];
             opts.withSessionToken = true;
-            [tanker setVerificationMethod:verif options:opts completionHandler:adapter];
+            [tanker setVerificationMethodWithVerification:verif options:opts completionHandler:adapter];
           });
           expect(token).toNot.beNil();
           expect(token.length).to.equal(expectedTokenLength);
@@ -2083,12 +2083,12 @@ SpecBegin(TankerSpecs)
         it(@"can get a session token using setVerificationMethod with phone number", ^{
           NSString* phoneNumber = @"+33639982233";
           startWithIdentityAndRegister(tanker, identity, verification);
-          TKRVerification* verif = [TKRVerification verificationFromPhoneNumber:phoneNumber
-                                                               verificationCode:getSMSVerificationCode(phoneNumber)];
+          TKRVerification* verif = [[TKRVerification alloc] withPhoneNumber:phoneNumber
+                                                           verificationCode:getSMSVerificationCode(phoneNumber)];
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
             TKRVerificationOptions* opts = [TKRVerificationOptions options];
             opts.withSessionToken = true;
-            [tanker setVerificationMethod:verif options:opts completionHandler:adapter];
+            [tanker setVerificationMethodWithVerification:verif options:opts completionHandler:adapter];
           });
           expect(token).toNot.beNil();
           expect(token.length).to.equal(expectedTokenLength);

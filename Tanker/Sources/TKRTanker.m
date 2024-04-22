@@ -10,7 +10,6 @@
 #import <Tanker/TKRStreamsFromNative+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
-#import <Tanker/TKRVerification+Private.h>
 #import <Tanker/TKRVerificationKey+Private.h>
 #import <Tanker/TKRVerificationMethod+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
@@ -40,56 +39,6 @@ TKRLogHandler globalLogHandler = ^(TKRLogEntry* _Nonnull entry) {
     NSLog(@"Unknown Tanker log level: %c: [%@] %@", (int)entry.level, entry.category, entry.message);
   }
 };
-
-static void verificationToCVerification(TKRVerification* _Nonnull verification, tanker_verification_t* c_verification)
-{
-  c_verification->verification_method_type = verification.type;
-  switch (verification.type)
-  {
-  case TKRVerificationMethodTypeEmail:
-    c_verification->email_verification.email = [verification.email.email cStringUsingEncoding:NSUTF8StringEncoding];
-    c_verification->email_verification.verification_code =
-        [verification.email.verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypePassphrase:
-    c_verification->passphrase = [verification.passphrase cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypeVerificationKey:
-    c_verification->verification_key = [verification.verificationKey.value cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypeOIDCIDToken:
-    c_verification->oidc_id_token = [verification.oidcIDToken cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypePhoneNumber:
-    c_verification->phone_number_verification.phone_number =
-        [verification.phoneNumber.phoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
-    c_verification->phone_number_verification.verification_code =
-        [verification.phoneNumber.verificationCode cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypePreverifiedEmail:
-    c_verification->preverified_email = [verification.preverifiedEmail cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypePreverifiedPhoneNumber:
-    c_verification->preverified_phone_number =
-        [verification.preverifiedPhoneNumber cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypeE2ePassphrase:
-    c_verification->e2e_passphrase = [verification.e2ePassphrase cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypePreverifiedOIDC:
-    c_verification->preverified_oidc_verification.subject = [verification.preverifiedOIDC.subject cStringUsingEncoding:NSUTF8StringEncoding];
-    c_verification->preverified_oidc_verification.provider_id = [verification.preverifiedOIDC.providerID cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  case TKRVerificationMethodTypeOIDCAuthorizationCode:
-    c_verification->oidc_authorization_code_verification.provider_id = [verification.oidcAuthorizationCode.providerID cStringUsingEncoding:NSUTF8StringEncoding];
-    c_verification->oidc_authorization_code_verification.authorization_code = [verification.oidcAuthorizationCode.authorizationCode cStringUsingEncoding:NSUTF8StringEncoding];
-    c_verification->oidc_authorization_code_verification.state = [verification.oidcAuthorizationCode.state cStringUsingEncoding:NSUTF8StringEncoding];
-    break;
-  default:
-    NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)verification.type);
-    assert(false);
-  }
-}
 
 static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
     tanker_verification_method_t* c_verification)
@@ -215,45 +164,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 // MARK: Instance methods
 
-- (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                       completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRIdentityVerificationHandler thunk = ^(NSString* _token, NSError* err) {
-    handler(err);
-  };
-
-  [self registerIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:thunk];
-}
-
-- (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
-                                 options:(nonnull TKRVerificationOptions*)options
-                       completionHandler:(nonnull TKRIdentityVerificationHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
-    if (err || !session_token)
-      handler(nil, err);
-    else
-    {
-      NSString* ret = [NSString stringWithCString:session_token encoding:NSUTF8StringEncoding];
-      tanker_free_buffer(session_token);
-      handler(ret, nil);
-    }
-  };
-  tanker_verification_t c_verification = TANKER_VERIFICATION_INIT;
-
-  tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
-  coptions.with_session_token = options.withSessionToken;
-  coptions.allow_e2e_method_switch = options.allowE2eMethodSwitch;
-
-  verificationToCVerification(verification, &c_verification);
-  tanker_future_t* register_future = tanker_register_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
-  tanker_future_t* resolve_future =
-      tanker_future_then(register_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(register_future);
-  tanker_future_destroy(resolve_future);
-}
-
 - (void)verificationMethodsWithCompletionHandler:(nonnull TKRVerificationMethodsHandler)handler
 {
   TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
@@ -275,83 +185,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* resolve_future =
       tanker_future_then(methods_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(methods_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRIdentityVerificationHandler thunk = ^(NSString* _token, NSError* err) {
-    handler(err);
-  };
-
-  [self setVerificationMethod:verification options:[TKRVerificationOptions options] completionHandler:thunk];
-}
-
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification
-                      options:(nonnull TKRVerificationOptions*)options
-            completionHandler:(nonnull TKRIdentityVerificationHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
-    if (err || !session_token)
-      handler(nil, err);
-    else
-    {
-      NSString* ret = [NSString stringWithCString:session_token encoding:NSUTF8StringEncoding];
-      tanker_free_buffer(session_token);
-      handler(ret, nil);
-    }
-  };
-  tanker_verification_t c_verification = TANKER_VERIFICATION_INIT;
-  verificationToCVerification(verification, &c_verification);
-
-  tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
-  coptions.with_session_token = options.withSessionToken;
-  coptions.allow_e2e_method_switch = options.allowE2eMethodSwitch;
-
-  tanker_future_t* set_future = tanker_set_verification_method((tanker_t*)self.cTanker, &c_verification, &coptions);
-  tanker_future_t* resolve_future =
-      tanker_future_then(set_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(set_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                     completionHandler:(nonnull TKRErrorHandler)handler
-{
-  TKRIdentityVerificationHandler thunk = ^(NSString* _token, NSError* err) {
-    handler(err);
-  };
-
-  [self verifyIdentityWithVerification:verification options:[TKRVerificationOptions options] completionHandler:thunk];
-}
-
-- (void)verifyIdentityWithVerification:(nonnull TKRVerification*)verification
-                               options:(nonnull TKRVerificationOptions*)options
-                     completionHandler:(nonnull TKRIdentityVerificationHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* maybeTokenPtr, NSError* err) {
-    char* session_token = (char*)TKR_numberToPtr(maybeTokenPtr);
-    if (err || !session_token)
-      handler(nil, err);
-    else
-    {
-      NSString* ret = [NSString stringWithCString:session_token encoding:NSUTF8StringEncoding];
-      tanker_free_buffer(session_token);
-      handler(ret, nil);
-    }
-  };
-  tanker_verification_t c_verification = TANKER_VERIFICATION_INIT;
-  verificationToCVerification(verification, &c_verification);
-
-  tanker_verification_options_t coptions = TANKER_VERIFICATION_OPTIONS_INIT;
-  coptions.with_session_token = options.withSessionToken;
-  coptions.allow_e2e_method_switch = options.allowE2eMethodSwitch;
-
-  tanker_future_t* verify_future = tanker_verify_identity((tanker_t*)self.cTanker, &c_verification, &coptions);
-  tanker_future_t* resolve_future =
-      tanker_future_then(verify_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(verify_future);
   tanker_future_destroy(resolve_future);
 }
 
@@ -382,22 +215,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker_future_t* resolve_future =
       tanker_future_then(attach_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
   tanker_future_destroy(attach_future);
-  tanker_future_destroy(resolve_future);
-}
-
-- (void)verifyProvisionalIdentityWithVerification:(TKRVerification*)verification
-                                completionHandler:(TKRErrorHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* unused, NSError* err) {
-    handler(err);
-  };
-  tanker_verification_t c_verification = TANKER_VERIFICATION_INIT;
-  verificationToCVerification(verification, &c_verification);
-
-  tanker_future_t* verify_future = tanker_verify_provisional_identity((tanker_t*)self.cTanker, &c_verification);
-  tanker_future_t* resolve_future =
-      tanker_future_then(verify_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(verify_future);
   tanker_future_destroy(resolve_future);
 }
 
@@ -718,39 +535,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
       verification_key_fut, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
 
   tanker_future_destroy(verification_key_fut);
-  tanker_future_destroy(resolve_future);
-}
-
-// Needs to be public to be accessible in tests
-- (void)authenticateWithIDP:(NSString*)providerID
-                     cookie:(NSString*)cookie
-          completionHandler:(nonnull TKRAuthenticateWithIDPResultHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* ptrValue, NSError* err) {
-    if (err)
-      handler(nil, err);
-    else
-    {
-      tanker_oidc_authorization_code_verification_t* c_result = TKR_numberToPtr(ptrValue);
-      NSString* providerID = [NSString stringWithCString:c_result->provider_id encoding:NSUTF8StringEncoding];
-      NSString* authorizationCode = [NSString stringWithCString:c_result->authorization_code encoding:NSUTF8StringEncoding];
-      NSString* state = [NSString stringWithCString:c_result->state encoding:NSUTF8StringEncoding];
-
-      TKRVerification* ret = [TKRVerification verificationFromOIDCAuthorizationCode:authorizationCode
-                                                                         providerID:providerID
-                                                                              state:state];
-      tanker_free_authenticate_with_idp_result(c_result);
-      handler(ret, nil);
-    }
-  };
-
-  char const* c_provider_id = [providerID cStringUsingEncoding:NSUTF8StringEncoding];
-  char const* c_cookie = [cookie cStringUsingEncoding:NSUTF8StringEncoding];
-
-  tanker_future_t* authenticate_future = tanker_authenticate_with_idp((tanker_t*)self.cTanker, c_provider_id, c_cookie);
-  tanker_future_t* resolve_future =
-      tanker_future_then(authenticate_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(authenticate_future);
   tanker_future_destroy(resolve_future);
 }
 

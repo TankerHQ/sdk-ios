@@ -7,7 +7,6 @@
 #import <Tanker/TKRSharingOptions.h>
 #import <Tanker/TKRStatus.h>
 #import <Tanker/TKRTankerOptions.h>
-#import <Tanker/TKRVerification.h>
 #import <Tanker/TKRVerificationKey.h>
 #import <Tanker/TKRVerificationMethod.h>
 #import <Tanker/TKRVerificationOptions.h>
@@ -63,7 +62,7 @@ NS_SWIFT_NAME(Tanker)
  @param verification the verification.
  @param handler the block called with an NSError*, or nil.
  */
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler;
+- (void)setVerificationMethodWithVerification:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Register or update a verification method.
@@ -74,9 +73,9 @@ NS_SWIFT_NAME(Tanker)
  @param options extra options for identity verification
  @param handler the block called with an NSError*, or nil.
  */
-- (void)setVerificationMethod:(nonnull TKRVerification*)verification
-                      options:(nonnull TKRVerificationOptions*)options
-            completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
+- (void)setVerificationMethodWithVerification:(nonnull TKRVerification*)verification
+                                      options:(nonnull TKRVerificationOptions*)options
+                            completionHandler:(nonnull TKRIdentityVerificationHandler)handler;
 
 /*!
  @brief Start Tanker
