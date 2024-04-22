@@ -13,6 +13,8 @@ internal func getExpectedString(_ expected: OpaquePointer) -> String {
 
 @objc(TKRTanker)
 public extension Tanker {
+  static let TANKER_IOS_VERSION = "9999";
+  
   @objc
   static func prehashPassword(_ password: String) throws -> String {
     if password.isEmpty {
@@ -23,5 +25,15 @@ public extension Tanker {
     
     let cPassword = password.cString(using: .utf8);
     return getExpectedString(tanker_prehash_password(cPassword)!);
+  }
+  
+  @objc
+  static func versionString() -> String {
+    TANKER_IOS_VERSION
+  }
+  
+  @objc
+  static func nativeVersionString() -> String {
+    String(cString: tanker_version_string())
   }
 }

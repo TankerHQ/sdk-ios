@@ -155,7 +155,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   cOptions->cache_path = [options.cachePath cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->url = [options.url cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->sdk_type = [options.sdkType cStringUsingEncoding:NSUTF8StringEncoding];
-  cOptions->sdk_version = [TANKER_IOS_VERSION cStringUsingEncoding:NSUTF8StringEncoding];
+  cOptions->sdk_version = [[TKRTanker versionString] cStringUsingEncoding:NSUTF8StringEncoding];
 }
 
 @interface TKRTanker ()
@@ -206,16 +206,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   tanker.cTanker = tanker_future_get_voidptr(create_future);
   tanker_future_destroy(create_future);
   return tanker;
-}
-
-+ (nonnull NSString*)versionString
-{
-  return TANKER_IOS_VERSION;
-}
-
-+ (nonnull NSString*)nativeVersionString
-{
-  return [NSString stringWithCString:tanker_version_string() encoding:NSUTF8StringEncoding];
 }
 
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler

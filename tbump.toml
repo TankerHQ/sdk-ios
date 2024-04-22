@@ -27,5 +27,5 @@ src = "Tanker/Tanker.podspec"
 search = 's.version'
 
 [[file]]
-src = "Tanker/Sources/TKRTanker.m"
-search = '#define TANKER_IOS_VERSION @"{current_version}"'
+src = "Tanker/Sources/TKRTanker.swift"
+search = 'static let TANKER_IOS_VERSION = @"{current_version}";'
