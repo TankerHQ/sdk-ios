@@ -4,6 +4,7 @@
 /*!
  @brief Options that must be given when creating a TKRTanker
  */
+NS_SWIFT_NAME(TankerOptions)
 @interface TKRTankerOptions : NSObject
 
 /*!

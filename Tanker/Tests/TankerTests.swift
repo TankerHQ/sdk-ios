@@ -7,7 +7,7 @@ class TankerTests: TankerFunctionalQuickSpec {
   var appID: String!;
   var appSecret: String!;
   
-  var tankerOptions = TKRTankerOptions();
+  var tankerOptions = TankerOptions();
     
   override func spec() {
     beforeSuite {

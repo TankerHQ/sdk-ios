@@ -34,9 +34,9 @@ func createStorageFullpath(_ dir: FileManager.SearchPathDirectory) -> String
   return path.absoluteString;
 }
 
-func createTankerOptions(url: String, appID: String) -> TKRTankerOptions
+func createTankerOptions(url: String, appID: String) -> TankerOptions
 {
-  let opts = TKRTankerOptions();
+  let opts = TankerOptions();
   opts.url = url;
   opts.appID = appID;
   opts.persistentPath = createStorageFullpath(.libraryDirectory);
