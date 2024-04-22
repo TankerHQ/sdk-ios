@@ -1,5 +1,16 @@
 import Foundation
 
+internal func getExpectedString(_ expected: OpaquePointer) -> String {
+  let expectedRawPtr = TKR_unwrapAndFreeExpected(UnsafeMutableRawPointer(expected));
+  // NOTE: freeWhenDone will call free() instead of tanker_free(), but this should be fine
+  return NSString(
+    bytesNoCopy: expectedRawPtr,
+    length: strlen(expectedRawPtr),
+    encoding: String.Encoding.utf8.rawValue,
+    freeWhenDone: true
+  )! as String
+}
+
 @objc(TKRTanker)
 public extension Tanker {
   @objc
@@ -11,14 +22,6 @@ public extension Tanker {
     }
     
     let cPassword = password.cString(using: .utf8);
-    let hashedExpected = UnsafeMutableRawPointer(tanker_prehash_password(cPassword)!);
-    let hashedPtr: UnsafeMutableRawPointer = TKR_unwrapAndFreeExpected(hashedExpected);
-    
-    return NSString(
-      bytesNoCopy: hashedPtr,
-      length: strlen(hashedPtr),
-      encoding: String.Encoding.utf8.rawValue,
-      freeWhenDone: true
-    )! as String
+    return getExpectedString(tanker_prehash_password(cPassword)!);
   }
 }
