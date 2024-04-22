@@ -155,7 +155,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   cOptions->cache_path = [options.cachePath cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->url = [options.url cStringUsingEncoding:NSUTF8StringEncoding];
   cOptions->sdk_type = [options.sdkType cStringUsingEncoding:NSUTF8StringEncoding];
-  cOptions->sdk_version = [TANKER_IOS_VERSION cStringUsingEncoding:NSUTF8StringEncoding];
+  cOptions->sdk_version = [[TKRTanker versionString] cStringUsingEncoding:NSUTF8StringEncoding];
 }
 
 @interface TKRTanker ()
@@ -208,38 +208,12 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   return tanker;
 }
 
-+ (nonnull NSString*)versionString
-{
-  return TANKER_IOS_VERSION;
-}
-
-+ (nonnull NSString*)nativeVersionString
-{
-  return [NSString stringWithCString:tanker_version_string() encoding:NSUTF8StringEncoding];
-}
-
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler
 {
   globalLogHandler = handler;
 }
 
 // MARK: Instance methods
-
-- (void)startWithIdentity:(nonnull NSString*)identity completionHandler:(nonnull TKRStartHandler)handler
-{
-  TKRAdapter adapter = ^(NSNumber* status, NSError* err) {
-    if (err)
-      handler(0, err);
-    else
-      handler(status.unsignedIntegerValue, nil);
-  };
-  char const* c_identity = [identity cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_future_t* start_future = tanker_start((tanker_t*)self.cTanker, c_identity);
-  tanker_future_t* resolve_future =
-      tanker_future_then(start_future, (tanker_future_then_t)&TKR_resolvePromise, (__bridge_retained void*)adapter);
-  tanker_future_destroy(start_future);
-  tanker_future_destroy(resolve_future);
-}
 
 - (void)registerIdentityWithVerification:(nonnull TKRVerification*)verification
                        completionHandler:(nonnull TKRErrorHandler)handler

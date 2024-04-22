@@ -35,7 +35,7 @@ class UnitTests: QuickSpec {
     
     describe("init") {
       it("should throw when the AppID is not base64") {
-        let tankerOptions = TKRTankerOptions();
+        let tankerOptions = TankerOptions();
         tankerOptions.appID = ",,";
         
         expect { try Tanker(options:tankerOptions) }.to(throwError { (error: NSError) in

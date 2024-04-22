@@ -6,8 +6,6 @@
 #import <Tanker/TKRTanker.h>
 #import <Tanker/Utils/TKRUtils.h>
 
-#define TANKER_IOS_VERSION @"9999"
-
 typedef void (^TKRAbstractEventHandler)(void* _Nonnull);
 
 void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
@@ -19,6 +17,7 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
 
 @interface TKRTanker (Private)
 
+// NOTE: Implemented on the Swift side
 @property(nonnull) void* cTanker;
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData
