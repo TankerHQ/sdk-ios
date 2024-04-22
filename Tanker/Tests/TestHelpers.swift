@@ -45,7 +45,7 @@ func createTankerOptions(url: String, appID: String) -> TKRTankerOptions
   return opts;
 }
 
-func startAndRegister(_ tanker: TKRTanker, _ identity: String, _ verification: TKRVerification) {
+func startAndRegister(_ tanker: Tanker, _ identity: String, _ verification: TKRVerification) {
   let err = hangWithResolver({ (resolver: _!) in
     tanker.start(withIdentity: identity, completionHandler: { (status: TKRStatus, err: Error?) in
       if (err != nil) {
@@ -60,7 +60,7 @@ func startAndRegister(_ tanker: TKRTanker, _ identity: String, _ verification: T
   expect(err) == nil;
 }
 
-func start(_ tanker: TKRTanker, _ identity: String) {
+func start(_ tanker: Tanker, _ identity: String) {
   let err = hangWithResolver({ (resolver: _!) in
     tanker.start(withIdentity: identity, completionHandler: { (status: TKRStatus, err: Error?) in
       if (err == nil) {
@@ -73,7 +73,7 @@ func start(_ tanker: TKRTanker, _ identity: String) {
   expect(tanker.status) == .ready;
 }
 
-func stop(_ tanker: TKRTanker) {
+func stop(_ tanker: Tanker) {
   let err = hangWithResolver({ (resolver: _!) in
     tanker.stop(completionHandler: resolver);
   });

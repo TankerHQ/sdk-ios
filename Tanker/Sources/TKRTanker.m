@@ -19,8 +19,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include "ctanker.h"
-#include "ctanker/stream.h"
+#include <Tanker/ctanker.h>
+#include <Tanker/ctanker/stream.h>
 
 NSString* const TKRErrorDomain = @"TKRErrorDomain";
 
@@ -216,18 +216,6 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 + (nonnull NSString*)nativeVersionString
 {
   return [NSString stringWithCString:tanker_version_string() encoding:NSUTF8StringEncoding];
-}
-
-+ (nonnull NSString*)prehashPassword:(nonnull NSString*)password
-{
-  if (!password.length)
-    [NSException raise:NSInvalidArgumentException format:@"cannot hash empty password"];
-
-  char const* c_password = [password cStringUsingEncoding:NSUTF8StringEncoding];
-  tanker_expected_t* expected_chashed = tanker_prehash_password(c_password);
-  char* c_hashed = (char*)TKR_unwrapAndFreeExpected(expected_chashed);
-  NSString* hashed = [NSString stringWithCString:c_hashed encoding:NSUTF8StringEncoding];
-  return hashed;
 }
 
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler

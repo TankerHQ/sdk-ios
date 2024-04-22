@@ -2,7 +2,7 @@
 #import <Tanker/TKREncryptionSession+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
 
-#include <ctanker/encryptionsession.h>
+#include <Tanker/ctanker/encryptionsession.h>
 
 #include <objc/runtime.h>
 

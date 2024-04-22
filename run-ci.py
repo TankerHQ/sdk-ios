@@ -29,33 +29,43 @@ PROFILES = [
 ]
 
 
-def _copy_folder_content(src_path: Path, dest_path: Path) -> None:
-    ui.info_1("Moving content of", src_path, "to", dest_path)
-    src_dirs = [p for p in src_path.iterdir() if p.is_dir()]
-    for src_dir in src_dirs:
-        dest_dir = dest_path / src_dir.name
-        if dest_dir.exists():
-            shutil.rmtree(dest_dir)
-        ui.info_2(src_dir, "->", dest_dir)
-        shutil.copytree(src_dir, dest_dir)
-    src_files = [p for p in src_path.iterdir() if p.is_file()]
-    for src_file in src_files:
-        dest_file = dest_path / src_file.name
-        if dest_file.exists():
-            dest_file.unlink()
+def _import_ctanker_headers(src_path: Path, dest_path: Path) -> None:
+    ui.info_1("Importing ctanker headers from", src_path, "to", dest_path)
+    ctanker_headers = [p for p in src_path.glob("ctanker/**/*.h")]
+    ctanker_headers.append(src_path / "ctanker.h")
+
+    for src_file in ctanker_headers:
+        file_rel_path = src_file.relative_to(src_path)
+        dest_file = dest_path / file_rel_path
+
         ui.info_2(src_file, "->", dest_file)
+        dest_file.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src_file, dest_file)
+
+        # Update ctanker header to use includes relative to the Tanker framework,
+        # so that we can import it directly inside the framework
+        # This replaces:  #include "ctanker/foo.h"  =>  #include <Tanker/ctanker/foo.h>
+        tankerci.run(
+            "sed",
+            "-E",
+            "-i",
+            "",
+            's@^#include ["<](ctanker/[^">]+)[">]@#include <Tanker/\\1>@',
+            str(file_rel_path),
+            cwd=dest_path
+        )
 
 
 class Builder:
     def __init__(
-        self, *, src_path: Path, build_profile: Profile, host_profiles: List[Profile]
+            self, *, src_path: Path, build_profile: Profile, host_profiles: List[Profile]
     ):
         self.src_path = src_path
         self.pod_path = self.src_path / "Tanker"
         self.conan_path = self.pod_path / "conan"
         self.libraries_path = self.pod_path / "Libraries"
-        self.private_headers_path = self.pod_path / "PrivateHeaders"
+        self.headers_path = self.pod_path / "Headers"
+        self.native_headers_path = self.pod_path / "NativeHeaders"
         self.example_path = self.pod_path / "Example"
         self.host_profiles = host_profiles
         self.build_profile = build_profile
@@ -82,7 +92,7 @@ class Builder:
         for include_dir in deps_info["tanker"].include_dirs:
             include_path = Path(include_dir)
 
-            _copy_folder_content(include_path, self.private_headers_path)
+            shutil.copytree(include_path, self.native_headers_path, dirs_exist_ok=True)
 
     def handle_sdk_deps(self) -> None:
         ui.info_1(
@@ -104,14 +114,15 @@ class Builder:
             self.libraries_path / str(p) / "libtankerdeps.a" for p in self.host_profiles
         ]
         xcframework_path = (
-            self.src_path / "Tanker" / "Frameworks" / "TankerDeps.xcframework"
+                self.src_path / "Tanker" / "Frameworks" / "TankerDeps.xcframework"
         )
         self.builder.generate_xcframework(
             xcframework_path=xcframework_path,
             libs=libs,
-            include_path=self.private_headers_path,
+            include_path=None,
             output_lib_filename="libtankerdeps.a",
         )
+        _import_ctanker_headers(self.native_headers_path, self.headers_path)
 
     def handle_ios_deps(self) -> None:
         ui.info_2("Installing Tanker pod dependencies")
@@ -247,10 +258,10 @@ class PodPublisher:
 
 
 def prepare(
-    tanker_source: TankerSource,
-    update: bool,
-    tanker_ref: Optional[str],
-    build_profile: Profile,
+        tanker_source: TankerSource,
+        update: bool,
+        tanker_ref: Optional[str],
+        build_profile: Profile,
 ) -> Builder:
     artifact_path = Path.cwd() / "package"
     tanker_deployed_ref = tanker_ref
@@ -278,10 +289,10 @@ def prepare(
 
 
 def build_and_test(
-    *,
-    tanker_source: TankerSource,
-    tanker_ref: Optional[str] = None,
-    build_profile: Profile,
+        *,
+        tanker_source: TankerSource,
+        tanker_ref: Optional[str] = None,
+        build_profile: Profile,
 ) -> None:
     builder = prepare(tanker_source, False, tanker_ref, build_profile)
     builder.build_and_test_pod()
@@ -371,7 +382,7 @@ def main() -> None:
             user_home = Path.cwd() / ".cache" / "conan" / args.remote
         is_deploy = command == "deploy"
         with tankerci.conan.ConanContextManager(
-            [args.remote], conan_home=user_home, clean_on_exit=is_deploy
+                [args.remote], conan_home=user_home, clean_on_exit=is_deploy
         ):
             if command == "build-and-test":
                 build_and_test(

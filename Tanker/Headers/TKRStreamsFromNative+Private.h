@@ -3,7 +3,7 @@
 #import <Tanker/TKRAsyncStreamReader+Private.h>
 #import <Tanker/TKRStreamBase.h>
 
-#include "ctanker/stream.h"
+#include <Tanker/ctanker/stream.h>
 
 @interface TKRStreamsFromNative : TKRStreamBase
 

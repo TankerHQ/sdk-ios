@@ -17,27 +17,20 @@ It's available for browsers, desktop, iOS and Android.
   s.ios.deployment_target = '12.0'
   s.swift_version = '5.0'
 
-  s.source_files = 'Sources/TKR*', 'Headers/TKR*'
+  s.source_files = [
+    'Sources/**/*.{m,swift}',
+    'Headers/**/*.h',
+  ]
   s.private_header_files = 'Headers/*+Private.h'
+
   s.pod_target_xcconfig = {
     'USE_HEADERMAP' => "NO",
     'DEFINES_MODULE' => "YES",
   }
 
-
   s.header_mappings_dir = 'Headers'
   s.vendored_framework = 'Frameworks/TankerDeps.xcframework'
   s.preserve_paths = 'Tests/Dummy.m'
-
-  s.subspec 'Utils' do |utils_spec|
-    utils_spec.source_files = 'Sources/Utils/*', 'Headers/Utils/*'
-    utils_spec.vendored_framework = 'Frameworks/TankerDeps.xcframework'
-  end
-
-  s.subspec 'Storage' do |storage_spec|
-    storage_spec.source_files = 'Sources/Storage/*', 'Headers/Storage/TKR*'
-    storage_spec.dependency 'Tanker/Utils'
-  end
 
   s.test_spec 'Tests' do |test_spec|
     test_spec.source_files = 'Tests/*.{h,m,swift}'
@@ -57,7 +50,7 @@ It's available for browsers, desktop, iOS and Android.
     test_spec.dependency 'PromiseKit/Promise', '~> 1.7'
     test_spec.dependency 'PromiseKit/Hang', '~> 1.7'
     test_spec.dependency 'PromiseKit/When', '~> 1.7'
-    
+
     # tests use admin parts
     test_spec.scheme = {
       :environment_variables => Hash[
