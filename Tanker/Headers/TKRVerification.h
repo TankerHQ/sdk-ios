@@ -5,6 +5,7 @@
 /*!
  @brief TKRVerification
  */
+NS_SWIFT_NAME(Verification)
 @interface TKRVerification : NSObject
 
 + (nonnull TKRVerification*)verificationFromVerificationKey:(nonnull TKRVerificationKey*)key;
