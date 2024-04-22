@@ -17,6 +17,7 @@ NSError* _Nullable convertEncryptionOptions(TKREncryptionOptions* _Nonnull opts,
 
 @interface TKRTanker (Private)
 
+// NOTE: Implemented on the Swift side
 @property(nonnull) void* cTanker;
 
 - (void)encryptDataImpl:(nonnull NSData*)clearData

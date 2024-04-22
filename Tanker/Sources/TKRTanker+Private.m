@@ -79,19 +79,6 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 
 @implementation TKRTanker (Private)
 
-// http://nshipster.com/associated-objects/
-@dynamic cTanker;
-
-- (void)setCTanker:(void*)value
-{
-  objc_setAssociatedObject(self, @selector(cTanker), TKR_ptrToNumber(value), OBJC_ASSOCIATION_RETAIN);
-}
-
-- (void*)cTanker
-{
-  return TKR_numberToPtr(objc_getAssociatedObject(self, @selector(cTanker)));
-}
-
 - (void)encryptDataImpl:(nonnull NSData*)clearData
                 options:(nonnull TKREncryptionOptions*)options
       completionHandler:(nonnull void (^)(TKRPtrAndSizePair* _Nullable, NSError* _Nullable))handler
