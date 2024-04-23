@@ -158,16 +158,6 @@ NS_SWIFT_NAME(Tanker)
                                 completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
- @brief Retrieve the current device id.
-
- @param handler the block called with the device id.
-
- @pre Status is TKRStatusReady.
- */
-- (void)deviceIDWithCompletionHandler:(nonnull TKRDeviceIDHandler)handler
-  DEPRECATED_MSG_ATTRIBUTE("This method is deprecated and will be removed in a future version");
-
-/*!
  @brief Stop Tanker.
 
  @discussion Perform Tanker cleanup actions.
