@@ -8,6 +8,7 @@
 
  @see generateVerificationKey
  */
+NS_SWIFT_NAME(VerificationKey)
 @interface TKRVerificationKey : NSObject
 
 /*!

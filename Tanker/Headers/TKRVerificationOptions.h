@@ -4,6 +4,7 @@
 /*!
  @brief Options used when verifying your identity.
  */
+NS_SWIFT_NAME(VerificationOptions)
 @interface TKRVerificationOptions : NSObject
 
 /*!

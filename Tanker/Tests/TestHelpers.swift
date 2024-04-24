@@ -45,7 +45,7 @@ func createTankerOptions(url: String, appID: String) -> TankerOptions
   return opts;
 }
 
-func startAndRegister(_ tanker: Tanker, _ identity: String, _ verification: TKRVerification) {
+func startAndRegister(_ tanker: Tanker, _ identity: String, _ verification: Verification) {
   let err = hangWithResolver({ (resolver: _!) in
     tanker.start(withIdentity: identity, completionHandler: { (status: TKRStatus, err: Error?) in
       if (err != nil) {

@@ -35,12 +35,12 @@ class TankerTests: TankerFunctionalQuickSpec {
       }
 
       it("should return .identityRegistrationNeeded when start is called for the first time") {
-        startAndRegister(tanker, identity, TKRVerification(fromPassphrase: "passphrase"));
+        startAndRegister(tanker, identity, Verification(passphrase: "passphrase"));
         stop(tanker);
       }
 
       it("should return .ready when start is called after identity has been registered") {
-        startAndRegister(tanker, identity, TKRVerification(fromPassphrase: "passphrase"));
+        startAndRegister(tanker, identity, Verification(passphrase: "passphrase"));
         stop(tanker);
         start(tanker, identity);
         stop(tanker);
@@ -51,7 +51,7 @@ class TankerTests: TankerFunctionalQuickSpec {
         // assertion, it's just a best effort to check that we won't crash
         // because of some use-after-free.
 
-        startAndRegister(tanker, identity, TKRVerification(fromPassphrase: "passphrase"));
+        startAndRegister(tanker, identity, Verification(passphrase: "passphrase"));
 
         // trigger an encrypt and do not wait
         tanker.encryptString("Rosebud", completionHandler: { _, _ in });
