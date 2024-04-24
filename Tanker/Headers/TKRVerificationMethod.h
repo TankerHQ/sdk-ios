@@ -3,6 +3,7 @@
 #import <Tanker/TKRVerificationKey.h>
 #import <Tanker/TKRVerificationMethodType.h>
 
+NS_SWIFT_NAME(VerificationMethod)
 @interface TKRVerificationMethod : NSObject
 
 @property(readonly) TKRVerificationMethodType type;
