@@ -5,6 +5,7 @@
 #import <Tanker/TKRStreamsFromNative+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
+#import <Tanker/TKRSwift+Private.h>
 
 #include <Tanker/ctanker.h>
 

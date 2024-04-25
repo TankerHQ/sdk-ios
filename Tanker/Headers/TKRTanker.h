@@ -3,13 +3,13 @@
 #import <Foundation/Foundation.h>
 
 #import <Tanker/TKRCompletionHandlers.h>
-#import <Tanker/TKREncryptionOptions.h>
 #import <Tanker/TKRSharingOptions.h>
 #import <Tanker/TKRStatus.h>
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRVerificationKey.h>
 #import <Tanker/TKRVerificationMethod.h>
 
+@class TKREncryptionOptions;
 @class TKRVerificationOptions;
 
 /*!

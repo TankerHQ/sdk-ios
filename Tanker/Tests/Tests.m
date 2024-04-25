@@ -500,7 +500,7 @@ SpecBegin(TankerSpecs)
             NSString* clearText = @"my clear data is clear!";
             int lengthWithPadme = 24;
 
-            TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+            TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
             encryptionOptions.paddingStep = [TKRPadding automatic];
 
             NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
@@ -519,7 +519,7 @@ SpecBegin(TankerSpecs)
           it(@"should encrypt and decrypt with no padding", ^{
             NSString* clearText = @"Rosebud";
 
-            TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+            TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
             encryptionOptions.paddingStep = [TKRPadding off];
 
             NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
@@ -539,7 +539,7 @@ SpecBegin(TankerSpecs)
             NSString* clearText = @"Rosebud";
             NSUInteger paddingStep = 13;
 
-            TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+            TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
             encryptionOptions.paddingStep = [TKRPadding step:paddingStep];
 
             NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
@@ -593,7 +593,7 @@ SpecBegin(TankerSpecs)
           it(@"should encrypt a stream with padding", ^{
             clearData = [NSMutableData dataWithLength:1024 * 1024 * 3 + 2];
             NSInputStream* clearStream = [TKRCustomDataSource customDataSourceWithData:clearData];
-            TKREncryptionOptions *opts = [TKREncryptionOptions options];
+            TKREncryptionOptions *opts = [[TKREncryptionOptions alloc] init];
             opts.paddingStep = [TKRPadding step:500];
 
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
@@ -755,7 +755,7 @@ SpecBegin(TankerSpecs)
           });
           NSString* clearText = @"Rosebud";
 
-          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
           encryptionOptions.shareWithGroups = @[ groupId ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
             [bobTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
@@ -799,7 +799,7 @@ SpecBegin(TankerSpecs)
           });
           NSString* clearText = @"Rosebud";
 
-          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
           encryptionOptions.shareWithGroups = @[ groupId ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
@@ -831,7 +831,7 @@ SpecBegin(TankerSpecs)
           expect(err).to.beNil();
 
           NSString* clearText = @"Rosebud";
-          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
           encryptionOptions.shareWithGroups = @[ groupId ];
           NSData* encryptedData = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
@@ -930,7 +930,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should be able to share with an encryption session", ^{
-          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          TKREncryptionOptions* opts = [[TKREncryptionOptions alloc] init];
           opts.shareWithUsers = @[ bobPublicIdentity ];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
@@ -947,7 +947,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should be able to share with an encryption session, but not with self", ^{
-          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          TKREncryptionOptions* opts = [[TKREncryptionOptions alloc] init];
           opts.shareWithUsers = @[ bobPublicIdentity ];
           opts.shareWithSelf = false;
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
@@ -971,7 +971,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should be able to encrypt streams with an encryption session", ^{
-          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          TKREncryptionOptions* opts = [[TKREncryptionOptions alloc] init];
           opts.shareWithUsers = @[ bobPublicIdentity ];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
@@ -1029,7 +1029,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should encrypt with auto padding", ^{
-          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          TKREncryptionOptions* opts = [[TKREncryptionOptions alloc] init];
           opts.paddingStep = [TKRPadding automatic];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
@@ -1051,7 +1051,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should encrypt with no padding", ^{
-          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          TKREncryptionOptions* opts = [[TKREncryptionOptions alloc] init];
           opts.paddingStep = [TKRPadding off];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
@@ -1073,7 +1073,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should encrypt with a padding step", ^{
           NSUInteger paddingStep = 13;
-          TKREncryptionOptions* opts = [TKREncryptionOptions options];
+          TKREncryptionOptions* opts = [[TKREncryptionOptions alloc] init];
           opts.paddingStep = [TKRPadding step:paddingStep];
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
@@ -1113,7 +1113,7 @@ SpecBegin(TankerSpecs)
           expect(aliceTanker).toNot.beNil();
           expect(bobTanker).toNot.beNil();
           expect(charlieTanker).toNot.beNil();
-          encryptionOptions = [TKREncryptionOptions options];
+          encryptionOptions = [[TKREncryptionOptions alloc] init];
 
           aliceIdentity = createIdentity(createUUID(), appID, appSecret);
           bobIdentity = createIdentity(createUUID(), appID, appSecret);
@@ -1186,7 +1186,7 @@ SpecBegin(TankerSpecs)
         it(@"should share a stream with Bob who can decrypt it", ^{
           NSData* clearData = [@"Rosebud" dataUsingEncoding:NSUTF8StringEncoding];
           NSInputStream* clearStream = [TKRCustomDataSource customDataSourceWithData:clearData];
-          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
           encryptionOptions.shareWithUsers = @[ bobPublicIdentity ];
 
           NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
@@ -1206,7 +1206,7 @@ SpecBegin(TankerSpecs)
 
         it(@"should encrypt a string for Bob, but not for Alice", ^{
           NSString* clearString = @"Rosebud";
-          TKREncryptionOptions* encryptionOptions = [TKREncryptionOptions options];
+          TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
           encryptionOptions.shareWithSelf = false;
           encryptionOptions.shareWithUsers = @[ bobPublicIdentity ];
 
