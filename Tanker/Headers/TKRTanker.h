@@ -9,7 +9,8 @@
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRVerificationKey.h>
 #import <Tanker/TKRVerificationMethod.h>
-#import <Tanker/TKRVerificationOptions.h>
+
+@class TKRVerificationOptions;
 
 /*!
  @brief Tanker object

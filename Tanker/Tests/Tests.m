@@ -1424,7 +1424,7 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice, identity, [[TKRVerification alloc] withPassphrase:oldPassphrase]);
 
-          TKRVerificationOptions* opts = [TKRVerificationOptions options];
+          TKRVerificationOptions* opts = [[TKRVerificationOptions alloc] init];
           opts.allowE2eMethodSwitch = true;
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withE2ePassphrase:newPassphrase]
@@ -1459,7 +1459,7 @@ SpecBegin(TankerSpecs)
           startWithIdentityAndRegister(
               firstDevice, identity, [[TKRVerification alloc] withE2ePassphrase:oldPassphrase]);
 
-          TKRVerificationOptions* opts = [TKRVerificationOptions options];
+          TKRVerificationOptions* opts = [[TKRVerificationOptions alloc] init];
           opts.allowE2eMethodSwitch = true;
           NSError* err = hangWithAdapter(^(PMKAdapter adapter) {
             [firstDevice setVerificationMethodWithVerification:[[TKRVerification alloc] withPassphrase:newPassphrase]
@@ -2034,7 +2034,7 @@ SpecBegin(TankerSpecs)
                       else
                       {
                         expect(status).to.equal(TKRStatusIdentityRegistrationNeeded);
-                        TKRVerificationOptions* opts = [TKRVerificationOptions options];
+                        TKRVerificationOptions* opts = [[TKRVerificationOptions alloc] init];
                         opts.withSessionToken = true;
                         [tanker registerIdentityWithVerification:verification options:opts completionHandler:adapter];
                       }
@@ -2047,7 +2047,7 @@ SpecBegin(TankerSpecs)
         it(@"can get a session token using verifyIdentityWithVerification", ^{
           startWithIdentityAndRegister(tanker, identity, verification);
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            TKRVerificationOptions* opts = [[TKRVerificationOptions alloc] init];
             opts.withSessionToken = true;
             [tanker verifyIdentityWithVerification:verification options:opts completionHandler:adapter];
           });
@@ -2058,7 +2058,7 @@ SpecBegin(TankerSpecs)
         it(@"can get a session token using setVerificationMethod with passphrase", ^{
           startWithIdentityAndRegister(tanker, identity, verification);
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            TKRVerificationOptions* opts = [[TKRVerificationOptions alloc] init];
             opts.withSessionToken = true;
             [tanker setVerificationMethodWithVerification:verification options:opts completionHandler:adapter];
           });
@@ -2072,7 +2072,7 @@ SpecBegin(TankerSpecs)
           TKRVerification* verif = [[TKRVerification alloc] withEmail:email
                                                      verificationCode:getEmailVerificationCode(email)];
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            TKRVerificationOptions* opts = [[TKRVerificationOptions alloc] init];
             opts.withSessionToken = true;
             [tanker setVerificationMethodWithVerification:verif options:opts completionHandler:adapter];
           });
@@ -2086,7 +2086,7 @@ SpecBegin(TankerSpecs)
           TKRVerification* verif = [[TKRVerification alloc] withPhoneNumber:phoneNumber
                                                            verificationCode:getSMSVerificationCode(phoneNumber)];
           NSString* token = hangWithAdapter(^(PMKAdapter adapter) {
-            TKRVerificationOptions* opts = [TKRVerificationOptions options];
+            TKRVerificationOptions* opts = [[TKRVerificationOptions alloc] init];
             opts.withSessionToken = true;
             [tanker setVerificationMethodWithVerification:verif options:opts completionHandler:adapter];
           });
