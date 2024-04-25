@@ -256,7 +256,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)encryptString:(nonnull NSString*)clearText completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptString:clearText options:[TKREncryptionOptions options] completionHandler:handler];
+  [self encryptString:clearText options:[[TKREncryptionOptions alloc] init] completionHandler:handler];
 }
 
 - (void)encryptString:(nonnull NSString*)clearText
@@ -297,7 +297,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)encryptData:(nonnull NSData*)clearData completionHandler:(nonnull TKREncryptedDataHandler)handler
 {
-  [self encryptData:clearData options:[TKREncryptionOptions options] completionHandler:handler];
+  [self encryptData:clearData options:[[TKREncryptionOptions alloc] init] completionHandler:handler];
 }
 
 - (void)encryptData:(nonnull NSData*)clearData
@@ -475,7 +475,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
 {
-  [self createEncryptionSessionWithCompletionHandler:handler encryptionOptions:[TKREncryptionOptions options]];
+  [self createEncryptionSessionWithCompletionHandler:handler encryptionOptions:[[TKREncryptionOptions alloc] init]];
 }
 
 - (void)createEncryptionSessionWithCompletionHandler:(nonnull TKREncryptionSessionHandler)handler
@@ -552,7 +552,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 
 - (void)encryptStream:(nonnull NSInputStream*)clearStream completionHandler:(nonnull TKRInputStreamHandler)handler
 {
-  [self encryptStream:clearStream options:[TKREncryptionOptions options] completionHandler:handler];
+  [self encryptStream:clearStream options:[[TKREncryptionOptions alloc] init] completionHandler:handler];
 }
 
 - (void)encryptStream:(nonnull NSInputStream*)clearStream

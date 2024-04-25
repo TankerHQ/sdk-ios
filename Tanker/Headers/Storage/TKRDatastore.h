@@ -2,6 +2,7 @@
 
 #import <Tanker/Storage/TKRDatastoreOnConflict.h>
 
+NS_SWIFT_NAME(Datastore)
 @interface TKRDatastore : NSObject
 
 + (nullable TKRDatastore*)datastoreWithPersistentPath:(nonnull NSString*)persistentPath

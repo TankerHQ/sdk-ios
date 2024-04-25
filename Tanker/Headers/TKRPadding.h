@@ -4,6 +4,7 @@
 /*!
  @brief Padding control for data encryption
  */
+NS_SWIFT_NAME(Padding)
 @interface TKRPadding : NSObject
 
 @property(nonnull, readonly) NSNumber* nativeValue;
