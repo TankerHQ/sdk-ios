@@ -1,7 +1,7 @@
 // Objective-C doesn't support enums with associated values, so we expose a wrapper
 @objc(TKRVerification)
 public class Verification: NSObject {
-  private let data: VerificationData;
+  public let data: VerificationData;
   
   @objc(withPassphrase:)
   public init(passphrase: String) {
@@ -58,7 +58,7 @@ public class Verification: NSObject {
   }
 }
 
-enum VerificationData {
+public enum VerificationData {
   case passphrase(String)
   case e2ePassphrase(String)
   case verificationKey(VerificationKey)
@@ -119,9 +119,9 @@ extension VerificationData {
 }
 
 @objc(TKREmailVerification)
-class EmailVerification: NSObject {
-  let email: String;
-  let verificationCode: String;
+public class EmailVerification: NSObject {
+  public let email: String;
+  public let verificationCode: String;
   
   init(email: String, verificationCode: String) {
     self.email = email
@@ -130,9 +130,9 @@ class EmailVerification: NSObject {
 }
 
 @objc(TKRPhoneNumberVerification)
-class PhoneNumberVerification: NSObject {
-  let phoneNumber: String;
-  let verificationCode: String;
+public class PhoneNumberVerification: NSObject {
+  public let phoneNumber: String;
+  public let verificationCode: String;
   
   init(phoneNumber: String, verificationCode: String) {
     self.phoneNumber = phoneNumber
@@ -141,9 +141,9 @@ class PhoneNumberVerification: NSObject {
 }
 
 @objc(TKRPreverifiedOIDCVerification)
-class PreverifiedOIDCVerification: NSObject {
-  let subject: String;
-  let providerID: String;
+public class PreverifiedOIDCVerification: NSObject {
+  public let subject: String;
+  public let providerID: String;
   
   init(subject: String, providerID: String) {
     self.subject = subject
@@ -152,10 +152,10 @@ class PreverifiedOIDCVerification: NSObject {
 }
 
 @objc(TKROIDCAuthorizationCodeVerification)
-class OIDCAuthorizationCodeVerification: NSObject {
-  let providerID: String;
-  let authorizationCode: String;
-  let state: String;
+public class OIDCAuthorizationCodeVerification: NSObject {
+  public let providerID: String;
+  public let authorizationCode: String;
+  public let state: String;
   
   init(providerID: String, authorizationCode: String, state: String) {
     self.providerID = providerID
