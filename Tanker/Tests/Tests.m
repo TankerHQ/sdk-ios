@@ -780,7 +780,7 @@ SpecBegin(TankerSpecs)
           NSString* resourceID = [bobTanker resourceIDOfEncryptedData:encryptedData error:&err];
           expect(err).to.beNil();
 
-          TKRSharingOptions* opts = [TKRSharingOptions options];
+          TKRSharingOptions* opts = [[TKRSharingOptions alloc] init];
           opts.shareWithGroups = @[ groupId ];
           err = hangWithResolver(^(PMKResolver resolve) {
             [bobTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
@@ -1170,7 +1170,7 @@ SpecBegin(TankerSpecs)
 
           expect(err).to.beNil();
 
-          TKRSharingOptions* opts = [TKRSharingOptions options];
+          TKRSharingOptions* opts = [[TKRSharingOptions alloc] init];
           opts.shareWithUsers = @[ bobPublicIdentity ];
           err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
@@ -1248,7 +1248,7 @@ SpecBegin(TankerSpecs)
 
           NSArray* resourceIDs = @[ resourceID1, resourceID2 ];
 
-          TKRSharingOptions* opts = [TKRSharingOptions options];
+          TKRSharingOptions* opts = [[TKRSharingOptions alloc] init];
           opts.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
           err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:resourceIDs options:opts completionHandler:resolve];
@@ -1285,7 +1285,7 @@ SpecBegin(TankerSpecs)
           NSString* resourceID = [aliceTanker resourceIDOfEncryptedData:encryptedData error:&err];
           expect(err).to.beNil();
 
-          TKRSharingOptions* opts = [TKRSharingOptions options];
+          TKRSharingOptions* opts = [[TKRSharingOptions alloc] init];
           err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:@[ resourceID ] options:opts completionHandler:resolve];
           });
@@ -1293,7 +1293,7 @@ SpecBegin(TankerSpecs)
         });
 
         it(@"should have no effect to share nothing", ^{
-          TKRSharingOptions* opts = [TKRSharingOptions options];
+          TKRSharingOptions* opts = [[TKRSharingOptions alloc] init];
           opts.shareWithUsers = @[ bobPublicIdentity, charliePublicIdentity ];
           NSError* err = hangWithResolver(^(PMKResolver resolve) {
             [aliceTanker shareResourceIDs:@[] options:opts completionHandler:resolve];

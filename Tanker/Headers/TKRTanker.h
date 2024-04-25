@@ -3,13 +3,13 @@
 #import <Foundation/Foundation.h>
 
 #import <Tanker/TKRCompletionHandlers.h>
-#import <Tanker/TKRSharingOptions.h>
 #import <Tanker/TKRStatus.h>
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRVerificationKey.h>
 #import <Tanker/TKRVerificationMethod.h>
 
 @class TKREncryptionOptions;
+@class TKRSharingOptions;
 @class TKRVerificationOptions;
 
 /*!
@@ -25,7 +25,7 @@ NS_SWIFT_NAME(Tanker)
  @param options Options needed to initialize Tanker.
 
  @pre Every field must be set with a valid value.
- 
+
  @result  Errors with NSInvalidArgumentException if initialization fails
 
  @return An initialized TKRTanker*.
@@ -312,7 +312,7 @@ NS_SWIFT_NAME(Tanker)
  @warning Experimental: This API is exposed for testing purposes only
 
  @pre status must be TKRStatusIdentityRegistrationNeeded, TKRStatusIdentityVerificationNeeded or TKRStatusReady
- 
+
  @param providerID oidc provider id of the trusted identity provider (as returned by the app managment API)
  @param cookie a cookie-list added to the authorization HTTP request (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
  @param handler the block called with an NSError*, or TKRVerification*.
