@@ -5,6 +5,7 @@
 
  @discussion Each field is optional.
  */
+NS_SWIFT_NAME(SharingOptions)
 @interface TKRSharingOptions : NSObject
 
 /*!

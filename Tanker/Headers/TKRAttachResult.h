@@ -4,6 +4,7 @@
 
 typedef NS_ENUM(NSUInteger, TKRStatus);
 
+NS_SWIFT_NAME(AttachResult)
 @interface TKRAttachResult : NSObject
 
 @property(readonly) TKRStatus status;

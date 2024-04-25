@@ -3,6 +3,7 @@
 /*!
  @brief Tanker Encryption Session object
  */
+NS_SWIFT_NAME(EncryptionSession)
 @interface TKREncryptionSession : NSObject
 
 // MARK: Instance methods

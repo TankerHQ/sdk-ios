@@ -7,6 +7,7 @@
 
  @discussion Each field is optional.
  */
+NS_SWIFT_NAME(EncryptionOptions)
 @interface TKREncryptionOptions : NSObject
 
 /*!
