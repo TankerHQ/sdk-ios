@@ -123,7 +123,7 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
 // Note: this constructor blocks until tanker_create resolves.
 // If we start doing background operation in tanker_create, we should
 // get rid of the tanker_future_wait()
-+ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options err:(NSError**)errResult
++ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options error:(NSError**)errResult
 {
   __block TKRTanker* tanker = [[[self class] alloc] init];
   tanker_set_log_handler(&defaultLogHandler);
