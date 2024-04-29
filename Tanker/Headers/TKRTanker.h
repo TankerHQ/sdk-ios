@@ -31,7 +31,7 @@ NS_SWIFT_NAME(Tanker)
  @return An initialized TKRTanker*.
 
  */
-+ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options err:(NSError * _Nullable * _Nullable)errResult;
++ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options error:(NSError * _Nullable * _Nullable)errResult;
 
 /*!
  @brief Get Tanker version as a string
