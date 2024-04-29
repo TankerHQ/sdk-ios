@@ -16,8 +16,8 @@ func createIdentity(appID: String, appSecret: String, userID: String) -> String
   let cAppSecret = appSecret.cString(using: .utf8);
   let cUserID = userID.cString(using: .utf8);
   
-  let identity_expected = UnsafeMutableRawPointer(tanker_create_identity(cAppID, cAppSecret, cUserID)!);
-  let identity_ptr: UnsafeMutableRawPointer = TKR_unwrapAndFreeExpected(identity_expected);
+  let identity_expected = tanker_create_identity(cAppID, cAppSecret, cUserID)!;
+  let identity_ptr: UnsafeMutableRawPointer = try! unwrapAndFreeExpected(identity_expected)!;
   return NSString(
     bytesNoCopy: identity_ptr,
     length: strlen(identity_ptr),
