@@ -77,13 +77,13 @@ void TKR_freeCStringArray(char** toFree, NSUInteger nbElems)
   free(toFree);
 }
 
-void* TKR_unwrapAndFreeExpected(void* expected)
+void* TKR_unwrapAndFreeExpected(void* expected, NSError** err)
 {
-  NSError* optErr = TKR_getOptionalFutureError(expected);
-  if (optErr)
+  *err = TKR_getOptionalFutureError(expected);
+  if (*err)
   {
     tanker_future_destroy((tanker_future_t*)expected);
-    @throw optErr;
+    return nil;
   }
 
   void* ptr = tanker_future_get_voidptr((tanker_future_t*)expected);

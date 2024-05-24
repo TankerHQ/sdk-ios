@@ -34,7 +34,10 @@ static NSString* createIdentity(NSString* userID, NSString* appID, NSString* app
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
   char const* app_secret = [appSecret cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* identity_expected = tanker_create_identity(app_id, app_secret, user_id);
-  char* identity = TKR_unwrapAndFreeExpected(identity_expected);
+
+  NSError* err = nil;
+  char* identity = TKR_unwrapAndFreeExpected(identity_expected, &err);
+  assert(!err);
   assert(identity);
   return [[NSString alloc] initWithBytesNoCopy:identity
                                         length:strlen(identity)
@@ -47,7 +50,9 @@ static NSString* createProvisionalIdentity(NSString* appID, NSString* email)
   char const* app_id = [appID cStringUsingEncoding:NSUTF8StringEncoding];
   char const* c_email = [email cStringUsingEncoding:NSUTF8StringEncoding];
   tanker_expected_t* provisional_expected = tanker_create_provisional_identity(app_id, c_email);
-  char* identity = TKR_unwrapAndFreeExpected(provisional_expected);
+  NSError* err = nil;
+  char* identity = TKR_unwrapAndFreeExpected(provisional_expected, &err);
+  assert(!err);
   assert(identity);
   return [[NSString alloc] initWithBytesNoCopy:identity
                                         length:strlen(identity)
@@ -60,7 +65,9 @@ static NSString* getPublicIdentity(NSString* identity)
   tanker_expected_t* identity_expected =
       tanker_get_public_identity([identity cStringUsingEncoding:NSUTF8StringEncoding]);
 
-  char* public_identity = TKR_unwrapAndFreeExpected(identity_expected);
+  NSError* err = nil;
+  char* public_identity = TKR_unwrapAndFreeExpected(identity_expected, &err);
+  assert(!err);
   assert(public_identity);
   return [[NSString alloc] initWithBytesNoCopy:public_identity
                                         length:strlen(public_identity)

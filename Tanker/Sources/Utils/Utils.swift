@@ -1,5 +1,5 @@
 internal func getExpectedString(_ expected: OpaquePointer) -> String {
-  let expectedRawPtr = TKR_unwrapAndFreeExpected(UnsafeMutableRawPointer(expected));
+  let expectedRawPtr = try! unwrapAndFreeExpected(expected)!;
   // NOTE: freeWhenDone will call free() instead of tanker_free(), but this should be fine
   return NSString(
     bytesNoCopy: expectedRawPtr,
@@ -31,3 +31,16 @@ func resolvePromise(_ fut: OpaquePointer?, _ arg: UnsafeMutableRawPointer?) -> U
   });
   return nil;
 };
+
+public func unwrapAndFreeExpected(_ expected: OpaquePointer) throws -> UnsafeMutableRawPointer?
+{
+  if let err = TKR_getOptionalFutureError(UnsafeMutableRawPointer(expected)) as NSError? {
+    tanker_future_destroy(expected);
+    throw err;
+  }
+
+  let ptr: UnsafeMutableRawPointer? = tanker_future_get_voidptr(expected);
+  tanker_future_destroy(expected);
+
+  return ptr;
+}

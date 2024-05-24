@@ -163,7 +163,13 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
   };
 
   tanker_expected_t* expected_decrypted_size = tanker_decrypted_size(encrypted_buffer, encrypted_size);
-  decrypted_size = (uint64_t)TKR_unwrapAndFreeExpected(expected_decrypted_size);
+
+  NSError* err = nil;
+  decrypted_size = (uint64_t)TKR_unwrapAndFreeExpected(expected_decrypted_size, &err);
+  if (err) {
+    handler(nil, err);
+    return;
+  }
 
   decrypted_buffer = (uint8_t*)malloc((unsigned long)decrypted_size);
   if (!decrypted_buffer)
