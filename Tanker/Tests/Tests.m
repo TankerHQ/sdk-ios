@@ -545,9 +545,11 @@ SpecBegin(TankerSpecs)
           it(@"should encrypt and decrypt with manual padding", ^{
             NSString* clearText = @"Rosebud";
             NSUInteger paddingStep = 13;
+            NSError* error = nil;
 
             TKREncryptionOptions* encryptionOptions = [[TKREncryptionOptions alloc] init];
-            encryptionOptions.paddingStep = [TKRPadding step:paddingStep];
+            encryptionOptions.paddingStep = [TKRPadding step:paddingStep error:&error];
+            expect(error).to.beNil();
 
             NSData* encrypted = hangWithAdapter(^(PMKAdapter adapter) {
               [tanker encryptString:clearText options:encryptionOptions completionHandler:adapter];
@@ -563,12 +565,15 @@ SpecBegin(TankerSpecs)
           });
 
           it(@"should throw when a bad step is given", ^{
-            expect(^{
-              [TKRPadding step:0];
-            }).to.raise(NSInvalidArgumentException);
-            expect(^{
-              [TKRPadding step:1];
-            }).to.raise(NSInvalidArgumentException);
+            NSError* error = nil;
+            [TKRPadding step:0 error:&error];
+            expect(error).toNot.beNil();
+            expect(error.code).to.equal(TKRErrorInvalidArgument);
+
+            error = nil;
+            [TKRPadding step:1 error:&error];
+            expect(error).toNot.beNil();
+            expect(error.code).to.equal(TKRErrorInvalidArgument);
           });
         });
 
@@ -601,7 +606,10 @@ SpecBegin(TankerSpecs)
             clearData = [NSMutableData dataWithLength:1024 * 1024 * 3 + 2];
             NSInputStream* clearStream = [TKRCustomDataSource customDataSourceWithData:clearData];
             TKREncryptionOptions *opts = [[TKREncryptionOptions alloc] init];
-            opts.paddingStep = [TKRPadding step:500];
+            NSError* error = nil;
+
+            opts.paddingStep = [TKRPadding step:500 error:&error];
+            expect(error).to.beNil();
 
             NSInputStream* encryptedStream = hangWithAdapter(^(PMKAdapter adapter) {
                 [tanker encryptStream:clearStream options:opts completionHandler:adapter];
@@ -1080,8 +1088,11 @@ SpecBegin(TankerSpecs)
 
         it(@"should encrypt with a padding step", ^{
           NSUInteger paddingStep = 13;
+          NSError* error = nil;
           TKREncryptionOptions* opts = [[TKREncryptionOptions alloc] init];
-          opts.paddingStep = [TKRPadding step:paddingStep];
+          opts.paddingStep = [TKRPadding step:paddingStep error:&error];
+          expect(error).to.beNil();
+
           TKREncryptionSession* encSess = hangWithAdapter(^(PMKAdapter adapter) {
             [aliceTanker createEncryptionSessionWithCompletionHandler:adapter encryptionOptions:opts];
           });
