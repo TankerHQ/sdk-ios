@@ -1,4 +1,6 @@
+#import <Tanker/TKRError.h>
 #import <Tanker/TKRPadding.h>
+#import <Tanker/Utils/TKRUtils.h>
 
 @interface TKRPadding ()
 
@@ -30,15 +32,13 @@
   return [[TKRPadding alloc] initWithValue:@1];
 }
 
-+ (nullable instancetype)step:(NSUInteger)value
-{
-  if (value < 2)
-  {
-    [NSException raise:NSInvalidArgumentException
-                 format:@"Invalid step. The value must be >= 2."];
++ (nullable instancetype)step:(NSUInteger)value error:(NSError **)error {
+  if (value < 2) {
+      *error = TKR_createNSError(TKRErrorInvalidArgument, @"Invalid step. The value must be >= 2.");
+      return nil;
   }
 
-  return [[TKRPadding alloc] initWithValue:[NSNumber numberWithUnsignedInteger:value]];
+  return [[TKRPadding alloc] initWithValue:@(value)];
 }
 
 @end

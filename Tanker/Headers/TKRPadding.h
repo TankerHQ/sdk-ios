@@ -24,6 +24,6 @@ NS_SWIFT_NAME(Padding)
 
  @param value Must be a NSUInteger >= 2
  */
-+ (nullable instancetype)step:(NSUInteger)value;
++ (nullable instancetype)step:(NSUInteger)value error:(NSError * _Nonnull * _Nullable)error;
 
 @end
