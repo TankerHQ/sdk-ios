@@ -26,7 +26,7 @@ NS_SWIFT_NAME(Tanker)
 
  @pre Every field must be set with a valid value.
 
- @result  Errors with NSInvalidArgumentException if initialization fails
+ @result error will be filled with TKRErrorInvalidArgument if initialization fails
 
  @return An initialized TKRTanker*.
 
