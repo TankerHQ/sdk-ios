@@ -66,7 +66,7 @@ stages:
   extends:
     - .rules/check/deployed-native
   script:
-    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_LATEST_CONAN_REFERENCE
+    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home build-and-test --use-tanker=deployed --tanker-ref=$SDK_NATIVE_CONAN_REFERENCE
     - echo $CI_COMMIT_REF_NAME > branch_name.txt
   artifacts:
     paths:
@@ -206,7 +206,7 @@ bridge/compat-deployed/arm:
     - check/deployed-native/arm
     - bridge-dotenv
   variables:
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: $SDK_NATIVE_LATEST_CONAN_REFERENCE
+    SDK_NATIVE_CONAN_REFERENCE: $SDK_NATIVE_CONAN_REFERENCE
     UPSTREAM_JOB_NAME: check/deployed-native/arm
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
@@ -321,7 +321,7 @@ deploy:
     - .rules/deploy/ios
   script:
     - poetry run python run-ci.py reset-branch $UPSTREAM_BRANCH_NAME
-    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_LATEST_CONAN_REFERENCE
+    - poetry run python run-ci.py --remote $CONAN_REMOTE --isolate-conan-user-home deploy --version $SDK_IOS_RELEASE_VERSION --tanker-ref $SDK_NATIVE_CONAN_REFERENCE
   release:
     description: sdk-ios v$SDK_IOS_RELEASE_VERSION
     tag_name: v$SDK_IOS_RELEASE_VERSION
@@ -340,7 +340,7 @@ brige/bump-ios-compat-tests:
   needs: [deploy]
   variables:
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: $SDK_NATIVE_LATEST_CONAN_REFERENCE
+    SDK_NATIVE_CONAN_REFERENCE: $SDK_NATIVE_CONAN_REFERENCE
     UPSTREAM_JOB_NAME: deploy
     UPSTREAM_JOB_TARGET: ios-arm
   trigger:
