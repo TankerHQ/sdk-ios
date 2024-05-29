@@ -5,7 +5,7 @@ private var AssociatedCTankerHandle: UInt8 = 0
 
 @objc(TKRTanker)
 public extension Tanker {
-  static let TANKER_IOS_VERSION = "9999";
+  static let TANKER_IOS_VERSION = "9999.0.0";
   
   private var cTanker: OpaquePointer? {
     get {
