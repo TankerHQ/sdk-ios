@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'Tanker'
-  s.version          = '9999'
+  s.version          = '9999.0.0'
   s.summary          = 'End to end encryption'
 
   s.description      = <<-DESC
