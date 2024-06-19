@@ -22,6 +22,7 @@
 @end
 
 // Internal block used to wrap C futures
+NS_SWIFT_NAME(Adapter)
 typedef void (^TKRAdapter)(NSNumber* _Nullable ptrValue, NSError* _Nullable err);
 
 void TKR_runOnMainQueue(void (^_Nonnull block)(void));

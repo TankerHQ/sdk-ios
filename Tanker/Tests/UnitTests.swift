@@ -14,8 +14,8 @@ class UnitTests: QuickSpec {
         expect {
           let _: String = try Tanker.prehashPassword("")
         }.to(throwError { (error: NSError) in
-          expect(error.domain).to(equal(TKRErrorDomain));
-          expect(error.code) == TKRError.invalidArgument.rawValue;
+          expect(error.domain).to(equal(ErrorDomain));
+          expect(error.code) == Error.invalidArgument.rawValue;
           expect(error.localizedDescription) == "Cannot hash empty password";
         })
       }
@@ -39,8 +39,8 @@ class UnitTests: QuickSpec {
         tankerOptions.appID = ",,";
         
         expect { try Tanker(options:tankerOptions) }.to(throwError { (error: NSError) in
-          expect(error.domain).to(equal(TKRErrorDomain));
-          expect(error.code) == TKRError.invalidArgument.rawValue;
+          expect(error.domain).to(equal(ErrorDomain));
+          expect(error.code) == Error.invalidArgument.rawValue;
         })
       }
     }

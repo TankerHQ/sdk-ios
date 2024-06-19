@@ -79,37 +79,37 @@ extension VerificationData {
     verif.version = Self.C_VERIFICATION_VERSION;
     switch self {
     case .passphrase(let passphrase):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.passphrase.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.passphrase.rawValue);
       verif.passphrase = (passphrase as NSString).utf8String;
     case .e2ePassphrase(let passphrase):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.e2ePassphrase.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.e2ePassphrase.rawValue);
       verif.e2e_passphrase = (passphrase as NSString).utf8String;
     case .verificationKey(let key):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.verificationKey.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.verificationKey.rawValue);
       verif.verification_key = (key.value as NSString).utf8String;
     case .email(let emailVerif):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.email.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.email.rawValue);
       verif.email_verification.email = (emailVerif.email as NSString).utf8String;
       verif.email_verification.verification_code = (emailVerif.verificationCode as NSString).utf8String;
     case .oidcIDToken(let token):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.oidcidToken.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.oidcidToken.rawValue);
       verif.oidc_id_token = (token as NSString).utf8String;
     case .phoneNumber(let phoneVerif):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.phoneNumber.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.phoneNumber.rawValue);
       verif.phone_number_verification.phone_number = (phoneVerif.phoneNumber as NSString).utf8String;
       verif.phone_number_verification.verification_code = (phoneVerif.verificationCode as NSString).utf8String;
     case .preverifiedEmail(let email):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.preverifiedEmail.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.preverifiedEmail.rawValue);
       verif.preverified_email = (email as NSString).utf8String;
     case .preverifiedPhoneNumber(let phoneNumber):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.preverifiedPhoneNumber.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.preverifiedPhoneNumber.rawValue);
       verif.preverified_phone_number = (phoneNumber as NSString).utf8String;
     case .preverifiedOIDC(let oidcVerif):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.preverifiedOIDC.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.preverifiedOIDC.rawValue);
       verif.preverified_oidc_verification.subject = (oidcVerif.subject as NSString).utf8String;
       verif.preverified_oidc_verification.provider_id = (oidcVerif.providerID as NSString).utf8String;
     case .oidcAuthorizationCode(let oidcVerif):
-      verif.verification_method_type = UInt8(TKRVerificationMethodType.oidcAuthorizationCode.rawValue);
+      verif.verification_method_type = UInt8(VerificationMethodType.oidcAuthorizationCode.rawValue);
       verif.oidc_authorization_code_verification.provider_id = (oidcVerif.providerID as NSString).utf8String;
       verif.oidc_authorization_code_verification.authorization_code = (oidcVerif.authorizationCode as NSString).utf8String;
       verif.oidc_authorization_code_verification.state = (oidcVerif.state as NSString).utf8String;

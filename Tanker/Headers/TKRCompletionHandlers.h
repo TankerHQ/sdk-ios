@@ -54,15 +54,6 @@ typedef void (^TKRDecryptedStringHandler)(NSString* _Nullable decryptedString, N
 typedef void (^TKRErrorHandler)(NSError* _Nullable err);
 
 /*!
- @typedef TKRDeviceIDHandler
- @brief Block which will be called with a device ID.
-
- @param deviceID the deviceID, or nil if an error occurred.
- @param err the error which occurred, or nil.
- */
-typedef void (^TKRDeviceIDHandler)(NSString* _Nullable deviceID, NSError* _Nullable err);
-
-/*!
  @typedef TKRNonceHandler
  @brief Block which will be called with Nonce.
 

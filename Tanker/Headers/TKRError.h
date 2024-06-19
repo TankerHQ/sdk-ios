@@ -19,6 +19,7 @@ typedef NS_ENUM(NSInteger, TKRError) {
   TKRErrorConflict = 13,
   TKRErrorUpgradeRequired = 14,
   TKRErrorIdentityAlreadyAttached = 15,
-};
+} NS_SWIFT_NAME(Error);
 
+NS_SWIFT_NAME(ErrorDomain)
 FOUNDATION_EXPORT NSString* const TKRErrorDomain;

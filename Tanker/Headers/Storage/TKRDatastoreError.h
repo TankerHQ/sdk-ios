@@ -8,6 +8,7 @@ typedef NS_ENUM(NSUInteger, TKRDatastoreError) {
   TKRDatastoreErrorDatabaseCorrupt = 5,
   TKRDatastoreErrorDatabaseTooRecent = 6,
   TKRDatastoreErrorConstraintFailed = 7,
-};
+} NS_SWIFT_NAME(DatastoreError);
 
+NS_SWIFT_NAME(DatastoreErrorDomain)
 FOUNDATION_EXPORT NSString* const TKRDatastoreErrorDomain;

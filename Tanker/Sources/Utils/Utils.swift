@@ -26,7 +26,7 @@ func resolvePromise(_ fut: OpaquePointer?, _ arg: UnsafeMutableRawPointer?) -> U
   }
   
   DispatchQueue.main.async(execute: {
-    let adapter = Unmanaged<AnyObject>.fromOpaque(arg!).takeRetainedValue() as! TKRAdapter;
+    let adapter = Unmanaged<AnyObject>.fromOpaque(arg!).takeRetainedValue() as! Adapter;
     adapter(ptrValue, maybeErr);
   });
   return nil;
