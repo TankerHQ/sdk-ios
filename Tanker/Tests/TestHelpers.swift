@@ -47,7 +47,7 @@ func createTankerOptions(url: String, appID: String) -> TankerOptions
 
 func startAndRegister(_ tanker: Tanker, _ identity: String, _ verification: Verification) {
   let err = hangWithResolver({ (resolver: _!) in
-    tanker.start(withIdentity: identity, completionHandler: { (status: TKRStatus, err: Error?) in
+    tanker.start(withIdentity: identity, completionHandler: { (status: Status, err: Swift.Error?) in
       if (err != nil) {
         resolver(err);
       } else {
@@ -62,7 +62,7 @@ func startAndRegister(_ tanker: Tanker, _ identity: String, _ verification: Veri
 
 func start(_ tanker: Tanker, _ identity: String) {
   let err = hangWithResolver({ (resolver: _!) in
-    tanker.start(withIdentity: identity, completionHandler: { (status: TKRStatus, err: Error?) in
+    tanker.start(withIdentity: identity, completionHandler: { (status: Status, err: Swift.Error?) in
       if (err == nil) {
         expect(status) == .ready;
       }
@@ -99,7 +99,7 @@ class TankerFunctionalQuickSpec: QuickSpec {
     ]
   ];
 
-  let admin = TKRTestAdmin(
+  let admin = TestAdmin(
     url: getEnv("TANKER_MANAGEMENT_API_URL"),
     appManagementToken: getEnv("TANKER_MANAGEMENT_API_ACCESS_TOKEN"),
     environmentName: getEnv("TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME")

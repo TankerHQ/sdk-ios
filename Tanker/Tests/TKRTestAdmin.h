@@ -2,6 +2,7 @@
 
 #import <PromiseKit/PromiseKit.h>
 
+NS_SWIFT_NAME(TestAdmin)
 @interface TKRTestAdmin : NSObject
 
 // MARK: Class methods

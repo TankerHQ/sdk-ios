@@ -1,6 +1,7 @@
 import Foundation
 
-@objc public enum TKRStatus: UInt {
+@objc(TKRStatus)
+public enum Status: UInt {
     case stopped
     case ready
     case identityRegistrationNeeded

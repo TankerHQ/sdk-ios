@@ -5,8 +5,9 @@ typedef NS_ENUM(NSUInteger, TKRLogLevel) {
   TKRLogLevelInfo,
   TKRLogLevelWarning,
   TKRLogLevelError
-};
+} NS_SWIFT_NAME(LogLevel);
 
+NS_SWIFT_NAME(LogEntry)
 @interface TKRLogEntry : NSObject
 
 @property NSString* category;

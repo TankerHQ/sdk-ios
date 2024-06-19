@@ -19,7 +19,7 @@ public extension Tanker {
   @objc
   static func prehashPassword(_ password: String) throws -> String {
     if password.isEmpty {
-      throw NSError(domain: "TKRErrorDomain", code: TKRError.invalidArgument.rawValue, userInfo: [
+      throw NSError(domain: "TKRErrorDomain", code: Error.invalidArgument.rawValue, userInfo: [
         NSLocalizedDescriptionKey: "Cannot hash empty password"
       ])
     }
@@ -39,12 +39,12 @@ public extension Tanker {
   }
   
   @objc
-  func start(identity: String, completionHandler handler: @escaping (_ status: TKRStatus, _ error: NSError?) -> ()) {
-    let adapter: TKRAdapter = {(status: NSNumber?, error: (any Error)?) in
+  func start(identity: String, completionHandler handler: @escaping (_ status: Status, _ error: NSError?) -> ()) {
+    let adapter: Adapter = {(status: NSNumber?, error: (any Swift.Error)?) in
       if (error != nil) {
-        handler(TKRStatus(rawValue: 0)!, error as NSError?);
+        handler(Status(rawValue: 0)!, error as NSError?);
       } else {
-        handler(TKRStatus(rawValue: status!.uintValue)!, nil);
+        handler(Status(rawValue: status!.uintValue)!, nil);
       }
     };
     let bridgeRetainedAdapter = Unmanaged.passRetained(adapter as AnyObject).toOpaque();
@@ -67,7 +67,7 @@ public extension Tanker {
   func registerIdentity(verification: Verification,
                         options: VerificationOptions,
                         completionHandler handler: @escaping (_ sessionToken: String?, _ error: NSError?) -> ()) {
-    let adapter: TKRAdapter = {(tokenPtrVal: NSNumber?, error: (any Error)?) in
+    let adapter: Adapter = {(tokenPtrVal: NSNumber?, error: (any Swift.Error)?) in
       let tokenPtr = UnsafeRawPointer(bitPattern: tokenPtrVal?.uintValue ?? 0)
       if (error != nil || tokenPtr == nil) {
         handler(nil, error as NSError?)
@@ -104,7 +104,7 @@ public extension Tanker {
   func verifyIdentity(verification: Verification,
                       options: VerificationOptions,
                       completionHandler handler: @escaping (_ sessionToken: String?, _ error: NSError?) -> ()) {
-    let adapter: TKRAdapter = {(tokenPtrVal: NSNumber?, error: (any Error)?) in
+    let adapter: Adapter = {(tokenPtrVal: NSNumber?, error: (any Swift.Error)?) in
       let tokenPtr = UnsafeRawPointer(bitPattern: tokenPtrVal?.uintValue ?? 0)
       if (error != nil || tokenPtr == nil) {
         handler(nil, error as NSError?)
@@ -141,7 +141,7 @@ public extension Tanker {
   func setVerificationMethod(verification: Verification,
                              options: VerificationOptions,
                              completionHandler handler: @escaping (_ sessionToken: String?, _ error: NSError?) -> ()) {
-    let adapter: TKRAdapter = {(tokenPtrVal: NSNumber?, error: (any Error)?) in
+    let adapter: Adapter = {(tokenPtrVal: NSNumber?, error: (any Swift.Error)?) in
       let tokenPtr = UnsafeRawPointer(bitPattern: tokenPtrVal?.uintValue ?? 0)
       if (error != nil || tokenPtr == nil) {
         handler(nil, error as NSError?)
@@ -169,7 +169,7 @@ public extension Tanker {
   @objc
   func verifyProvisionalIdentity(verification: Verification,
                                  completionHandler handler: @escaping (_ error: NSError?) -> ()) {
-    let adapter: TKRAdapter = {(_unused: NSNumber?, error: (any Error)?) in
+    let adapter: Adapter = {(_unused: NSNumber?, error: (any Swift.Error)?) in
       handler(error as NSError?)
     }
     let bridgeRetainedAdapter = Unmanaged.passRetained(adapter as AnyObject).toOpaque()
@@ -188,7 +188,7 @@ public extension Tanker {
   func authenticateWithIDP(providerID: String,
                            cookie: String,
                            completionHandler handler: @escaping (_ verification: Verification?, _ error: NSError?) -> ()) {
-    let adapter: TKRAdapter = {(verifPtrValue: NSNumber?, error: (any Error)?) in
+    let adapter: Adapter = {(verifPtrValue: NSNumber?, error: (any Swift.Error)?) in
       if (error != nil) {
         handler(nil, error as NSError?)
       } else {
