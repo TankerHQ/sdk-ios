@@ -90,7 +90,7 @@ class TankerFunctionalQuickSpec: QuickSpec {
     "clientSecret": getEnv("TANKER_OIDC_CLIENT_SECRET"),
     "provider": getEnv("TANKER_OIDC_PROVIDER"),
     "issuer": getEnv("TANKER_OIDC_ISSUER"),
-    "fakeOidcIssuerUrl": getEnv("TANKER_FAKE_OIDC_URL") + "/issuer",
+    "fakeOidcIssuerUrl": getEnv("TANKER_FAKE_OIDC_URL") + "/issuers/main",
     "users": [
       "martine": [
         "email": getEnv("TANKER_OIDC_MARTINE_EMAIL"),
