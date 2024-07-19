@@ -304,7 +304,7 @@ SpecBegin(TankerSpecs)
 
         fakeOidcIssuerUrl = env[@"TANKER_FAKE_OIDC_URL"];
         expect(fakeOidcIssuerUrl).toNot.beNil();
-        fakeOidcIssuerUrl = [NSString stringWithFormat:@"%@/issuer", fakeOidcIssuerUrl];
+        fakeOidcIssuerUrl = [NSString stringWithFormat:@"%@/issuers/main", fakeOidcIssuerUrl];
 
         oidcTestConfig = @{
           @"clientId" : env[@"TANKER_OIDC_CLIENT_ID"],

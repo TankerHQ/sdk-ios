@@ -228,6 +228,7 @@
       [oidcProviders setValue:oidcClientID forKey:@"client_id"];
       [oidcProviders setValue:oidcClientProvider forKey:@"display_name"];
       [oidcProviders setValue:oidcIssuer forKey:@"issuer"];
+      [oidcProviders setValue:@"ZBZD5xIAw4AdFitkAIKp6rrhl_TTSTb3ssNZMj7Nt5U" forKey:@"oidc_provider_group_id"];
 
       [contentDictionary setValue:@[oidcProviders] forKey:@"oidc_providers"];
   } else {
