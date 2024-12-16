@@ -8,12 +8,12 @@
 #import <Tanker/TKRLogEntry.h>
 #import <Tanker/TKRNetwork.h>
 #import <Tanker/TKRStreamsFromNative+Private.h>
+#import <Tanker/TKRSwift+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/TKRTankerOptions.h>
 #import <Tanker/TKRVerificationKey+Private.h>
 #import <Tanker/TKRVerificationMethod+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
-#import <Tanker/TKRSwift+Private.h>
 
 #include <assert.h>
 #include <string.h>
@@ -149,7 +149,9 @@ static void convertOptions(TKRTankerOptions const* options, tanker_options_t* cO
   {
     tanker_future_destroy(create_future);
     if (errResult != nil)
-      *errResult = TKR_createNSError(TKRErrorInvalidArgument, [NSString stringWithFormat:@"Could not init Tanker %@", [error localizedDescription]]);
+      *errResult =
+          TKR_createNSError(TKRErrorInvalidArgument,
+                            [NSString stringWithFormat:@"Could not init Tanker %@", [error localizedDescription]]);
     return nil;
   }
   tanker.cTanker = tanker_future_get_voidptr(create_future);

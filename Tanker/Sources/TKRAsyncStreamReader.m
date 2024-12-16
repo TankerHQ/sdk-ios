@@ -23,7 +23,7 @@ void readInput(uint8_t* _Nonnull out,
         else
           tanker_stream_read_operation_finish(op, 0);
         // now we can release the reader created in encryptStream/decryptStream
-        (void)(__bridge_transfer TKRAsyncStreamReader*) additional_data;
+        (void)(__bridge_transfer TKRAsyncStreamReader*)additional_data;
       }
       reader.cOut = out;
       reader.cSize = n;

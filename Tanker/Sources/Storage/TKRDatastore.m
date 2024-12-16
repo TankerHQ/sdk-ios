@@ -208,10 +208,10 @@ static NSArray<NSArray<NSData*>*>* _Nullable retrieveCachedValues(sqlite3* handl
   int err_code = sqlite3_prepare_v2(handle, query.UTF8String, (int)query.length, &stmt, NULL);
   if (err_code != SQLITE_OK)
   {
-    *err = TKR_createNSErrorWithDomain(TKRDatastoreErrorDomain,
-                                       translateSQLiteError(err_code),
-                                       [NSString stringWithFormat:@"Failed to prepare statement: %s", sqlite3_errstr(err_code)]
-                                       );
+    *err = TKR_createNSErrorWithDomain(
+        TKRDatastoreErrorDomain,
+        translateSQLiteError(err_code),
+        [NSString stringWithFormat:@"Failed to prepare statement: %s", sqlite3_errstr(err_code)]);
     return nil;
   }
   while ((err_code = sqlite3_step(stmt)) == SQLITE_ROW)
@@ -412,7 +412,7 @@ fail:
   NSData* ret;
   NSString* query = [NSString stringWithFormat:@"SELECT deviceblob FROM %@ WHERE id = 1", deviceTableName];
   sqlite3_stmt* stmt;
-    
+
   int err_code = sqlite3_prepare_v2(self.persistent_handle, query.UTF8String, -1, &stmt, NULL);
   if (err_code != SQLITE_OK)
   {

@@ -31,7 +31,8 @@ NS_SWIFT_NAME(Tanker)
  @return An initialized TKRTanker*.
 
  */
-+ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options error:(NSError * _Nullable * _Nullable)errResult;
++ (nullable TKRTanker*)tankerWithOptions:(nonnull TKRTankerOptions*)options
+                                   error:(NSError* _Nullable* _Nullable)errResult;
 
 /*!
  @brief Get Tanker version as a string
@@ -40,7 +41,7 @@ NS_SWIFT_NAME(Tanker)
 
 + (nonnull NSString*)nativeVersionString;
 
-+ (nullable NSString*)prehashPassword:(nonnull NSString*)password error:(NSError * _Nullable * _Nullable)errResult;
++ (nullable NSString*)prehashPassword:(nonnull NSString*)password error:(NSError* _Nullable* _Nullable)errResult;
 
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler;
 
@@ -63,7 +64,8 @@ NS_SWIFT_NAME(Tanker)
  @param verification the verification.
  @param handler the block called with an NSError*, or nil.
  */
-- (void)setVerificationMethodWithVerification:(nonnull TKRVerification*)verification completionHandler:(nonnull TKRErrorHandler)handler;
+- (void)setVerificationMethodWithVerification:(nonnull TKRVerification*)verification
+                            completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Register or update a verification method.
@@ -179,8 +181,7 @@ NS_SWIFT_NAME(Tanker)
 /*!
  @brief Set the nonce to use during Oidc verification
  */
-- (void)setOidcTestNonce:(nonnull NSString*)nonce
-       completionHandler:(nonnull TKRErrorHandler)handler;
+- (void)setOidcTestNonce:(nonnull NSString*)nonce completionHandler:(nonnull TKRErrorHandler)handler;
 
 /*!
  @brief Create a verification key that can be used to accept devices.
@@ -314,7 +315,8 @@ NS_SWIFT_NAME(Tanker)
  @pre status must be TKRStatusIdentityRegistrationNeeded, TKRStatusIdentityVerificationNeeded or TKRStatusReady
 
  @param providerID oidc provider id of the trusted identity provider (as returned by the app managment API)
- @param cookie a cookie-list added to the authorization HTTP request (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
+ @param cookie a cookie-list added to the authorization HTTP request (see
+ https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
  @param handler the block called with an NSError*, or TKRVerification*.
  */
 - (void)authenticateWithIDP:(nonnull NSString*)providerID
