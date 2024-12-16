@@ -33,6 +33,60 @@ class UnitTests: QuickSpec {
       }
     }
 
+    describe("prehashAndEncryptPassword") {
+      it("fails to hash an empty password") {
+        let publicKey = "iFpHADRaRYQbErZhHMDruROvqkRF3XkgJxKk+7eP1hI=";
+        expect {
+          let _: String = try Tanker.prehashAndEncryptPassword("", publicKey: publicKey);
+        }.to(throwError { (error: NSError) in
+          expect(error.domain).to(equal(ErrorDomain));
+          expect(error.code) == Error.invalidArgument.rawValue;
+          expect(error.localizedDescription) == "Tanker::Crypto(invalid buffer size): cannot hash an empty password";
+        })
+      }
+
+      it("fails to hash with an empty public key") {
+        let password = "super secretive password";
+        expect {
+          let _: String = try Tanker.prehashAndEncryptPassword(password, publicKey: "");
+        }.to(throwError { (error: NSError) in
+          expect(error.domain).to(equal(ErrorDomain));
+          expect(error.code) == Error.invalidArgument.rawValue;
+          expect(error.localizedDescription) == "Tanker::Tanker(invalid argument): public_key has an invalid value: ";
+        })
+      }
+
+      it("fails to hash with a non-base64-encoded public key") {
+        let password = "super secretive password";
+        expect {
+          let _: String = try Tanker.prehashAndEncryptPassword(password, publicKey: "$");
+        }.to(throwError { (error: NSError) in
+          expect(error.domain).to(equal(ErrorDomain));
+          expect(error.code) == Error.invalidArgument.rawValue;
+          expect(error.localizedDescription) == "Tanker::Tanker(invalid argument): public_key has an invalid value: $";
+        })
+      }
+
+      it("fails to hash with an invalid public key") {
+        let password = "super secretive password";
+        expect {
+          let _: String = try Tanker.prehashAndEncryptPassword(password, publicKey: "fake");
+        }.to(throwError { (error: NSError) in
+          expect(error.domain).to(equal(ErrorDomain));
+          expect(error.code) == Error.invalidArgument.rawValue;
+          expect(error.localizedDescription) == "Tanker::Tanker(invalid argument): public_key has an invalid value: fake";
+        })
+      }
+
+      it("hashes and encrypt when using a valid password and public key") {
+        let password = "super secretive password";
+        let publicKey = "iFpHADRaRYQbErZhHMDruROvqkRF3XkgJxKk+7eP1hI=";
+        let hashed = try! Tanker.prehashAndEncryptPassword(password, publicKey: publicKey);
+        expect(hashed.count) != 0;
+        expect(!hashed.contains(password));
+      }
+    }
+
     describe("init") {
       it("should throw when the AppID is not base64") {
         let tankerOptions = TankerOptions();

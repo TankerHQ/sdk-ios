@@ -43,6 +43,10 @@ NS_SWIFT_NAME(Tanker)
 
 + (nullable NSString*)prehashPassword:(nonnull NSString*)password error:(NSError* _Nullable* _Nullable)errResult;
 
++ (nullable NSString*)prehashAndEncryptPassword:(nonnull NSString*)password
+                                      publicKey:(nonnull NSString*)publicKey
+                                          error:(NSError* _Nullable* _Nullable)errResult;
+
 + (void)connectLogHandler:(nonnull TKRLogHandler)handler;
 
 // MARK: Instance methods

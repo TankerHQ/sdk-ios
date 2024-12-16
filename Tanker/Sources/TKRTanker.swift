@@ -23,6 +23,13 @@ public extension Tanker {
   }
 
   @objc
+  static func prehashAndEncryptPassword(_ password: String, publicKey: String) throws -> String {
+    let cPassword = password.cString(using: .utf8);
+    let cPublicKey = publicKey.cString(using: .utf8);
+    return try getExpectedString(tanker_prehash_and_encrypt_password(cPassword, cPublicKey)!);
+  }
+
+  @objc
   static func versionString() -> String {
     TANKER_IOS_VERSION
   }
