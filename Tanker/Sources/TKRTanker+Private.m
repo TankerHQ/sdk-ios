@@ -3,9 +3,9 @@
 
 #import <Tanker/TKRError.h>
 #import <Tanker/TKRStreamsFromNative+Private.h>
+#import <Tanker/TKRSwift+Private.h>
 #import <Tanker/TKRTanker+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
-#import <Tanker/TKRSwift+Private.h>
 
 #include <Tanker/ctanker.h>
 
@@ -166,7 +166,8 @@ void completeStreamEncrypt(TKRAsyncStreamReader* _Nonnull reader,
 
   NSError* err = nil;
   decrypted_size = (uint64_t)TKR_unwrapAndFreeExpected(expected_decrypted_size, &err);
-  if (err) {
+  if (err)
+  {
     handler(nil, err);
     return;
   }

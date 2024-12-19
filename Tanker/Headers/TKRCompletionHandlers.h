@@ -62,7 +62,6 @@ typedef void (^TKRErrorHandler)(NSError* _Nullable err);
  */
 typedef void (^TKRNonceHandler)(NSString* _Nullable nonce, NSError* _Nullable err);
 
-
 /*!
  @typedef TKRGroupIDHandler
  @brief Block which will be called with a group ID.

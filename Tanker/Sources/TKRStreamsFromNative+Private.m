@@ -5,12 +5,14 @@
 #import <Tanker/TKRError.h>
 #import <Tanker/TKRStreamsFromNative+Private.h>
 #import <Tanker/Utils/TKRUtils.h>
- 
-@interface TKRStreamsFromNative () <NSStreamDelegate> {
+
+@interface TKRStreamsFromNative () <NSStreamDelegate>
+{
   tanker_stream_t* _Nullable cstream;
   TKRAsyncStreamReader* _Nonnull reader;
 
-  @public BOOL hasBytesAvailable;
+@public
+  BOOL hasBytesAvailable;
   tanker_future_t* bytes_available_fut;
 }
 
@@ -53,7 +55,8 @@ static void* finishTankerRead(tanker_future_t* fut, void* data)
   return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
   tanker_future_destroy(self->bytes_available_fut);
 }
 
@@ -69,24 +72,26 @@ static void* finishTankerRead(tanker_future_t* fut, void* data)
   tanker_future_destroy(read_fut);
 }
 
-
 #pragma mark - NSInputStream
 
-- (NSInteger)read:(uint8_t *)buffer maxLength:(NSUInteger)maxLength {
-  if (![self isOpen]) {
+- (NSInteger)read:(uint8_t*)buffer maxLength:(NSUInteger)maxLength
+{
+  if (![self isOpen])
+  {
     NSLog(@"%@: Stream is not open, status %ld.", self, (long)[self streamStatus]);
     return -1;
   }
-  if ([self streamStatus] == NSStreamStatusAtEnd) {
+  if ([self streamStatus] == NSStreamStatusAtEnd)
+  {
     return 0;
   }
-  
+
   if (maxLength > NSIntegerMax)
   {
     [self setError:TKR_createNSError(TKRErrorInvalidArgument, @"Attempting to read more than NSIntegerMax")];
     return -1;
   }
-  
+
   assert(self->bytes_available_fut);
   // this future is always ready when read is called due to hasBytesAvailable being set to YES.
   // when run synchronously, the thread is blocked until bytes are available
@@ -120,28 +125,33 @@ static void* finishTankerRead(tanker_future_t* fut, void* data)
   return nbRead;
 }
 
-- (BOOL)hasBytesAvailable {
-  if (![self isOpen]) {
+- (BOOL)hasBytesAvailable
+{
+  if (![self isOpen])
+  {
     return NO;
   }
-  
+
   return self->hasBytesAvailable;
 }
 
 #pragma mark - NSStream
 
-- (void)open {
-  if ([self streamStatus] != NSStreamStatusNotOpen) {
+- (void)open
+{
+  if ([self streamStatus] != NSStreamStatusNotOpen)
+  {
     NSLog(@"%@: stream already open", self);
     return;
   }
   [super open];
-  
+
   self->hasBytesAvailable = NO;
   [self triggerCTankerRead];
 }
 
-- (void)close {
+- (void)close
+{
   if (![self isOpen])
     return;
   [super close];

@@ -1,5 +1,5 @@
-internal func getExpectedString(_ expected: OpaquePointer) -> String {
-  let expectedRawPtr = try! unwrapAndFreeExpected(expected)!;
+internal func getExpectedString(_ expected: OpaquePointer) throws -> String {
+  let expectedRawPtr = try unwrapAndFreeExpected(expected)!;
   // NOTE: freeWhenDone will call free() instead of tanker_free(), but this should be fine
   return NSString(
     bytesNoCopy: expectedRawPtr,
@@ -20,11 +20,11 @@ internal func getFutureError(_ fut: OpaquePointer) -> NSError? {
 func resolvePromise(_ fut: OpaquePointer?, _ arg: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
   let maybeErr = getFutureError(fut!);
   var ptrValue: NSNumber? = nil;
-  
+
   if maybeErr == nil {
     ptrValue = NSNumber(value: UInt(bitPattern: tanker_future_get_voidptr(fut)));
   }
-  
+
   DispatchQueue.main.async(execute: {
     let adapter = Unmanaged<AnyObject>.fromOpaque(arg!).takeRetainedValue() as! Adapter;
     adapter(ptrValue, maybeErr);

@@ -1,8 +1,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import <Tanker/TKRPadding.h>
 #import <Tanker/TKRAsyncStreamReader+Private.h>
+#import <Tanker/TKRPadding.h>
 #import <Tanker/TKRTanker.h>
 #import <Tanker/Utils/TKRUtils.h>
 

@@ -6,7 +6,7 @@ private var AssociatedCTankerHandle: UInt8 = 0
 @objc(TKRTanker)
 public extension Tanker {
   static let TANKER_IOS_VERSION = "9999.0.0";
-  
+
   private var cTanker: OpaquePointer? {
     get {
         return objc_getAssociatedObject(self, &AssociatedCTankerHandle) as! OpaquePointer?
@@ -15,29 +15,30 @@ public extension Tanker {
         objc_setAssociatedObject(self, &AssociatedCTankerHandle, newValue, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
     }
   }
-  
+
   @objc
   static func prehashPassword(_ password: String) throws -> String {
-    if password.isEmpty {
-      throw NSError(domain: "TKRErrorDomain", code: Error.invalidArgument.rawValue, userInfo: [
-        NSLocalizedDescriptionKey: "Cannot hash empty password"
-      ])
-    }
-    
     let cPassword = password.cString(using: .utf8);
-    return getExpectedString(tanker_prehash_password(cPassword)!);
+    return try getExpectedString(tanker_prehash_password(cPassword)!);
   }
-  
+
+  @objc
+  static func prehashAndEncryptPassword(_ password: String, publicKey: String) throws -> String {
+    let cPassword = password.cString(using: .utf8);
+    let cPublicKey = publicKey.cString(using: .utf8);
+    return try getExpectedString(tanker_prehash_and_encrypt_password(cPassword, cPublicKey)!);
+  }
+
   @objc
   static func versionString() -> String {
     TANKER_IOS_VERSION
   }
-  
+
   @objc
   static func nativeVersionString() -> String {
     String(cString: tanker_version_string())
   }
-  
+
   @objc
   func start(identity: String, completionHandler handler: @escaping (_ status: Status, _ error: NSError?) -> ()) {
     let adapter: Adapter = {(status: NSNumber?, error: (any Swift.Error)?) in
@@ -48,13 +49,13 @@ public extension Tanker {
       }
     };
     let bridgeRetainedAdapter = Unmanaged.passRetained(adapter as AnyObject).toOpaque();
-    
+
     let startFuture = tanker_start(self.cTanker, identity.cString(using: .utf8));
     let resolveFuture = tanker_future_then(startFuture, resolvePromise, bridgeRetainedAdapter)
     tanker_future_destroy(startFuture);
     tanker_future_destroy(resolveFuture);
   }
-  
+
   @objc
   func registerIdentity(verification: Verification,
                         completionHandler handler: @escaping (_ error: NSError?) -> ()) {
@@ -62,7 +63,7 @@ public extension Tanker {
       handler(error);
     }
   }
-  
+
   @objc
   func registerIdentity(verification: Verification,
                         options: VerificationOptions,
@@ -78,10 +79,10 @@ public extension Tanker {
       }
     }
     let bridgeRetainedAdapter = Unmanaged.passRetained(adapter as AnyObject).toOpaque()
-    
+
     let cOptions = options.toCVerificationOptions()
     let cVerif = verification.toCVerification()
-    
+
     withUnsafePointer(to: cOptions) { cOptionsPtr in
       withUnsafePointer(to: cVerif) { cVerifPtr in
         let registerFuture = tanker_register_identity(self.cTanker, cVerifPtr, cOptionsPtr)
@@ -91,7 +92,7 @@ public extension Tanker {
       }
     }
   }
-  
+
   @objc
   func verifyIdentity(verification: Verification,
                       completionHandler handler: @escaping (_ error: NSError?) -> ()) {
@@ -99,7 +100,7 @@ public extension Tanker {
       handler(error);
     }
   }
-  
+
   @objc
   func verifyIdentity(verification: Verification,
                       options: VerificationOptions,
@@ -115,10 +116,10 @@ public extension Tanker {
       }
     }
     let bridgeRetainedAdapter = Unmanaged.passRetained(adapter as AnyObject).toOpaque()
-    
+
     let cOptions = options.toCVerificationOptions()
     let cVerif = verification.toCVerification()
-    
+
     withUnsafePointer(to: cOptions) { cOptionsPtr in
       withUnsafePointer(to: cVerif) { cVerifPtr in
         let verifyFuture = tanker_verify_identity(self.cTanker, cVerifPtr, cOptionsPtr)
@@ -128,7 +129,7 @@ public extension Tanker {
       }
     }
   }
-  
+
   @objc
   func setVerificationMethod(verification: Verification,
                              completionHandler handler: @escaping (_ error: NSError?) -> ()) {
@@ -136,7 +137,7 @@ public extension Tanker {
       handler(error);
     }
   }
-  
+
   @objc
   func setVerificationMethod(verification: Verification,
                              options: VerificationOptions,
@@ -152,10 +153,10 @@ public extension Tanker {
       }
     }
     let bridgeRetainedAdapter = Unmanaged.passRetained(adapter as AnyObject).toOpaque()
-    
+
     let cOptions = options.toCVerificationOptions()
     let cVerif = verification.toCVerification()
-    
+
     withUnsafePointer(to: cOptions) { cOptionsPtr in
       withUnsafePointer(to: cVerif) { cVerifPtr in
         let setFuture = tanker_set_verification_method(self.cTanker, cVerifPtr, cOptionsPtr)
@@ -165,7 +166,7 @@ public extension Tanker {
       }
     }
   }
-  
+
   @objc
   func verifyProvisionalIdentity(verification: Verification,
                                  completionHandler handler: @escaping (_ error: NSError?) -> ()) {
@@ -173,9 +174,9 @@ public extension Tanker {
       handler(error as NSError?)
     }
     let bridgeRetainedAdapter = Unmanaged.passRetained(adapter as AnyObject).toOpaque()
-    
+
     let cVerif = verification.toCVerification()
-    
+
     withUnsafePointer(to: cVerif) { cVerifPtr in
       let verifyFuture = tanker_verify_provisional_identity(self.cTanker, cVerifPtr)
       let resolveFuture = tanker_future_then(verifyFuture, resolvePromise, bridgeRetainedAdapter)
@@ -183,7 +184,7 @@ public extension Tanker {
       tanker_future_destroy(resolveFuture)
     }
   }
-  
+
   @objc(authenticateWithIDP:cookie:completionHandler:)
   func authenticateWithIDP(providerID: String,
                            cookie: String,
