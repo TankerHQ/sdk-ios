@@ -53,6 +53,11 @@ public class Verification: NSObject {
     self.data = VerificationData.oidcAuthorizationCode(OIDCAuthorizationCodeVerification(providerID: providerID, authorizationCode: oidcAuthorizationCode, state: state))
   }
   
+  @objc(withPrehashedAndEncryptedPassphrase:)
+  public init(prehashedAndEncryptedPassphrase: String) {
+    self.data = VerificationData.prehashedAndEncryptedPassphrase(prehashedAndEncryptedPassphrase)
+  }
+
   internal func toCVerification() -> tanker_verification_t {
     return self.data.toCVerification()
   }
@@ -69,10 +74,11 @@ public enum VerificationData {
   case preverifiedPhoneNumber(String)
   case preverifiedOIDC(PreverifiedOIDCVerification)
   case oidcAuthorizationCode(OIDCAuthorizationCodeVerification)
+  case prehashedAndEncryptedPassphrase(String)
 }
 
 extension VerificationData {
-  static let C_VERIFICATION_VERSION: UInt8 = 8;
+  static let C_VERIFICATION_VERSION: UInt8 = 9;
   
   func toCVerification() -> tanker_verification_t {
     var verif = tanker_verification_t();
@@ -113,6 +119,9 @@ extension VerificationData {
       verif.oidc_authorization_code_verification.provider_id = (oidcVerif.providerID as NSString).utf8String;
       verif.oidc_authorization_code_verification.authorization_code = (oidcVerif.authorizationCode as NSString).utf8String;
       verif.oidc_authorization_code_verification.state = (oidcVerif.state as NSString).utf8String;
+    case .prehashedAndEncryptedPassphrase(let prehashedAndEncryptedPassphrase):
+      verif.verification_method_type = UInt8(VerificationMethodType.prehashedAndEncryptedPassphrase.rawValue);
+      verif.prehashed_and_encrypted_passphrase = (prehashedAndEncryptedPassphrase as NSString).utf8String;
     }
     return verif;
   }

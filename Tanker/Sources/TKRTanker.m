@@ -74,6 +74,9 @@ static TKRVerificationMethod* _Nonnull cVerificationMethodToVerificationMethod(
   case TKRVerificationMethodTypeOIDCAuthorizationCode:
     NSLog(@"Unreachable code: OIDCAuthorizationCode is not exposed as a VerificationMethod");
     assert(false);
+  case TKRVerificationMethodTypePrehashedAndEncryptedPassphrase:
+    NSLog(@"Unreachable code: PrehashedAndEncryptedPassphrase is not exposed as a VerificationMethod");
+    assert(false);
   default:
     NSLog(@"Unreachable code: unknown verification method type: %lu", (unsigned long)ret.type);
     assert(false);

@@ -15,4 +15,5 @@ typedef NS_ENUM(NSUInteger, TKRVerificationMethodType) {
   TKRVerificationMethodTypeE2ePassphrase,
   TKRVerificationMethodTypePreverifiedOIDC,
   TKRVerificationMethodTypeOIDCAuthorizationCode,
+  TKRVerificationMethodTypePrehashedAndEncryptedPassphrase,
 } NS_SWIFT_NAME(VerificationMethodType);
